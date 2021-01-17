@@ -11,19 +11,18 @@ Input options:
 - File: $ qunitx test/foo.js
 - Folder: $ qunitx test/login
 - Glob: $ qunitx test/**/*.ts
-- Regex: $ qunit *-test.ts
-- Combination: $ qunit test/foo.js test/bar.js test/logout app/e2e/submit-*.ts
+- Regex: $ qunit \w+-test.ts
+- Combination: $ qunit test/foo.js test/bar.js test/logout app/e2e/submit-\w+.ts
 
 Optional flags:
---browser [default] : run qunit tests in chromium instead of node.js(with puppeteer)
---node : run qunit tests in node.js without spawning a chromium/puppeteer
+--browser : run qunit tests in chromium with puppeteer instead of node.js(which is the default)
 --debug : print console output when tests run in browser
 --watch : run the target file or folders and watch them for continuous run
 --failFast : run the target file or folders with immediate abort if a single test fails
 --reporter : define a reporter
 --coverage : define a coverage dist folder target(by default ./dist)
 
-Example: $ qunitx test/foo.ts#204 app/e2e --debug --watch
+Example: $ qunitx test/foo.ts#204 app/e2e --browser --debug --watch
 `;
 
 test('$ qunitx -> prints help text', async (t) => {
