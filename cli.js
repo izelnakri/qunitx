@@ -18,8 +18,14 @@ process.title = 'qunitx';
 
     if (entry.isDirectory()) {
       console.log('entry', entry, ' is directory');
-    } else if (entry.isFile()) {
-      console.log('entry', entry, ' is file');
+    } else if (entry.isFile()) { // what to do when its .ts
+      global.window = global;
+
+      const QUnit = (await import('./lib/setup-node-js-environment.js')).default;
+
+      await import(`./${fileOrFolder}`);
+
+      QUnit.start();
     }
   } catch (error) {
     console.log(error);
