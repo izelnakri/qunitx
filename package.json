@@ -29,7 +29,6 @@
     "chalk": "^4.1.0",
     "puppeteer": "^5.5.0",
     "qunit": "^2.13.0",
-    "rewiremock": "^3.14.3",
     "ws": "^7.4.2"
   },
   "devDependencies": {
