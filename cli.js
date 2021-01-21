@@ -23,7 +23,7 @@ process.title = 'qunitx';
 
       const QUnit = (await import('./lib/setup-node-js-environment.js')).default;
 
-      await import(`./${fileOrFolder}`);
+      await import(`${process.cwd()}/${fileOrFolder}`);
 
       QUnit.start();
     }
