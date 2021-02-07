@@ -11,8 +11,8 @@ Input options:
 - File: $ qunitx test/foo.js
 - Folder: $ qunitx test/login
 - Glob: $ qunitx test/**/*.ts
-- Regex: $ qunit \w+-test.ts
-- Combination: $ qunit test/foo.js test/bar.js test/logout app/e2e/submit-\w+.ts
+- Regex: $ qunitx \w+-test.ts
+- Combination: $ qunitx test/foo.js test/bar.js test/logout app/e2e/submit-\w+.ts
 
 Optional flags:
 --browser : run qunit tests in chromium with puppeteer instead of node.js(which is the default)
@@ -23,6 +23,8 @@ Optional flags:
 --coverage : define a coverage dist folder target(by default ./dist)
 
 Example: $ qunitx test/foo.ts#204 app/e2e --browser --debug --watch
+
+To create a new qunitx file do: $ qunitx new myNewTest
 `;
 
 test('$ qunitx -> prints help text', async (t) => {
