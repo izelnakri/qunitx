@@ -2,7 +2,8 @@
 import fs from 'fs/promises';
 import chalk from 'chalk';
 import displayHelpOutput from './lib/commands/help.js';
-import parseCliFlags from './lib/parse-cli-flags.js';
+import run from './lib/commands/run.js';
+import parseCliInputs from './lib/parse-cli-inputs.js';
 
 process.title = 'qunitx';
 
@@ -13,27 +14,8 @@ process.title = 'qunitx';
     return await displayHelpOutput();
   }
 
-  let config = await parseCliFlags();
+  let config = await parseCliInputs();
 
-  const fileOrFolder = process.argv[2]; // then turn this to array of remaining args
-  try {
-    const entry = await fs.stat(fileOrFolder);
-
-    if (entry.isDirectory()) {
-      console.log('entry', entry, ' is directory');
-    } else if (entry.isFile()) { // what to do when its .ts
-      const QUnit = (await import('./lib/setup-node-js-environment.js')).default;
-
-      console.log(fileOrFolder);
-      await import(`${process.cwd()}/${fileOrFolder}`);
-
-      QUnit.start();
-    }
-  } catch (error) {
-    console.log(error);
-
-    return process.exit(1);
-  }
-  // if file execute file
+  return await run(config);
 })();
 
