@@ -2,6 +2,7 @@
 import fs from 'fs/promises';
 import chalk from 'chalk';
 import displayHelpOutput from './lib/commands/help.js';
+import parseCliFlags from './lib/parse-cli-flags.js';
 
 process.title = 'qunitx';
 
@@ -11,6 +12,8 @@ process.title = 'qunitx';
   } else if (['help', 'h', 'p', 'print'].includes(process.argv[2])) {
     return await displayHelpOutput();
   }
+
+  let config = await parseCliFlags();
 
   const fileOrFolder = process.argv[2]; // then turn this to array of remaining args
   try {
