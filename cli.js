@@ -3,7 +3,7 @@ import fs from 'fs/promises';
 import chalk from 'chalk';
 import displayHelpOutput from './lib/commands/help.js';
 import run from './lib/commands/run.js';
-import parseCliInputs from './lib/parse-cli-inputs.js';
+import parseCliInputs from './lib/utils/parse-cli-inputs.js';
 
 process.title = 'qunitx';
 
