@@ -43,7 +43,7 @@
       "!test/helpers/**/*"
     ],
     "require": [
-      "./vendor/disable-colors"
+      "./vendor/test-setup"
     ],
     "timeout": "20m",
     "failFast": true
