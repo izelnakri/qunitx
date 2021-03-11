@@ -27,8 +27,10 @@
   },
   "dependencies": {
     "chalk": "^4.1.0",
+    "klaw": "^3.0.0",
     "puppeteer": "^5.5.0",
     "qunit": "^2.13.0",
+    "through2": "^4.0.2",
     "ws": "^7.4.2"
   },
   "devDependencies": {
