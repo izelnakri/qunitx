@@ -5,8 +5,7 @@ RUN apt-get update && \
 
 WORKDIR /code/
 
-ADD package-lock.json /code/package-lock.json
-ADD package.json /code/package.json
+ADD package-lock.json package.json /code/
 
 RUN npm install
 

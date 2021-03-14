@@ -1,4 +1,6 @@
-try this: $ npx ava --tap | npx tap-nyan
+
+try this: $ npx ava --tap | npx tap-difflet
+or this: $ npx ava --tap | npx faucet
 
 research mocha reporter(TAP > reporters | json stream metada then it consumes this metadata(how?))
 example good reporters: spec(reporter), dot, tap, landing strip(interesting instead put percentage), jest
