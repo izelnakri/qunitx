@@ -54,7 +54,7 @@
     "failFast": true
   },
   "volta": {
-    "node": "15.4.0"
+    "node": "15.11.0"
   },
   "prettier": {
     "printWidth": 100,
