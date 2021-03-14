@@ -56,7 +56,7 @@ module('Basic sanity check', function (hooks) {
 # you can run the test in node with ES modules package.json{ "type": "module" }
 $ qunitx some-test.js
 
-# or if you want to run it in browser:
+# Suggested mode: if you want to run it in CI/google chrome:
 
 $ qunitx some-test.js --browser
 

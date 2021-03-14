@@ -552,4 +552,3 @@ test.serial('testing a single failing ts file with --browser --debug works', asy
   }
 });
 
-// TODO: also make it work with line numbers
