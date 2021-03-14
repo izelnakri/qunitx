@@ -1,6 +1,7 @@
 import QUnit from 'qunit';
 
 QUnit.config.autostart = false;
+
 export const isLocal = QUnit.isLocal;
 export const on = QUnit.on;
 export const test = QUnit.test;
