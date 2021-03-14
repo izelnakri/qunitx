@@ -21,7 +21,5 @@ process.title = 'qunitx';
   }
 
   let config = await parseCliFlags();
-  console.log(config);
-
   return await run(config);
 })();

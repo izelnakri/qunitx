@@ -1,6 +1,4 @@
-import QUnit from 'qunit';
-
-const { module, test } = QUnit;
+import { module, test } from '../../index.js';
 
 module('{{moduleName}}', function(hooks) {
   test('assert true works', function (assert) {
