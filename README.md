@@ -7,14 +7,14 @@ Experimental improvements, suggestions for qunit CLI
 Default test output is TAP(Test-Anything-Protocol_) thus you can use any tap reporter of your choice to display test
 output in anyway you like. Example:
 
-```
+```zsh
 # using it with tap-difflet TAP reporter:
 qunitx tests/attachments tests/user | npx tap-difflet
 ```
 
 #### Installation:
 
-```sh
+```zsh
 npm install -g qunitx
 
 qunitx
@@ -52,7 +52,7 @@ module('Basic sanity check', function (hooks) {
 });
 ```
 
-```
+```zsh
 $ qunitx some-test.js
 
 # or if you want to run it in browser:
