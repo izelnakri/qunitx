@@ -6,6 +6,7 @@ module('{{moduleName}}', function(hooks) {
   test('assert true works', function (assert) {
     assert.expect(3);
     assert.ok(true);
+    console.log('calling assert true test case');
     assert.equal(true, true);
     assert.equal(null, null);
   });
@@ -14,7 +15,18 @@ module('{{moduleName}}', function(hooks) {
     assert.expect(4);
 
     const wait = new Promise((reject, resolve) => {
-      window.setTimeout(() => resolve(true), 50);
+      window.setTimeout(() => {
+        console.log('resolving async test');
+        console.log({
+          moduleName: 'called resolved async test with object',
+          placeholder: 1000,
+          anotherObject: {
+            firstName: 'Izel',
+            createdAt: new Date('2021-03-06')
+          }
+        });
+        resolve(true);
+      }, 50);
     });
     const result = wait();
 
@@ -33,6 +45,7 @@ module('{{moduleName}}', function(hooks) {
   test('deepEqual true works', function (assert) {
     const me = { firstName: 'Izel', lastName: 'Nakri' };
 
+    console.log('calling deepEqual test case');
     assert.deepEqual(me, { firstName: 'Isaac', lastName: 'Nakri' });
   });
 });
