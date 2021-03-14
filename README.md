@@ -32,7 +32,7 @@ import { module, test } from 'qunitx';
 Example:
 
 ```js
-// some-test.js:
+// in some-test.js: (typescript is also supported for --browser mode)
 import { module, test } from 'qunitx';
 import $ from 'jquery';
 
@@ -53,6 +53,7 @@ module('Basic sanity check', function (hooks) {
 ```
 
 ```zsh
+# you can run the test in node with ES modules package.json{ "type": "module" }
 $ qunitx some-test.js
 
 # or if you want to run it in browser:
