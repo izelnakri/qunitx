@@ -23,14 +23,16 @@ process.title = 'qunitx';
 
   let config = await parseCliFlags();
   let [httpPort, wsPort] = await Promise.all([
-    resolvePortNumberFor(1234),
-    resolvePortNumberFor(4000)
+    resolvePortNumberFor(config.httpPort || 1234),
+    resolvePortNumberFor(config.wsPort || 4000)
   ]);
 
   Object.assign(config, {
     httpPort,
     timeout: config.timeout || 10000,
-    wsPort
+    wsPort,
+    outputPath: config.outputPath || `${config.projectRoot}/tmp`,
+    htmlPaths: config.htmls || [`${config.projectRoot}/tests.html`]
   });
 
   return await run(config);
