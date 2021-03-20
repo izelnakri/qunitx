@@ -1,79 +1,218 @@
 import test from 'ava';
-import { v4 as uuid } from 'uuid';
+import { promisify } from 'util';
+import { exec } from 'child_process';
+
+import { writeTestFolder } from './helpers/fs-writers.js';
+import { assertPassingTestCase, assertFailingTestCase, assertTAPResult } from './helpers/assert-stdout.js';
+
+const shell = promisify(exec);
 
 test('works for a single folder input with all passing tests', async (t) => {
-  t.true(true);
+  let folderName = await writeTestFolder({ addFailingTests: false, });
+
+  const { stdout } = await shell(`node cli.js tmp/${folderName}`);
+
+  console.log(stdout);
+
+  assertPassingTestCase(t, stdout, { debug: true, moduleName: `${folderName} | first-module-pass` });
+  assertPassingTestCase(t, stdout, { debug: true, moduleName: `${folderName} | second-module-pass` });
+  assertTAPResult(t, stdout, { testCount: 6 });
 });
 
-// test('works for a single folder input with few failing tests', async (t) => {
-//   t.true(true);
-// });
+test('works for a single folder input with few failing tests', async (t) => {
+  let folderName = await writeTestFolder({ addFailingTests: true });
 
-// test('works for a multiple folders input with all passing tests', async (t) => {
-//   t.true(true);
-// });
+  try {
+    await shell(`node cli.js tmp/${folderName}`);
+  } catch (cmd) {
+    console.log(cmd.stdout);
 
-// test('works for a multiple folders input with few failing tests', async (t) => {
-//   t.true(true);
-// });
+    assertPassingTestCase(t, cmd.stdout, { debug: true, moduleName: `${folderName} | first-module-pass` });
+    assertPassingTestCase(t, cmd.stdout, { debug: true, moduleName: `${folderName} | second-module-pass` });
+    assertFailingTestCase(t, cmd.stdout, { debug: true, moduleName: `${folderName} | first-module-fail` });
+    assertFailingTestCase(t, cmd.stdout, { debug: true, moduleName: `${folderName} | second-module-fail` });
+    assertFailingTestCase(t, cmd.stdout, { debug: true, moduleName: `${folderName} | third-module-fail` });
+    assertTAPResult(t, cmd.stdout, { testCount: 18, failCount: 9 });
+  }
+});
 
-// test('works for a single folder input in browser mode with all passing tests', async (t) => {
-//   t.true(true);
-// });
+test('works for a multiple folders input with all passing tests', async (t) => {
+  let firstFolderName = await writeTestFolder({ addFailingTests: false, });
+  let secondFolderName = await writeTestFolder({ addFailingTests: false });
 
-// test('works for a single folder input in browser mode with few failing tests', async (t) => {
-//   t.true(true);
-// });
+  const { stdout } = await shell(`node cli.js tmp/${firstFolderName} tmp/${secondFolderName}`);
 
-// test('works for a multiple folders input in browser mode with all passing tests', async (t) => {
-//   t.true(true);
-// });
+  console.log(stdout);
 
-// test('works for a multiple folders input in browser mode with few failing tests', async (t) => {
-//   t.true(true);
-// });
+  assertPassingTestCase(t, stdout, { debug: true, moduleName: `${firstFolderName} | first-module-pass` });
+  assertPassingTestCase(t, stdout, { debug: true, moduleName: `${firstFolderName} | second-module-pass` });
+  assertPassingTestCase(t, stdout, { debug: true, moduleName: `${secondFolderName} | first-module-pass` });
+  assertPassingTestCase(t, stdout, { debug: true, moduleName: `${secondFolderName} | second-module-pass` });
+  assertTAPResult(t, stdout, { testCount: 12 });
+});
 
-// test('works for a single folder input in browser mode with debug and all passing tests', async (t) => {
-//   t.true(true);
-// });
+test('works for a multiple folders input with few failing tests', async (t) => {
+  let firstFolderName = await writeTestFolder({ addFailingTests: true });
+  let secondFolderName = await writeTestFolder({ addFailingTests: false });
+  let thirdFolderName = await writeTestFolder({ addFailingTests: true });
 
-// test('works for a single folder input in browser mode with debug and few failing tests', async (t) => {
-//   t.true(true);
-// });
+  try {
+    await shell(`node cli.js tmp/${firstFolderName} tmp/${secondFolderName}`);
+  } catch (cmd) {
+    console.log(cmd.stdout);
 
-// test('works for a multiple folders input in browser mode with debug and all passing tests', async (t) => {
-//   t.true(true);
-// });
+    assertPassingTestCase(t, cmd.stdout, { debug: true, moduleName: `${firstFolderName} | first-module-pass` });
+    assertPassingTestCase(t, cmd.stdout, { debug: true, moduleName: `${firstFolderName} | second-module-pass` });
+    assertFailingTestCase(t, cmd.stdout, { debug: true, moduleName: `${firstFolderName} | first-module-fail` });
+    assertFailingTestCase(t, cmd.stdout, { debug: true, moduleName: `${firstFolderName} | second-module-fail` });
+    assertFailingTestCase(t, cmd.stdout, { debug: true, moduleName: `${firstFolderName} | third-module-fail` });
+    assertPassingTestCase(t, cmd.stdout, { debug: true, moduleName: `${secondFolderName} | first-module-pass` });
+    assertPassingTestCase(t, cmd.stdout, { debug: true, moduleName: `${secondFolderName} | second-module-pass` });
+    assertPassingTestCase(t, cmd.stdout, { debug: true, moduleName: `${thirdFolderName} | first-module-pass` });
+    assertPassingTestCase(t, cmd.stdout, { debug: true, moduleName: `${thirdFolderName} | second-module-pass` });
+    assertFailingTestCase(t, cmd.stdout, { debug: true, moduleName: `${thirdFolderName} | first-module-fail` });
+    assertFailingTestCase(t, cmd.stdout, { debug: true, moduleName: `${thirdFolderName} | second-module-fail` });
+    assertFailingTestCase(t, cmd.stdout, { debug: true, moduleName: `${thirdFolderName} | third-module-fail` });
+    assertTAPResult(t, cmd.stdout, { testCount: 24, failCount: 9 });
+  }
+});
 
-// test('works for a multiple folders input in browser mode with debug and few failing tests', async (t) => {
-//   t.true(true);
-// });
+test.serial('works for a single folder input in browser mode with all passing tests', async (t) => {
+  let folderName = await writeTestFolder({ addFailingTests: false, });
 
+  const { stdout } = await shell(`node cli.js tmp/${folderName} --browser`);
 
-async function createTestFolder(options={ addFailingTests: false, mixedExtensions: false }) {
-  let { addFailingTests, mixedExtensions } = options;
-  let folderName = uuid();
-  let extension = mixedExtensions ? 'ts' : 'js';
-  let [passingsTestTemplate, failingTestTemplate] = await Promise.all([
-    fs.readFile(`${process.cwd()}/test/helpers/passing-tests.js`),
-    options.addFailingTests fs.readFile(`${process.cwd()}/test/helpers/failing-tests.js`) : null,
-    fs.mkdir(`${process.cwd()}/tmp/${folderName}`, { recursive: true });
-  ]);
+  console.log(stdout);
 
-  await Promise.all([
-    writeTestFile(folderName, 'first-module-pass', 'js', passingsTestTemplate),
-    writeTestFile(folderName, 'second-module-pass', extension, passingsTestTemplate),
-    addFailingTests ? writeTestFile(folderName, 'first-module-fail', 'js', failingTestTemplate) : null,
-    addFailingTests ? writeTestFile(folderName, 'second-module-fail', mixedExtensions, failingTestTemplate) : null,
-    addFailingTests ? writeTestFile(folderName, 'third-module-fail', mixedExtensions, failingTestTemplate) : null,
-  ]);
+  assertPassingTestCase(t, stdout, { debug: false, moduleName: `${folderName} | first-module-pass` });
+  assertPassingTestCase(t, stdout, { debug: false, moduleName: `${folderName} | second-module-pass` });
+  assertTAPResult(t, stdout, { testCount: 6 });
+});
 
-  return folderName;
-}
+test.serial('works for a single folder input in browser mode with few failing tests', async (t) => {
+  let folderName = await writeTestFolder({ addFailingTests: true });
 
-async function writeTestFile(folderName, testFileName, extension, templateBuffer) {
-  await fs.writeFile(
-    `${process.cwd()}/${folderName}/${testFileName}/${extension}`,
-    templateBuffer.toString().replace('{{moduleName}}', `${folderName} | ${testFileName}`)
-  );
-}
+  try {
+    await shell(`node cli.js tmp/${folderName} --browser`);
+  } catch (cmd) {
+    console.log(cmd.stdout);
+
+    assertPassingTestCase(t, cmd.stdout, { debug: false, moduleName: `${folderName} | first-module-pass` });
+    assertPassingTestCase(t, cmd.stdout, { debug: false, moduleName: `${folderName} | second-module-pass` });
+    assertFailingTestCase(t, cmd.stdout, { debug: false, moduleName: `${folderName} | first-module-fail` });
+    assertFailingTestCase(t, cmd.stdout, { debug: false, moduleName: `${folderName} | second-module-fail` });
+    assertFailingTestCase(t, cmd.stdout, { debug: false, moduleName: `${folderName} | third-module-fail` });
+    assertTAPResult(t, cmd.stdout, { testCount: 18, failCount: 9 });
+  }
+});
+
+test.serial('works for a multiple folders input in browser mode with all passing tests', async (t) => {
+  let firstFolderName = await writeTestFolder({ addFailingTests: false, });
+  let secondFolderName = await writeTestFolder({ addFailingTests: false });
+
+  const { stdout } = await shell(`node cli.js tmp/${firstFolderName} tmp/${secondFolderName} --browser`);
+
+  console.log(stdout);
+
+  assertPassingTestCase(t, stdout, { debug: false, moduleName: `${firstFolderName} | first-module-pass` });
+  assertPassingTestCase(t, stdout, { debug: false, moduleName: `${firstFolderName} | second-module-pass` });
+  assertPassingTestCase(t, stdout, { debug: false, moduleName: `${secondFolderName} | first-module-pass` });
+  assertPassingTestCase(t, stdout, { debug: false, moduleName: `${secondFolderName} | second-module-pass` });
+  assertTAPResult(t, stdout, { testCount: 12 });
+});
+
+test.serial('works for a multiple folders input in browser mode with few failing tests', async (t) => {
+  let firstFolderName = await writeTestFolder({ addFailingTests: true });
+  let secondFolderName = await writeTestFolder({ addFailingTests: false });
+  let thirdFolderName = await writeTestFolder({ addFailingTests: true });
+
+  try {
+    await shell(`node cli.js tmp/${firstFolderName} tmp/${secondFolderName} --browser`);
+  } catch (cmd) {
+    console.log(cmd.stdout);
+
+    assertPassingTestCase(t, cmd.stdout, { debug: false, moduleName: `${firstFolderName} | first-module-pass` });
+    assertPassingTestCase(t, cmd.stdout, { debug: false, moduleName: `${firstFolderName} | second-module-pass` });
+    assertFailingTestCase(t, cmd.stdout, { debug: false, moduleName: `${firstFolderName} | first-module-fail` });
+    assertFailingTestCase(t, cmd.stdout, { debug: false, moduleName: `${firstFolderName} | second-module-fail` });
+    assertFailingTestCase(t, cmd.stdout, { debug: false, moduleName: `${firstFolderName} | third-module-fail` });
+    assertPassingTestCase(t, cmd.stdout, { debug: false, moduleName: `${secondFolderName} | first-module-pass` });
+    assertPassingTestCase(t, cmd.stdout, { debug: false, moduleName: `${secondFolderName} | second-module-pass` });
+    assertPassingTestCase(t, cmd.stdout, { debug: false, moduleName: `${thirdFolderName} | first-module-pass` });
+    assertPassingTestCase(t, cmd.stdout, { debug: false, moduleName: `${thirdFolderName} | second-module-pass` });
+    assertFailingTestCase(t, cmd.stdout, { debug: false, moduleName: `${thirdFolderName} | first-module-fail` });
+    assertFailingTestCase(t, cmd.stdout, { debug: false, moduleName: `${thirdFolderName} | second-module-fail` });
+    assertFailingTestCase(t, cmd.stdout, { debug: false, moduleName: `${thirdFolderName} | third-module-fail` });
+    assertTAPResult(t, cmd.stdout, { testCount: 24, failCount: 9 });
+  }
+});
+
+test.serial('works for a single folder input in browser mode with debug and all passing tests', async (t) => {
+  let folderName = await writeTestFolder({ addFailingTests: false, });
+
+  const { stdout } = await shell(`node cli.js tmp/${folderName} --browser --debug`);
+
+  console.log(stdout);
+
+  assertPassingTestCase(t, stdout, { debug: true, moduleName: `${folderName} | first-module-pass` });
+  assertPassingTestCase(t, stdout, { debug: true, moduleName: `${folderName} | second-module-pass` });
+  assertTAPResult(t, stdout, { testCount: 6 });
+});
+
+test.serial('works for a single folder input in browser mode with debug and few failing tests', async (t) => {
+  let folderName = await writeTestFolder({ addFailingTests: true });
+
+  try {
+    await shell(`node cli.js tmp/${folderName} --browser --debug`);
+  } catch (cmd) {
+    console.log(cmd.stdout);
+
+    assertPassingTestCase(t, cmd.stdout, { debug: true, moduleName: `${folderName} | first-module-pass` });
+    assertPassingTestCase(t, cmd.stdout, { debug: true, moduleName: `${folderName} | second-module-pass` });
+    assertFailingTestCase(t, cmd.stdout, { debug: true, moduleName: `${folderName} | first-module-fail` });
+    assertFailingTestCase(t, cmd.stdout, { debug: true, moduleName: `${folderName} | second-module-fail` });
+    assertFailingTestCase(t, cmd.stdout, { debug: true, moduleName: `${folderName} | third-module-fail` });
+    assertTAPResult(t, cmd.stdout, { testCount: 18, failCount: 9 });
+  }
+});
+
+test.serial('works for a multiple folders input in browser mode with debug and all passing tests', async (t) => {
+  let firstFolderName = await writeTestFolder({ addFailingTests: false, });
+  let secondFolderName = await writeTestFolder({ addFailingTests: false });
+
+  const { stdout } = await shell(`node cli.js tmp/${firstFolderName} tmp/${secondFolderName} --browser --debug`);
+
+  console.log(stdout);
+
+  assertPassingTestCase(t, stdout, { debug: true, moduleName: `${firstFolderName} | first-module-pass` });
+  assertPassingTestCase(t, stdout, { debug: true, moduleName: `${firstFolderName} | second-module-pass` });
+  assertPassingTestCase(t, stdout, { debug: true, moduleName: `${secondFolderName} | first-module-pass` });
+  assertPassingTestCase(t, stdout, { debug: true, moduleName: `${secondFolderName} | second-module-pass` });
+  assertTAPResult(t, stdout, { testCount: 12 });
+});
+
+test.serial('works for a multiple folders input in browser mode with debug and few failing tests', async (t) => {
+  let firstFolderName = await writeTestFolder({ addFailingTests: true });
+  let secondFolderName = await writeTestFolder({ addFailingTests: false });
+  let thirdFolderName = await writeTestFolder({ addFailingTests: true });
+
+  try {
+    await shell(`node cli.js tmp/${firstFolderName} tmp/${secondFolderName} --browser --debug`);
+  } catch (cmd) {
+    console.log(cmd.stdout);
+
+    assertPassingTestCase(t, cmd.stdout, { debug: true, moduleName: `${firstFolderName} | first-module-pass` });
+    assertPassingTestCase(t, cmd.stdout, { debug: true, moduleName: `${firstFolderName} | second-module-pass` });
+    assertFailingTestCase(t, cmd.stdout, { debug: true, moduleName: `${firstFolderName} | first-module-fail` });
+    assertFailingTestCase(t, cmd.stdout, { debug: true, moduleName: `${firstFolderName} | second-module-fail` });
+    assertFailingTestCase(t, cmd.stdout, { debug: true, moduleName: `${firstFolderName} | third-module-fail` });
+    assertPassingTestCase(t, cmd.stdout, { debug: true, moduleName: `${secondFolderName} | first-module-pass` });
+    assertPassingTestCase(t, cmd.stdout, { debug: true, moduleName: `${secondFolderName} | second-module-pass` });
+    assertPassingTestCase(t, cmd.stdout, { debug: true, moduleName: `${thirdFolderName} | first-module-pass` });
+    assertPassingTestCase(t, cmd.stdout, { debug: true, moduleName: `${thirdFolderName} | second-module-pass` });
+    assertFailingTestCase(t, cmd.stdout, { debug: true, moduleName: `${thirdFolderName} | first-module-fail` });
+    assertFailingTestCase(t, cmd.stdout, { debug: true, moduleName: `${thirdFolderName} | second-module-fail` });
+    assertFailingTestCase(t, cmd.stdout, { debug: true, moduleName: `${thirdFolderName} | third-module-fail` });
+    assertTAPResult(t, cmd.stdout, { testCount: 24, failCount: 9 });
+  }
+});

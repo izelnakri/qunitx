@@ -2,8 +2,9 @@ export function assertStdout(t, folderNames, options={ checkFailure: false, brow
 
 }
 
-export function assertPassingTestCase(t, stdout, options={ moduleName: '{{moduleName}}', testNo: 1, debug: false }) {
-  let { moduleName, testNo, debug } = options;
+export function assertPassingTestCase(t, stdout, options={ moduleName: '{{moduleName}}', debug: false }) {
+  let testNo = options.testNo || 1;
+  let { moduleName, debug } = options;
 
   if (debug) {
     return t.true(new RegExp(`ok ${testNo} ${moduleName} | assert true works # (\d+ ms)
@@ -23,8 +24,9 @@ export function assertPassingTestCase(t, stdout, options={ moduleName: '{{module
     ok ${testNo++} ${moduleName} | deepEqual true works # (\d+ ms)`).test(stdout));
 }
 
-export function assertFailingTestCase(t, stdout, options={ moduleName: '{{moduleName}}', testNo: 1, debug: false }) {
-  let { moduleName, testNo, debug } = options;
+export function assertFailingTestCase(t, stdout, options={ moduleName: '{{moduleName}}', debug: false }) {
+  let testNo = options.testNo || 1;
+  let { moduleName, debug } = options;
 
   if (debug) {
     t.true(stdout.includes('calling assert true test case'));
