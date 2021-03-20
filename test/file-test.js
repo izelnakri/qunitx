@@ -100,7 +100,7 @@ test('testing a single failing js file works', async (t) => {
 // test.skip('testing a single failing ts file works', async (t) => {
 // });
 
-test('testing a single passing js file with --browser works, console output supressed', async (t) => {
+test.serial('testing a single passing js file with --browser works, console output supressed', async (t) => {
   const { stdout } = await shell('node cli.js tmp/test/passing-tests.js --browser');
 
   console.log(stdout);
@@ -108,7 +108,7 @@ test('testing a single passing js file with --browser works, console output supr
   assertTAPResult(t, stdout, { testCount: 3 });
 });
 
-test('testing a single passing js file with --browser --debug works', async (t) => {
+test.serial('testing a single passing js file with --browser --debug works', async (t) => {
   const { stdout } = await shell('node cli.js tmp/test/passing-tests.js --browser --debug');
 
   console.log(stdout);
@@ -119,7 +119,7 @@ test('testing a single passing js file with --browser --debug works', async (t) 
   assertTAPResult(t, stdout, { testCount: 3 });
 });
 
-test('testing a single failing js with --browser file works', async (t) => {
+test.serial('testing a single failing js with --browser file works', async (t) => {
   try {
     let { stdout } = await shell('node cli.js tmp/test/failing-tests.js --browser');
     console.log(stdout);
@@ -132,7 +132,7 @@ test('testing a single failing js with --browser file works', async (t) => {
   }
 });
 
-test('testing a single failing js file with --browser --debug works', async (t) => {
+test.serial('testing a single failing js file with --browser --debug works', async (t) => {
   try {
     await shell('node cli.js tmp/test/failing-tests.js --browser --debug');
   } catch(cmd) {
@@ -144,7 +144,7 @@ test('testing a single failing js file with --browser --debug works', async (t) 
   }
 });
 
-test('testing a single passing ts file with --browser works, console output supressed', async (t) => {
+test.serial('testing a single passing ts file with --browser works, console output supressed', async (t) => {
   const { stdout } = await shell('node cli.js tmp/test/passing-tests.ts --browser');
 
   console.log(stdout);
@@ -154,7 +154,7 @@ test('testing a single passing ts file with --browser works, console output supr
   assertTAPResult(t, stdout, { testCount: 3 });
 });
 
-test('testing a single passing ts file with --browser --debug works', async (t) => {
+test.serial('testing a single passing ts file with --browser --debug works', async (t) => {
   const { stdout } = await shell('node cli.js tmp/test/passing-tests.ts --browser --debug');
 
   console.log(stdout);
@@ -166,7 +166,7 @@ test('testing a single passing ts file with --browser --debug works', async (t) 
   assertTAPResult(t, stdout, { testCount: 3 });
 });
 
-test('testing a single failing ts with --browser file works', async (t) => {
+test.serial('testing a single failing ts with --browser file works', async (t) => {
   try {
     let { stdout } = await shell('node cli.js tmp/test/failing-tests.ts --browser');
     console.log('STDOUT is');
@@ -180,7 +180,7 @@ test('testing a single failing ts with --browser file works', async (t) => {
   }
 });
 
-test('testing a single failing ts file with --browser --debug works', async (t) => {
+test.serial('testing a single failing ts file with --browser --debug works', async (t) => {
   try {
     let { stdout } = await shell('node cli.js tmp/test/failing-tests.ts --browser --debug');
     console.log('STDOUT is');
