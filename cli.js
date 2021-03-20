@@ -1,6 +1,5 @@
 #! /usr/bin/env node
 import fs from 'fs/promises';
-import chalk from 'chalk';
 import displayHelpOutput from './lib/commands/help.js';
 import initializeProject from './lib/commands/init.js';
 import generateTestFiles from './lib/commands/generate.js';
