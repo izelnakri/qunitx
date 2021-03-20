@@ -8,10 +8,6 @@ const shell = promisify(exec);
 
 // TODO: also test with #line number test cases
 test('testing a single passing js file works', async (t) => {
-  let passingTestContent = await fs.readFile('./test/helpers/passing-tests.js');
-
-  await fs.writeFile('./tmp/test/passing-tests.js', passingTestContent.toString());
-
   const { stdout } = await shell('node cli.js tmp/test/passing-tests.js');
 
   console.log(stdout);
@@ -21,10 +17,6 @@ test('testing a single passing js file works', async (t) => {
 });
 
 test('testing a single failing js file works', async (t) => {
-  let failingTestContent = await fs.readFile('./test/helpers/failing-tests.js');
-
-  await fs.writeFile('./tmp/test/failing-tests.js', failingTestContent.toString());
-
   try {
     await shell('node cli.js tmp/test/failing-tests.js');
   } catch(cmd) {
@@ -108,11 +100,7 @@ test('testing a single failing js file works', async (t) => {
 // test.skip('testing a single failing ts file works', async (t) => {
 // });
 
-test.serial('testing a single passing js file with --browser works, console output supressed', async (t) => {
-  let passingTestContent = await fs.readFile('./test/helpers/passing-tests.js');
-
-  await fs.writeFile('./tmp/test/passing-tests.js', passingTestContent.toString());
-
+test('testing a single passing js file with --browser works, console output supressed', async (t) => {
   const { stdout } = await shell('node cli.js tmp/test/passing-tests.js --browser');
 
   console.log(stdout);
@@ -120,28 +108,21 @@ test.serial('testing a single passing js file with --browser works, console outp
   assertTAPResult(t, stdout, { testCount: 3 });
 });
 
-test.serial('testing a single passing js file with --browser --debug works', async (t) => {
-  let passingTestContent = await fs.readFile('./test/helpers/passing-tests.js');
-
-  await fs.writeFile('./tmp/test/passing-tests.js', passingTestContent.toString());
-
+test('testing a single passing js file with --browser --debug works', async (t) => {
   const { stdout } = await shell('node cli.js tmp/test/passing-tests.js --browser --debug');
 
   console.log(stdout);
-  t.true(new RegExp(`WS Server running on 4000
-http server running on port 1234
-TAP version 13`).test(stdout));
+  t.true(new RegExp(/websocket server running on port \d+/).test(stdout));
+  t.true(new RegExp(/http server running on port \d+/).test(stdout));
+  t.true(stdout.includes('TAP version 13'));
   assertPassingTestCase(t, stdout, { debug: true, testNo: 1, moduleName: '{{moduleName}}' });
   assertTAPResult(t, stdout, { testCount: 3 });
 });
 
-test.serial('testing a single failing js with --browser file works', async (t) => {
-  let failingTestContent = await fs.readFile('./test/helpers/failing-tests.js');
-
-  await fs.writeFile('./tmp/test/failing-tests.js', failingTestContent.toString());
-
+test('testing a single failing js with --browser file works', async (t) => {
   try {
-    await shell('node cli.js tmp/test/failing-tests.js --browser');
+    let { stdout } = await shell('node cli.js tmp/test/failing-tests.js --browser');
+    console.log(stdout);
   } catch(cmd) {
     console.log(cmd.stdout);
     t.true(cmd.stdout.includes('TAP version 13'));
@@ -151,11 +132,7 @@ test.serial('testing a single failing js with --browser file works', async (t) =
   }
 });
 
-test.serial('testing a single failing js file with --browser --debug works', async (t) => {
-  let failingTestContent = await fs.readFile('./test/helpers/failing-tests.js');
-
-  await fs.writeFile('./tmp/test/failing-tests.js', failingTestContent.toString());
-
+test('testing a single failing js file with --browser --debug works', async (t) => {
   try {
     await shell('node cli.js tmp/test/failing-tests.js --browser --debug');
   } catch(cmd) {
@@ -167,11 +144,7 @@ test.serial('testing a single failing js file with --browser --debug works', asy
   }
 });
 
-test.serial('testing a single passing ts file with --browser works, console output supressed', async (t) => {
-  let passingTestContent = await fs.readFile('./test/helpers/passing-tests.js');
-
-  await fs.writeFile('./tmp/test/passing-tests.ts', passingTestContent.toString());
-
+test('testing a single passing ts file with --browser works, console output supressed', async (t) => {
   const { stdout } = await shell('node cli.js tmp/test/passing-tests.ts --browser');
 
   console.log(stdout);
@@ -181,15 +154,11 @@ test.serial('testing a single passing ts file with --browser works, console outp
   assertTAPResult(t, stdout, { testCount: 3 });
 });
 
-test.serial('testing a single passing ts file with --browser --debug works', async (t) => {
-  let passingTestContent = await fs.readFile('./test/helpers/passing-tests.js');
-
-  await fs.writeFile('./tmp/test/passing-tests.ts', passingTestContent.toString());
-
+test('testing a single passing ts file with --browser --debug works', async (t) => {
   const { stdout } = await shell('node cli.js tmp/test/passing-tests.ts --browser --debug');
 
   console.log(stdout);
-  t.true(new RegExp(/WS Server running on \d+/).test(stdout));
+  t.true(new RegExp(/websocket server running on port \d+/).test(stdout));
   t.true(new RegExp(/http server running on port \d+/).test(stdout));
   t.true(stdout.includes('TAP version 13'));
 
@@ -197,13 +166,11 @@ test.serial('testing a single passing ts file with --browser --debug works', asy
   assertTAPResult(t, stdout, { testCount: 3 });
 });
 
-test.serial('testing a single failing ts with --browser file works', async (t) => {
-  let failingTestContent = await fs.readFile('./test/helpers/failing-tests.js');
-
-  await fs.writeFile('./tmp/test/failing-tests.ts', failingTestContent.toString());
-
+test('testing a single failing ts with --browser file works', async (t) => {
   try {
-    await shell('node cli.js tmp/test/failing-tests.ts --browser');
+    let { stdout } = await shell('node cli.js tmp/test/failing-tests.ts --browser');
+    console.log('STDOUT is');
+    console.log(stdout);
   } catch(cmd) {
     console.log(cmd.stdout);
     t.true(cmd.stdout.includes('TAP version 13'));
@@ -213,13 +180,11 @@ test.serial('testing a single failing ts with --browser file works', async (t) =
   }
 });
 
-test.serial('testing a single failing ts file with --browser --debug works', async (t) => {
-  let failingTestContent = await fs.readFile('./test/helpers/failing-tests.js');
-
-  await fs.writeFile('./tmp/test/failing-tests.ts', failingTestContent.toString());
-
+test('testing a single failing ts file with --browser --debug works', async (t) => {
   try {
-    await shell('node cli.js tmp/test/failing-tests.ts --browser --debug');
+    let { stdout } = await shell('node cli.js tmp/test/failing-tests.ts --browser --debug');
+    console.log('STDOUT is');
+    console.log(stdout);
   } catch(cmd) {
     console.log(cmd.stdout);
     t.true(cmd.stdout.includes('TAP version 13'));
@@ -228,4 +193,3 @@ test.serial('testing a single failing ts file with --browser --debug works', asy
     assertTAPResult(t, cmd.stdout, { testCount: 4, failCount: 3 });
   }
 });
-
