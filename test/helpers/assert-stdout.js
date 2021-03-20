@@ -42,7 +42,7 @@ export function assertFailingTestCase(t, stdout, options={ moduleName: '{{module
   anotherObject: {`));
   }
 
-    t.true(new RegExp(`not ok 2 {{moduleName}} | async test finishes # (\d+ ms)␊
+    t.true(new RegExp(`not ok 2 ${moduleName} | async test finishes # (\d+ ms)␊
         ---␊
           name: 'Assertion #1'␊
           actual: null␊
@@ -61,7 +61,7 @@ export function assertFailingTestCase(t, stdout, options={ moduleName: '{{module
           stack: '    at Object.<anonymous> (\S+:\d+:\d+)'␊
           at: '\S+:\d+:\d+'␊
         ...`).test(stdout));
-    t.true(new RegExp(`not ok 3 {{moduleName}} | runtime error output # (\d+ ms)
+    t.true(new RegExp(`not ok 3 ${moduleName} | runtime error output # (\d+ ms)
       ---
         name: 'Assertion #1'
         actual: null
@@ -84,7 +84,7 @@ export function assertFailingTestCase(t, stdout, options={ moduleName: '{{module
         at: '\S+:\d+:\d+'
       ...
     `).test(stdout));
-    t.true(new RegExp(`not ok 4 {{moduleName}} | deepEqual true works # (\d+ ms)␊
+    t.true(new RegExp(`not ok 4 ${moduleName} | deepEqual true works # (\d+ ms)␊
         ---␊
           name: 'Assertion #1'␊
           actual:␊

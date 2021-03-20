@@ -12,7 +12,7 @@ module('{{moduleName}}', function(hooks) {
   test('async test finishes', async function (assert) {
     assert.expect(4);
 
-    const wait = new Promise((reject, resolve) => {
+    const wait = () => new Promise((reject, resolve) => {
       window.setTimeout(() => {
         console.log('resolving async test');
         console.log({
@@ -26,7 +26,7 @@ module('{{moduleName}}', function(hooks) {
         resolve(true);
       }, 50);
     });
-    const result = wait();
+    const result = await wait();
 
     assert.ok(true);
     assert.equal(true, result);

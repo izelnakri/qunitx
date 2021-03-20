@@ -16,15 +16,15 @@ export async function writeTestFolder(options={ addFailingTests: false, mixedExt
     writeTestFile(folderName, 'first-module-pass', 'js', passingsTestTemplate),
     writeTestFile(folderName, 'second-module-pass', extension, passingsTestTemplate),
     addFailingTests ? writeTestFile(folderName, 'first-module-fail', 'js', failingTestTemplate) : null,
-    addFailingTests ? writeTestFile(folderName, 'second-module-fail', mixedExtensions, failingTestTemplate) : null,
-    addFailingTests ? writeTestFile(folderName, 'third-module-fail', mixedExtensions, failingTestTemplate) : null,
+    addFailingTests ? writeTestFile(folderName, 'second-module-fail', extension, failingTestTemplate) : null,
+    addFailingTests ? writeTestFile(folderName, 'third-module-fail', extension, failingTestTemplate) : null,
   ]);
 
   return folderName;
 }
 
-export async function writeTestFile(folderName, testFileName, extension, templateBuffer) {
-  await fs.writeFile(
+export function writeTestFile(folderName, testFileName, extension, templateBuffer) {
+  return fs.writeFile(
     `${process.cwd()}/tmp/${folderName}/${testFileName}.${extension}`,
     templateBuffer.toString().replace('{{moduleName}}', `${folderName} | ${testFileName}`)
   );
