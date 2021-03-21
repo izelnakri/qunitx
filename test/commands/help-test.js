@@ -1,4 +1,4 @@
-import test from 'ava';
+import assert from 'assert';
 import fs from 'fs';
 import { promisify } from 'util';
 import { exec } from 'child_process';
@@ -27,43 +27,45 @@ Example: $ qunitx test/foo.ts#204 app/e2e --browser --debug --watch
 To create a new qunitx file do: $ qunitx new myNewTest
 `;
 
-test('$ qunitx -> prints help text', async (t) => {
-  const { stdout } = await shell(`node ${process.cwd()}/cli.js`);
+describe('Commands | Help tests', function() {
+  it('$ qunitx -> prints help text', async function() {
+    const { stdout } = await shell(`node ${process.cwd()}/cli.js`);
 
-  t.true(stdout.includes(printedHelpOutput));
+    assert.ok(stdout.includes(printedHelpOutput));
+  });
+
+  it('$ qunitx print -> prints help text', async function() {
+    const { stdout } = await shell(`node ${process.cwd()}/cli.js print`);
+
+    assert.ok(stdout.includes(printedHelpOutput));
+  });
+
+  it('$ qunitx p -> prints help text', async function() {
+    const { stdout } = await shell(`node ${process.cwd()}/cli.js p`);
+
+    assert.ok(stdout.includes(printedHelpOutput));
+  });
+
+  it('$ qunitx help -> prints help text', async function() {
+    const { stdout } = await shell(`node ${process.cwd()}/cli.js help`);
+
+    assert.ok(stdout.includes(printedHelpOutput));
+  });
+
+  it('$ qunitx h -> prints help text', async function() {
+    const { stdout } = await shell(`node ${process.cwd()}/cli.js h`);
+
+    assert.ok(stdout.includes(printedHelpOutput));
+  });
 });
 
-test('$ qunitx print -> prints help text', async (t) => {
-  const { stdout } = await shell(`node ${process.cwd()}/cli.js print`);
-
-  t.true(stdout.includes(printedHelpOutput));
-});
-
-test('$ qunitx p -> prints help text', async (t) => {
-  const { stdout } = await shell(`node ${process.cwd()}/cli.js p`);
-
-  t.true(stdout.includes(printedHelpOutput));
-});
-
-test('$ qunitx help -> prints help text', async (t) => {
-  const { stdout } = await shell(`node ${process.cwd()}/cli.js help`);
-
-  t.true(stdout.includes(printedHelpOutput));
-});
-
-test('$ qunitx h -> prints help text', async (t) => {
-  const { stdout } = await shell(`node ${process.cwd()}/cli.js h`);
-
-  t.true(stdout.includes(printedHelpOutput));
-});
-
-// test('$ qunitx unknown -> raises error', async (t) => {
+// it('$ qunitx unknown -> raises error', async function() {
 //   t.plan(2);
 
 //   try {
 //     await shell(`node ${process.cwd()}/cli.js dasd`);
 //   } catch ({ stdout }) {
-//     t.true(stdout.includes('qunitx unknown command. Available options are:'));
-//     t.true(stdout.includes(printedHelpOutput));
+//     assert.ok(stdout.includes('qunitx unknown command. Available options are:'));
+//     assert.ok(stdout.includes(printedHelpOutput));
 //   }
 // });
