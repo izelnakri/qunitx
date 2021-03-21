@@ -2,6 +2,7 @@ import fs from 'fs/promises';
 
 process.env['FORCE_COLOR'] = 0;
 
+await fs.rmdir('./tmp', { recursive: true });
 await fs.mkdir('./tmp/test', { recursive: true });
 let [failingTestContent, passingTestContent] = await Promise.all([
   fs.readFile('./test/helpers/failing-tests.js'),
@@ -14,5 +15,3 @@ await Promise.all([
   fs.writeFile('./tmp/test/passing-tests.js', passingTestContent.toString()),
   fs.writeFile('./tmp/test/passing-tests.ts', passingTestContent.toString())
 ]);
-
-

@@ -1,13 +1,13 @@
-export function assertStdout(t, folderNames, options={ checkFailure: false, browser: false, debug: false }) {
-
+export function assertStdout(assert, folderNames, options={ checkFailure: false, browser: false, debug: false }) {
+  // folderNames.forEach((folder
 }
 
-export function assertPassingTestCase(t, stdout, options={ moduleName: '{{moduleName}}', debug: false }) {
+export function assertPassingTestCase(assert, stdout, options={ moduleName: '{{moduleName}}', debug: false }) {
   let testNo = options.testNo || 1;
   let { moduleName, debug } = options;
 
   if (debug) {
-    return t.true(new RegExp(`ok ${testNo} ${moduleName} | assert true works # (\d+ ms)
+    return assert.ok(new RegExp(`ok ${testNo} ${moduleName} | asserassert.ok works # (\d+ ms)
     resolving async test
     {
       moduleName: 'called resolved async test with object',
@@ -19,32 +19,32 @@ export function assertPassingTestCase(t, stdout, options={ moduleName: '{{module
     ok ${testNo++} ${moduleName} | deepEqual true works # (\d+ ms)`).test(stdout));
   }
 
-  return t.true(new RegExp(`ok ${testNo} ${moduleName} | assert true works # (\d+ ms)
+  return assert.ok(new RegExp(`ok ${testNo} ${moduleName} | asserassert.ok works # (\d+ ms)
     ok ${testNo++} ${moduleName} | async test finishes # (\d+ ms)
     ok ${testNo++} ${moduleName} | deepEqual true works # (\d+ ms)`).test(stdout));
 }
 
-export function assertFailingTestCase(t, stdout, options={ moduleName: '{{moduleName}}', debug: false }) {
+export function assertFailingTestCase(assert, stdout, options={ moduleName: '{{moduleName}}', debug: false }) {
   let testNo = options.testNo || 1;
   let { moduleName, debug } = options;
 
   if (debug) {
-    t.true(stdout.includes('calling assert true test case'));
-    t.true(stdout.includes('resolving async test'));
-    t.true(stdout.includes(`{
+    assert.ok(stdout.includes('calling assert true test case'));
+    assert.ok(stdout.includes('resolving async test'));
+    assert.ok(stdout.includes(`{
   moduleName: 'called resolved async test with object',
   placeholder: 1000,
   anotherObject: {`));
   } else {
-    t.true(!stdout.includes('calling assert true test case'));
-    t.true(!stdout.includes('resolving async test'));
-    t.true(!stdout.includes(`{
+    assert.ok(!stdout.includes('calling assert true test case'));
+    assert.ok(!stdout.includes('resolving async test'));
+    assert.ok(!stdout.includes(`{
   moduleName: 'called resolved async test with object',
   placeholder: 1000,
   anotherObject: {`));
   }
 
-    t.true(new RegExp(`not ok 2 ${moduleName} | async test finishes # (\d+ ms)␊
+    assert.ok(new RegExp(`not ok 2 ${moduleName} | async test finishes # (\d+ ms)␊
         ---␊
           name: 'Assertion #1'␊
           actual: null␊
@@ -63,7 +63,7 @@ export function assertFailingTestCase(t, stdout, options={ moduleName: '{{module
           stack: '    at Object.<anonymous> (\S+:\d+:\d+)'␊
           at: '\S+:\d+:\d+'␊
         ...`).test(stdout));
-    t.true(new RegExp(`not ok 3 ${moduleName} | runtime error output # (\d+ ms)
+    assert.ok(new RegExp(`not ok 3 ${moduleName} | runtime error output # (\d+ ms)
       ---
         name: 'Assertion #1'
         actual: null
@@ -86,7 +86,7 @@ export function assertFailingTestCase(t, stdout, options={ moduleName: '{{module
         at: '\S+:\d+:\d+'
       ...
     `).test(stdout));
-    t.true(new RegExp(`not ok 4 ${moduleName} | deepEqual true works # (\d+ ms)␊
+    assert.ok(new RegExp(`not ok 4 ${moduleName} | deepEqual true works # (\d+ ms)␊
         ---␊
           name: 'Assertion #1'␊
           actual:␊
@@ -101,18 +101,18 @@ export function assertFailingTestCase(t, stdout, options={ moduleName: '{{module
         ...␊`).test(stdout));
 }
 
-export function assertTAPResult(t, stdout, options={ testCount: 0, failCount: 0 }) {
+export function assertTAPResult(assert, stdout, options={ testCount: 0, failCount: 0 }) {
   if (options.failCount) {
     let passCount = options.testCount - options.failCount;
 
-    return t.true(new RegExp(`1..(${options.testCount}|${options.testCount + 1})
+    return assert.ok(new RegExp(`1..(${options.testCount}|${options.testCount + 1})
 # tests (${options.testCount}|${options.testCount + 1})
 # pass ${options.testCount - options.failCount}
 # skip 0
 # fail (${options.failCount}|${options.failCount + 1})`).test(stdout));
   }
 
-  t.true(new RegExp(`1..${options.testCount}
+  assert.ok(new RegExp(`1..${options.testCount}
 # tests ${options.testCount}
 # pass ${options.testCount}
 # skip 0
