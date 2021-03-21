@@ -10,22 +10,21 @@ const printedHelpOutput = `[qunitx v${VERSION}] Usage: qunitx [targets] --$flags
 Input options:
 - File: $ qunitx test/foo.js
 - Folder: $ qunitx test/login
-- Glob: $ qunitx test/**/*.ts
-- Regex: $ qunitx \w+-test.ts
-- Combination: $ qunitx test/foo.js test/bar.js test/logout app/e2e/submit-\w+.ts
+- Combination: $ qunitx test/foo.js test/bar.js test/logout
 
 Optional flags:
 --browser : run qunit tests in chromium with puppeteer instead of node.js(which is the default)
 --debug : print console output when tests run in browser
 --watch : run the target file or folders and watch them for continuous run
+--timeout : change default timeout per test case
+--outputPath : folder to distribute built qunitx html and js that a webservers can run[default: tmp]
 --failFast : run the target file or folders with immediate abort if a single test fails
---reporter : define a reporter
---coverage : define a coverage dist folder target(by default ./dist)
 
-Example: $ qunitx test/foo.ts#204 app/e2e --browser --debug --watch
+Example: $ qunitx test/foo.ts app/e2e --browser --debug --watch
 
-To create a new qunitx file do: $ qunitx new myNewTest
-`;
+Commands:
+$ qunitx init               # Bootstraps qunitx base html and add qunitx config to package.json if needed
+$ qunitx new $testFileName  # Creates a qunitx test file`;
 
 describe('Commands | Help tests', function() {
   it('$ qunitx -> prints help text', async function() {
