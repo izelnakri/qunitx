@@ -25,8 +25,8 @@ process.title = 'qunitx';
   Object.assign(config, {
     httpPort: config.httpPort || 1234,
     timeout: config.timeout || 10000,
-    outputPath: config.outputPath || `${config.projectRoot}/tmp`,
-    htmlPaths: config.htmls || [`${config.projectRoot}/tests.html`]
+    output: config.output|| `${config.projectRoot}/tmp`,
+    htmlPaths: config.htmls || [`${config.projectRoot}/test/tests.html`] // TODO: add this to package.json
   });
 
   return await run(config);

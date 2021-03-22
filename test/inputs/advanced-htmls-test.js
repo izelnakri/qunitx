@@ -16,4 +16,4 @@ describe('Advanced HTML Input Tests', function() {
 // html with content
 // html with content  --browser --debug
 // multiple htmls
-// multiple htmls --browser --debug --outputPath
+// multiple htmls --browser --debug --output
