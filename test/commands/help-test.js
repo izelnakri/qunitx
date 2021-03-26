@@ -17,7 +17,7 @@ Optional flags:
 --debug : print console output when tests run in browser
 --watch : run the target file or folders and watch them for continuous run
 --timeout : change default timeout per test case
---output: folder to distribute built qunitx html and js that a webservers can run[default: tmp]
+--output : folder to distribute built qunitx html and js that a webservers can run[default: tmp]
 --failFast : run the target file or folders with immediate abort if a single test fails
 
 Example: $ qunitx test/foo.ts app/e2e --browser --debug --watch
