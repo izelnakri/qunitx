@@ -14,10 +14,10 @@ process.title = 'qunitx';
     return await displayHelpOutput();
   } else if (['help', 'h', 'p', 'print'].includes(process.argv[2])) {
     return await displayHelpOutput();
-  } else if (['init', 'new'].includes(process.argv[2])) {
-    return await initializeProject();
-  } else if (['g', 'generate'].includes(process.argv[2])) {
+  } else if (['new', 'n', 'g', 'generate'].includes(process.argv[2])) {
     return await generateTestFiles();
+  } else if (['init'].includes(process.argv[2])) {
+    return await initializeProject();
   }
 
   let config = await parseCliFlags();
