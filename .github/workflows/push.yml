@@ -39,4 +39,4 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
       - name: Execute tests
-        run: docker run -t --entrypoint="npm" ${REGISTRY}/${REPO_OWNER}/${DOCKER_TAG} test
+        run: docker run -t --entrypoint="npm" ${REGISTRY}/${REPO_OWNER}/${DOCKER_TAG} run test:all

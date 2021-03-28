@@ -13,7 +13,7 @@ describe('Advanced HTML Input Tests', function() {
   //   console.log(stdout);
 
   //   assert.match(stdout, /Hello from index-without-content.html/);
-  // });
+  });
 });
 
 // html without content
