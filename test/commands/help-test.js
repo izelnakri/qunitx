@@ -15,7 +15,7 @@ Input options:
 Optional flags:
 --browser : run qunit tests in chromium with puppeteer instead of node.js(which is the default)
 --debug : print console output when tests run in browser
---watch : run the target file or folders and watch them for continuous run
+--watch : run the target file or folders, watch them for continuous run and expose http server under localhost
 --timeout : change default timeout per test case
 --output : folder to distribute built qunitx html and js that a webservers can run[default: tmp]
 --failFast : run the target file or folders with immediate abort if a single test fails
