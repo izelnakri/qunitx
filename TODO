@@ -1,3 +1,9 @@
+
+
+- autorefresh: true
+- QX keybind to run all tests
+- regex needs to be there
+
 $ qunitx some-test --browser | default html doesnt match with $ qunitx init and also no html mode should be there
 
 try this: $ npx ava --tap | npx tap-difflet
