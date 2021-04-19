@@ -33,8 +33,9 @@
     "js-yaml": "^3.14.1",
     "klaw": "^3.0.0",
     "kleur": "^4.1.4",
+    "lodash.clonedeep": "^4.5.0",
     "puppeteer": "^8.0.0",
-    "qunit": "^2.14.1",
+    "qunit": "^2.15.0",
     "through2": "^4.0.2",
     "ws": "^7.4.4"
   },
