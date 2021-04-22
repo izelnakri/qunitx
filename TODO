@@ -1,5 +1,6 @@
-- autorefresh: true
-- QX keybind to run all tests
+- advanced http parsing
+- autorefresh: true (implement websocket connection for watching)
+- qa, qx, ql keybinds
 - regex needs to be there
 
 $ qunitx some-test --browser | default html doesnt match with $ qunitx init and also no html mode should be there
