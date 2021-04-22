@@ -1,4 +1,4 @@
-import QUnit from 'qunit';
+import QUnit from './vendor/qunit.js';
 
 QUnit.config.autostart = false;
 

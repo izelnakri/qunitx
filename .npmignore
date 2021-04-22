@@ -5,3 +5,9 @@ dist
 docs
 tmp
 .github
+scripts
+.gitignore
+CHANGELOG.md
+Dockerfile
+README.md
+TODO
