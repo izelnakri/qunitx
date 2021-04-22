@@ -30,12 +30,12 @@
   },
   "dependencies": {
     "chokidar": "^3.5.1",
-    "esbuild": "^0.10.1",
+    "esbuild": "^0.11.12",
     "indent-string": "^4.0.0",
     "js-yaml": "^3.14.1",
     "klaw": "^3.0.0",
     "kleur": "^4.1.4",
-    "puppeteer": "^8.0.0",
+    "puppeteer": "^9.0.0",
     "qunit": "^2.15.0",
     "through2": "^4.0.2",
     "ws": "^7.4.4"
