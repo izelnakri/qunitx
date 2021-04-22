@@ -41,10 +41,10 @@ async function createPackageJSONIfNotExists() {
     await fs.stat('./vendor/package.json');
 
     return true;
-  } catch() {
+  } catch (error) {
     await fs.writeFile('./vendor/package.json', JSON.stringify({
       name: 'qunitx-vendor',
       version: '0.0.1'
-    });
+    }));
   }
 }

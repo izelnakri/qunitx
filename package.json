@@ -15,7 +15,7 @@
   },
   "scripts": {
     "bin": "node cli.js",
-    "build": "echo 'add here build'",
+    "build": "npm run build:qunit",
     "build:qunit": "node scripts/hack-qunit.js",
     "changelog:unreleased": "node_modules/.bin/auto-changelog --stdout --commit-limit false --package --unreleased-only --hide-credit --sort-commits date-desc",
     "changelog:preview": "node_modules/.bin/auto-changelog --stdout --commit-limit false --package -u --sort-commits date-desc",
@@ -36,7 +36,6 @@
     "klaw": "^3.0.0",
     "kleur": "^4.1.4",
     "puppeteer": "^9.0.0",
-    "qunit": "^2.15.0",
     "through2": "^4.0.2",
     "ws": "^7.4.4"
   },
@@ -45,7 +44,8 @@
     "mocha": "^8.3.2",
     "prettier": "^2.2.1",
     "release-it": "^14.5.0",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "qunit": "^2.15.0"
   },
   "volta": {
     "node": "15.11.0"
