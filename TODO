@@ -1,4 +1,6 @@
-- advanced http parsing
+Why calling setup/browser is from run-tests-in-browser.js function call?
+watch parsed files from html(?)
+
 - autorefresh: true (implement websocket connection for watching)
 - qa, qx, ql keybinds
 - regex needs to be there

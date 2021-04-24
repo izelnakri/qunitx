@@ -29,8 +29,10 @@
     "test:spec": "node_modules/.bin/mocha --require test/setup.js --bail --check-leaks test/inputs test/commands -t=20000"
   },
   "dependencies": {
+    "cheerio": "^1.0.0-rc.6",
     "chokidar": "^3.5.1",
     "esbuild": "^0.11.12",
+    "express": "^4.17.1",
     "indent-string": "^4.0.0",
     "js-yaml": "^3.14.1",
     "klaw": "^3.0.0",
@@ -43,9 +45,9 @@
     "auto-changelog": "^2.2.1",
     "mocha": "^8.3.2",
     "prettier": "^2.2.1",
+    "qunit": "^2.15.0",
     "release-it": "^14.5.0",
-    "uuid": "^8.3.2",
-    "qunit": "^2.15.0"
+    "uuid": "^8.3.2"
   },
   "volta": {
     "node": "15.11.0"

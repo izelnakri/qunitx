@@ -1,7 +1,8 @@
 import fs from 'fs/promises';
 
-let [qunitJS, _] = await Promise.all([
+let [qunitJS, qunitCSS, _] = await Promise.all([
   fs.readFile('./node_modules/qunit/qunit/qunit.js'),
+  fs.readFile('./node_modules/qunit/qunit/qunit.css'),
   fs.mkdir('./vendor', { recursive: true })
 ]);
 
@@ -33,6 +34,7 @@ let newQUnit = qunitJS.toString().replace(
 
 await Promise.all([
   fs.writeFile('./vendor/qunit.js', newQUnit),
+  fs.writeFile('./vendor/qunit.css', qunitCSS),
   createPackageJSONIfNotExists()
 ]);
 
