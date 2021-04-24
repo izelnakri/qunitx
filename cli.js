@@ -1,4 +1,5 @@
 #! /usr/bin/env node
+import path from 'path';
 import fs from 'fs/promises';
 import defaultProjectConfigValues from './lib/boilerplates/default-project-config-values.js';
 import displayHelpOutput from './lib/commands/help.js';
@@ -26,13 +27,13 @@ process.title = 'qunitx';
     parseCliFlags(),
     readConfigFromPackageJSON()
   ]);
-  let targetConfig = Object.assign(
+  let targetConfig = normalizeHTMLPaths(Object.assign(
     { htmlPaths: [] },
     defaultProjectConfigValues,
     packageJSONConfig.qunitx,
     config,
     { projectRoot }
-  );
+  ));
 
   return await run(targetConfig);
 })();
@@ -43,4 +44,11 @@ async function readConfigFromPackageJSON() {
   const packageJSONConfig = JSON.parse(packageJSON.toString());
 
   return { projectRoot, packageJSONConfig };
+}
+
+function normalizeHTMLPaths(config) {
+  config.htmlPaths = Array.from(new Set(config.htmlPaths
+    .map((htmlPath) => `${config.projectRoot}/${htmlPath}`)));
+
+  return config;
 }
