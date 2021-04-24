@@ -1,7 +1,7 @@
 {
   "name": "qunitx",
   "type": "module",
-  "version": "0.0.36",
+  "version": "0.0.37",
   "description": "Experimental improvements, suggestions for qunit CLI",
   "author": "Izel Nakri",
   "license": "MIT",
