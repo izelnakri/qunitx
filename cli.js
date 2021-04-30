@@ -28,7 +28,7 @@ process.title = 'qunitx';
     readConfigFromPackageJSON()
   ]);
   let targetConfig = normalizeHTMLPaths(Object.assign(
-    { htmlPaths: [] },
+    { htmlPaths: [], lastFailedTestFiles: null, lastRanTestFiles: null },
     defaultProjectConfigValues,
     packageJSONConfig.qunitx,
     config,
