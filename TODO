@@ -1,9 +1,8 @@
 allow passing absolutePaths(maybe)
-Why calling setup/browser is from run-tests-in-browser.js function call?
+- implement failFast
+- regex needs to be there
 watch parsed files from html(?)
 
-- qa, qx, ql keybinds
-- regex needs to be there
 
 $ qunitx some-test --browser | default html doesnt match with $ qunitx init and also no html mode should be there
 
