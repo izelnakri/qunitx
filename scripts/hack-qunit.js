@@ -30,7 +30,6 @@ let newQUnit = qunitJS.toString().replace(
 
 		config.modules.push( config.currentModule );
   },
-  finish: done,
   start: function start(count) {`);
 
 await Promise.all([

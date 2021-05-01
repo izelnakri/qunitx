@@ -1,6 +1,8 @@
 allow passing absolutePaths(maybe)
-- implement failFast
-- regex needs to be there
+
+- globs: test dynamically added file is watched on global input configuration | also check added files on watch gets put to config.fileOrFolderInputs
+currently parse-fs-inputs might be less performant on big folders(?) dependending on how watch is implemented
+- coverage
 watch parsed files from html(?)
 
 
