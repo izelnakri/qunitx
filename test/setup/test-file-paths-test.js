@@ -1,11 +1,11 @@
 import assert from 'assert';
-import { buildWatchPaths } from '../../lib/setup/config.js';
+import setupTestFilePaths from '../../lib/setup/test-file-paths.js';
 
-describe('Setup | config tests', function() {
-  it('buildWatchPaths() works correctly on different inputs', function() {
+describe('Setup | test-file-paths tests', function() {
+  it('setupTestFilePaths() works correctly on different inputs', function() {
     let projectRoot = '/home/izelnakri/Github/qunitx';
 
-    assert.deepEqual(buildWatchPaths(projectRoot, [
+    assert.deepEqual(setupTestFilePaths(projectRoot, [
       `${projectRoot}/tmp`,
       `${projectRoot}/tmp/vendor`,
       `${projectRoot}/another/first/*`,
