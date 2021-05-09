@@ -38,6 +38,7 @@
     "klaw": "^3.0.0",
     "kleur": "^4.1.4",
     "nanoexpress": "2.4.13",
+    "picomatch": "^2.2.3",
     "puppeteer": "^9.0.0",
     "through2": "^4.0.2"
   },
