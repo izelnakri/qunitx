@@ -64,3 +64,14 @@ $ qunitx some-test.js --browser
 
 $ qunitx some-test.js --browser --debug
 ```
+
+### Code coverage
+
+QUnitX runner on node.js mode(without --browser) supports code coverage with c8, the best coverage tool
+in existence at the moment:
+
+```
+c8 qunitx test/attachments test/user
+```
+
+You can browse [c8 documentation](https://github.com/bcoe/c8) for all configuration options.
