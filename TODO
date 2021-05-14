@@ -1,3 +1,6 @@
+implement and test require and timeout flags
+implement concurrency
+
 fix watcher for file removals make the logic smarter
 
 allow passing absolutePaths(maybe)
