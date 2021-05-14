@@ -75,3 +75,13 @@ c8 qunitx test/attachments test/user
 ```
 
 You can browse [c8 documentation](https://github.com/bcoe/c8) for all configuration options.
+
+Implementing code coverage for the browser mode is currently not possible because we use esbuild --bundle feature to
+create a JS bundles for testing in the browser, this could be instrumented with `puppeteer-to-istanbul` however
+instrumentation includes transpiled npm imports of `qunitx` and other potential npm imports developer
+includes in the code, this cannot be filtered since potential filtering can only occur after the `esbuild` bundling.
+When chrome browser and puppeteer fully supports ES asset maps we can remove esbuild from the browser mode, run
+everything in deno and make instrumentation for code coverage possible with the default v8 instrumentation.
+
+Esbuild plugin interface is an ongoing development, we might be able to figure out a way to generate this instrumentation
+with esbuild in the future, which could allow code coverage for --browser mode.
