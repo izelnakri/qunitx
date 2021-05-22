@@ -1,6 +1,6 @@
 import { module, test } from '../../index.js';
 
-module('{{moduleName}}', function(hooks) {
+module('{{moduleName}} Passing Tests', function(hooks) {
   test('assert true works', function (assert) {
     assert.expect(3);
     assert.ok(true);
