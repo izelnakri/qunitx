@@ -36,7 +36,7 @@
     "js-yaml": "^4.1.0",
     "klaw": "^3.0.0",
     "kleur": "^4.1.4",
-    "nanoexpress": "5.0.5",
+    "nanoexpress": "4.0.0",
     "picomatch": "^2.2.3",
     "puppeteer": "10.0.0",
     "through2": "^4.0.2"
