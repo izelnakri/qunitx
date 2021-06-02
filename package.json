@@ -43,6 +43,9 @@
   },
   "devDependencies": {
     "auto-changelog": "^2.3.0",
+    "axios": "^0.21.1",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
     "mocha": "^8.4.0",
     "prettier": "^2.2.1",
     "qunit": "^2.15.0",
