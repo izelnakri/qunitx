@@ -10,6 +10,7 @@ ADD package-lock.json package.json /code/
 RUN npm install
 
 ADD lib /code/lib
+ADD vendor /code/vendor
 ADD test /code/test
 ADD . /code/
 
