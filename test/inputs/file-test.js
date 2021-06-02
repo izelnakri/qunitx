@@ -112,8 +112,7 @@ describe('File Input Tests', () => {
     const { stdout } = await shell('node cli.js tmp/test/passing-tests.js --browser --debug');
 
     console.log(stdout);
-    assert.ok(new RegExp(/websocket server running on port \d+/).test(stdout));
-    assert.ok(new RegExp(/http server running on port \d+/).test(stdout));
+    assert.ok(new RegExp(/# HTTPServer \[Server\]: started successfully at \[localhost:\d+\]/).test(stdout));
     assert.ok(stdout.includes('TAP version 13'));
     assertPassingTestCase(assert, stdout, { debug: true, testNo: 1, moduleName: '{{moduleName}}' });
     assertTAPResult(assert, stdout, { testCount: 3 });
@@ -158,8 +157,7 @@ describe('File Input Tests', () => {
     const { stdout } = await shell('node cli.js tmp/test/passing-tests.ts --browser --debug');
 
     console.log(stdout);
-    assert.ok(new RegExp(/websocket server running on port \d+/).test(stdout));
-    assert.ok(new RegExp(/http server running on port \d+/).test(stdout));
+    assert.ok(new RegExp(/# HTTPServer \[Server\]: started successfully at \[localhost:\d+\]/).test(stdout));
     assert.ok(stdout.includes('TAP version 13'));
 
     assertPassingTestCase(assert, stdout, { debug: true, testNo: 1, moduleName: '{{moduleName}}' });

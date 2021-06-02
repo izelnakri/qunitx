@@ -25,8 +25,7 @@
     "release:beta": "node_modules/.bin/release-it --preRelease=beta --no-git.requireUpstream",
     "release": "node_modules/.bin/release-it",
     "test": "node_modules/.bin/mocha --require test/setup.js --bail --check-leaks -p -t=20000",
-    "test:all": "node_modules/.bin/mocha --require test/setup.js --bail --check-leaks test/inputs test/commands -p -t=20000",
-    "test:spec": "node_modules/.bin/mocha --require test/setup.js --bail --check-leaks test/inputs test/commands -t=20000"
+    "test:all": "node_modules/.bin/mocha --require test/setup.js --bail --check-leaks test/inputs test/commands test/flags/after-test.js test/flags/before-test.js -p -t=20000"
   },
   "dependencies": {
     "@nanoexpress/middleware-static-serve": "^1.0.3",
