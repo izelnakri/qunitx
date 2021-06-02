@@ -1,7 +1,7 @@
 import assert from 'assert';
 import setupTestFilePaths from '../../lib/setup/test-file-paths.js';
 
-describe('Setup | test-file-paths tests', function() {
+describe('Setup | glob(*) input tests | test-file-paths tests', function() {
   it('setupTestFilePaths() works correctly on different inputs', function() {
     let projectRoot = '/home/izelnakri/Github/qunitx';
 
