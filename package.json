@@ -31,14 +31,13 @@
     "@nanoexpress/middleware-static-serve": "^1.0.3",
     "cheerio": "^1.0.0-rc.9",
     "chokidar": "^3.5.1",
-    "esbuild": "^0.12.5",
+    "esbuild": "^0.12.6",
     "js-yaml": "^4.1.0",
-    "klaw": "^3.0.0",
     "kleur": "^4.1.4",
     "nanoexpress": "4.0.0",
     "picomatch": "^2.2.3",
     "puppeteer": "10.0.0",
-    "through2": "^4.0.2"
+    "recursive-lookup": "1.0.0"
   },
   "devDependencies": {
     "auto-changelog": "^2.3.0",
@@ -48,7 +47,7 @@
     "mocha": "^8.4.0",
     "prettier": "^2.2.1",
     "qunit": "^2.15.0",
-    "qunitx": "^0.1.11",
+    "qunitx": "^0.2.0",
     "release-it": "^14.7.0",
     "uuid": "^8.3.2"
   },
