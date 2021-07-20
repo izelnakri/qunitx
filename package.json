@@ -34,7 +34,7 @@
     "esbuild": "^0.12.15",
     "js-yaml": "^4.1.0",
     "kleur": "^4.1.4",
-    "nanoexpress": "4.0.0",
+    "nanoexpress": "5.0.7",
     "picomatch": "^2.2.3",
     "puppeteer": "10.1.0",
     "recursive-lookup": "1.0.0"
