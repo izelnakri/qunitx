@@ -14,7 +14,7 @@
     "url": "https://github.com/izelnakri/qunitx.git"
   },
   "scripts": {
-    "bin": "node cli.js",
+    "bin": "chmod +x cli.js && ./cli.js",
     "build": "npm run build:qunit",
     "build:qunit": "node scripts/hack-qunit.js",
     "changelog:unreleased": "node_modules/.bin/auto-changelog --stdout --commit-limit false --package --unreleased-only --hide-credit --sort-commits date-desc",
@@ -49,6 +49,7 @@
     "qunit": "^2.16.0",
     "qunitx": "^0.2.2",
     "release-it": "^14.10.0",
+    "ts-node": "^10.1.0",
     "uuid": "^8.3.2"
   },
   "volta": {
