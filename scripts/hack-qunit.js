@@ -17,8 +17,10 @@ let newQUnit = qunitJS.toString().replace(
 		config.modules.length = 0;
 		config.autostart = false;
 
+    Object.assign(config.stats, { total: 0, passed: 0, failed: 0, skipped: 0, todo: 0 });
+
 		[
-			"stats", "started", "updateRate", "filter", "depth", "current",
+			"started", "updateRate", "filter", "depth", "current",
 			"pageLoaded", "timeoutHandler", "timeout", "pollution"
 		].forEach( ( key ) => delete config[ key ] );
 
