@@ -1,11 +1,16 @@
-FROM node:16.13
+FROM node:16.13.0-slim
 
-RUN apt-get update && \
-  apt-get install -y lsof vim libgtk-3-0 libatk1.0-0 libx11-xcb1 libnss3 libxss1 libasound2 libgbm-dev libxshmfence-dev
+RUN apt-get update \
+    && apt-get install -y wget gnupg \
+    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
+    && apt-get update \
+    && apt-get install -y git libxshmfence-dev google-chrome-stable --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /code/
 
-ADD package-lock.json package.json /code/
+ADD package.json package-lock.json /code/
 
 RUN npm install
 
