@@ -5,6 +5,10 @@
   "description": "Experimental improvements, suggestions for qunit CLI",
   "author": "Izel Nakri",
   "license": "MIT",
+  "keywords": [
+    "qunit",
+    "qunit-plugin"
+  ],
   "main": "index.js",
   "bin": {
     "qunitx": "cli.js"
