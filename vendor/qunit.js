@@ -1,5 +1,5 @@
 /*!
- * QUnit 2.17.2
+ * QUnit 2.18.0
  * https://qunitjs.com/
  *
  * Copyright OpenJS Foundation and other contributors
@@ -349,24 +349,56 @@
     return array.indexOf(elem) !== -1;
   }
   /**
-   * Makes a clone of an object using only Array or Object as base,
-   * and copies over the own enumerable properties.
+   * Recursively clone an object into a plain array or object, taking only the
+   * own enumerable properties.
    *
-   * @param {Object} obj
-   * @return {Object} New object with only the own properties (recursively).
+   * @param {any} obj
+   * @param {bool} [allowArray=true]
+   * @return {Object|Array}
    */
 
   function objectValues(obj) {
-    var vals = is("array", obj) ? [] : {};
+    var allowArray = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+    var vals = allowArray && is("array", obj) ? [] : {};
 
     for (var key in obj) {
       if (hasOwn$1.call(obj, key)) {
         var val = obj[key];
-        vals[key] = val === Object(val) ? objectValues(val) : val;
+        vals[key] = val === Object(val) ? objectValues(val, allowArray) : val;
       }
     }
 
     return vals;
+  }
+  /**
+   * Recursively clone an object into a plain object, taking only the
+   * subset of own enumerable properties that exist a given model.
+   *
+   * @param {any} obj
+   * @param {any} model
+   * @return {Object}
+   */
+
+  function objectValuesSubset(obj, model) {
+    // Return primitive values unchanged to avoid false positives or confusing
+    // results from assert.propContains().
+    // E.g. an actual null or false wrongly equaling an empty object,
+    // or an actual string being reported as object not matching a partial object.
+    if (obj !== Object(obj)) {
+      return obj;
+    } // Unlike objectValues(), subset arrays to a plain objects as well.
+    // This enables subsetting [20, 30] with {1: 30}.
+
+
+    var subset = {};
+
+    for (var key in model) {
+      if (hasOwn$1.call(model, key) && hasOwn$1.call(obj, key)) {
+        subset[key] = objectValuesSubset(obj[key], model[key]);
+      }
+    }
+
+    return subset;
   }
   function extend(a, b, undefOnly) {
     for (var prop in b) {
@@ -808,6 +840,38 @@
     // Set of all modules.
     modules: [],
     // The first unnamed module
+    //
+    // By being defined as the intial value for currentModule, it is the
+    // receptacle and implied parent for any global tests. It is as if we
+    // called `QUnit.module( "" );` before any other tests were defined.
+    //
+    // If we reach begin() and no tests were put in it, we dequeue it as if it
+    // never existed, and in that case never expose it to the events and
+    // callbacks API.
+    //
+    // When global tests are defined, then this unnamed module will execute
+    // as any other module, including moduleStart/moduleDone events etc.
+    //
+    // Since this module isn't explicitly created by the user, they have no
+    // access to add hooks for it. The hooks object is defined to comply
+    // with internal expectations of test.js, but they will be empty.
+    // To apply hooks, place tests explicitly in a QUnit.module(), and use
+    // its hooks accordingly.
+    //
+    // For global hooks that apply to all tests and all modules, use QUnit.hooks.
+    //
+    // NOTE: This is *not* a "global module". It is not an ancestor of all modules
+    // and tests. It is merely the parent for any tests defined globally,
+    // before the first QUnit.module(). As such, the events for this unnamed
+    // module will fire as normal, right after its last test, and *not* at
+    // the end of the test run.
+    //
+    // NOTE: This also should probably also not become a global module, unless
+    // we keep it out of the public API. For example, it would likely not
+    // improve the user interface and plugin behaviour if all modules became
+    // wrapped between the start and end events of this module, and thus
+    // needlessly add indentation, indirection, or other visible noise.
+    // Unit tests for the callbacks API would detect that as a regression.
     currentModule: {
       name: "",
       tests: [],
@@ -821,6 +885,9 @@
         after: []
       }
     },
+    // Exposed to make resets easier
+    // Ref https://github.com/qunitjs/qunit/pull/1598
+    globalHooks: {},
     callbacks: {},
     // The storage module to use for reordering tests
     storage: localSessionStorage
@@ -1119,8 +1186,8 @@
 
       this.name = name;
       this.fullName = parentSuite ? parentSuite.fullName.concat(name) : []; // When an "error" event is emitted from onUncaughtException(), the
-      // "runEnd" event should report the status as failed.
-      // The "runEnd" event data is made by this class (as "globalSuite").
+      // "runEnd" event should report the status as failed. The "runEnd" event data
+      // is tracked through this property (via the "runSuite" instance).
 
       this.globalFailureCount = 0;
       this.tests = [];
@@ -1245,6 +1312,7 @@
   }();
 
   var moduleStack = [];
+  var runSuite = new SuiteReport();
 
   function isParentModuleInQueue() {
     var modulesInQueue = config.modules.filter(function (module) {
@@ -1260,18 +1328,35 @@
   function createModule(name, testEnvironment, modifiers) {
     var parentModule = moduleStack.length ? moduleStack.slice(-1)[0] : null;
     var moduleName = parentModule !== null ? [parentModule.name, name].join(" > ") : name;
-    var parentSuite = parentModule ? parentModule.suiteReport : globalSuite;
+    var parentSuite = parentModule ? parentModule.suiteReport : runSuite;
     var skip = parentModule !== null && parentModule.skip || modifiers.skip;
     var todo = parentModule !== null && parentModule.todo || modifiers.todo;
+    var env = {};
+
+    if (parentModule) {
+      extend(env, parentModule.testEnvironment);
+    }
+
+    extend(env, testEnvironment);
     var module = {
       name: moduleName,
       parentModule: parentModule,
+      hooks: {
+        before: [],
+        beforeEach: [],
+        afterEach: [],
+        after: []
+      },
+      testEnvironment: env,
       tests: [],
       moduleId: generateHash(moduleName),
       testsRun: 0,
       testsIgnored: 0,
       childModules: [],
       suiteReport: new SuiteReport(name, parentSuite),
+      // Initialised by test.js when the module start executing,
+      // i.e. before the first test in this module (or a child).
+      stats: null,
       // Pass along `skip` and `todo` properties from parent module, in case
       // there is one, to childs. And use own otherwise.
       // This property will be used to mark own tests and tests of child suites
@@ -1280,17 +1365,33 @@
       todo: skip ? false : todo,
       ignored: modifiers.ignored || false
     };
-    var env = {};
 
     if (parentModule) {
       parentModule.childModules.push(module);
-      extend(env, parentModule.testEnvironment);
     }
 
-    extend(env, testEnvironment);
-    module.testEnvironment = env;
     config.modules.push(module);
     return module;
+  }
+
+  function setHookFromEnvironment(hooks, environment, name) {
+    var potentialHook = environment[name];
+
+    if (typeof potentialHook === "function") {
+      hooks[name].push(potentialHook);
+    }
+
+    delete environment[name];
+  }
+
+  function makeSetHook(module, hookName) {
+    return function setHook(callback) {
+      if (config.currentModule !== module) {
+        Logger.warn("The `" + hookName + "` hook was called inside the wrong module (`" + config.currentModule.name + "`). " + "Instead, use hooks provided by the callback to the containing module (`" + module.name + "`). " + "This will become an error in QUnit 3.0.");
+      }
+
+      module.hooks[hookName].push(callback);
+    };
   }
 
   function processModule(name, options, executeNow) {
@@ -1301,19 +1402,19 @@
       options = undefined;
     }
 
-    var module = createModule(name, options, modifiers); // Move any hooks to a 'hooks' object
+    var module = createModule(name, options, modifiers); // Transfer any initial hooks from the options object to the 'hooks' object
 
     var testEnvironment = module.testEnvironment;
-    var hooks = module.hooks = {};
+    var hooks = module.hooks;
     setHookFromEnvironment(hooks, testEnvironment, "before");
     setHookFromEnvironment(hooks, testEnvironment, "beforeEach");
     setHookFromEnvironment(hooks, testEnvironment, "afterEach");
     setHookFromEnvironment(hooks, testEnvironment, "after");
     var moduleFns = {
-      before: setHookFunction(module, "before"),
-      beforeEach: setHookFunction(module, "beforeEach"),
-      afterEach: setHookFunction(module, "afterEach"),
-      after: setHookFunction(module, "after")
+      before: makeSetHook(module, "before"),
+      beforeEach: makeSetHook(module, "beforeEach"),
+      afterEach: makeSetHook(module, "afterEach"),
+      after: makeSetHook(module, "after")
     };
     var prevModule = config.currentModule;
     config.currentModule = module;
@@ -1335,22 +1436,6 @@
         moduleStack.pop();
         config.currentModule = module.parentModule || prevModule;
       }
-    }
-
-    function setHookFromEnvironment(hooks, environment, name) {
-      var potentialHook = environment[name];
-      hooks[name] = typeof potentialHook === "function" ? [potentialHook] : [];
-      delete environment[name];
-    }
-
-    function setHookFunction(module, hookName) {
-      return function setHook(callback) {
-        if (config.currentModule !== module) {
-          Logger.warn("The `" + hookName + "` hook was called inside the wrong module (`" + config.currentModule.name + "`). " + "Instead, use hooks provided by the callback to the containing module (`" + module.name + "`). " + "This will become an error in QUnit 3.0.");
-        }
-
-        module.hooks[hookName].push(callback);
-      };
     }
   }
 
@@ -2102,7 +2187,7 @@
     var runtime = now() - config.started;
     var passed = config.stats.all - config.stats.bad;
     ProcessingQueue.finished = true;
-    emit("runEnd", globalSuite.end(true));
+    emit("runEnd", runSuite.end(true));
     runLoggingCallbacks("done", {
       passed: passed,
       failed: config.stats.bad,
@@ -2422,13 +2507,37 @@
     after: function after() {
       checkPollution();
     },
-    queueHook: function queueHook(hook, hookName, hookOwner) {
+    queueGlobalHook: function queueGlobalHook(hook, hookName) {
       var _this2 = this;
 
-      var callHook = function callHook() {
-        var promise = hook.call(_this2.testEnvironment, _this2.assert);
+      var runHook = function runHook() {
+        config.current = _this2;
+        var promise;
+
+        if (config.notrycatch) {
+          promise = hook.call(_this2.testEnvironment, _this2.assert);
+        } else {
+          try {
+            promise = hook.call(_this2.testEnvironment, _this2.assert);
+          } catch (error) {
+            _this2.pushFailure("Global " + hookName + " failed on " + _this2.testName + ": " + errorString(error), extractStacktrace(error, 0));
+
+            return;
+          }
+        }
 
         _this2.resolvePromise(promise, hookName);
+      };
+
+      return runHook;
+    },
+    queueHook: function queueHook(hook, hookName, hookOwner) {
+      var _this3 = this;
+
+      var callHook = function callHook() {
+        var promise = hook.call(_this3.testEnvironment, _this3.assert);
+
+        _this3.resolvePromise(promise, hookName);
       };
 
       var runHook = function runHook() {
@@ -2437,7 +2546,7 @@
             return;
           }
 
-          _this2.preserveEnvironment = true;
+          _this3.preserveEnvironment = true;
         } // The 'after' hook should only execute when there are not tests left and
         // when the 'after' and 'finish' tasks are the only tasks left to process
 
@@ -2446,7 +2555,7 @@
           return;
         }
 
-        config.current = _this2;
+        config.current = _this3;
 
         if (config.notrycatch) {
           callHook();
@@ -2454,9 +2563,16 @@
         }
 
         try {
+          // This try-block includes the indirect call to resolvePromise, which shouldn't
+          // have to be inside try-catch. But, since we support any user-provided thenable
+          // object, the thenable might throw in some unexpected way.
+          // This subtle behaviour is undocumented. To avoid new failures in minor releases
+          // we will not change this until QUnit 3.
+          // TODO: In QUnit 3, reduce this try-block to just hook.call(), matching
+          // the simplicity of queueGlobalHook.
           callHook();
         } catch (error) {
-          _this2.pushFailure(hookName + " failed on " + _this2.testName + ": " + (error.message || error), extractStacktrace(error, 0));
+          _this3.pushFailure(hookName + " failed on " + _this3.testName + ": " + (error.message || error), extractStacktrace(error, 0));
         }
       };
 
@@ -2465,6 +2581,14 @@
     // Currently only used for module level hooks, can be used to add global level ones
     hooks: function hooks(handler) {
       var hooks = [];
+
+      function processGlobalhooks(test) {
+        if ((handler === "beforeEach" || handler === "afterEach") && config.globalHooks[handler]) {
+          for (var i = 0; i < config.globalHooks[handler].length; i++) {
+            hooks.push(test.queueGlobalHook(config.globalHooks[handler][i], handler));
+          }
+        }
+      }
 
       function processHooks(test, module) {
         if (module.parentModule) {
@@ -2480,6 +2604,7 @@
 
 
       if (!this.skip) {
+        processGlobalhooks(this);
         processHooks(this, this.module);
       }
 
@@ -3399,6 +3524,35 @@
         });
       }
     }, {
+      key: "propContains",
+      value: function propContains(actual, expected, message) {
+        actual = objectValuesSubset(actual, expected); // The expected parameter is usually a plain object, but clone it for
+        // consistency with propEqual(), and to make it easy to explain that
+        // inheritence is not considered (on either side), and to support
+        // recursively checking subsets of nested objects.
+
+        expected = objectValues(expected, false);
+        this.pushResult({
+          result: equiv(actual, expected),
+          actual: actual,
+          expected: expected,
+          message: message
+        });
+      }
+    }, {
+      key: "notPropContains",
+      value: function notPropContains(actual, expected, message) {
+        actual = objectValuesSubset(actual, expected);
+        expected = objectValues(expected);
+        this.pushResult({
+          result: !equiv(actual, expected),
+          actual: actual,
+          expected: expected,
+          message: message,
+          negative: true
+        });
+      }
+    }, {
       key: "deepEqual",
       value: function deepEqual(actual, expected, message) {
         this.pushResult({
@@ -4009,7 +4163,7 @@
 
     _createClass(TapReporter, [{
       key: "onRunStart",
-      value: function onRunStart(_globalSuite) {
+      value: function onRunStart(_runSuite) {
         this.log("TAP version 13");
       }
     }, {
@@ -4059,13 +4213,13 @@
       }
     }, {
       key: "onRunEnd",
-      value: function onRunEnd(globalSuite) {
+      value: function onRunEnd(runSuite) {
         this.ended = true;
-        this.log("1..".concat(globalSuite.testCounts.total));
-        this.log("# pass ".concat(globalSuite.testCounts.passed));
-        this.log($.yellow("# skip ".concat(globalSuite.testCounts.skipped)));
-        this.log($.cyan("# todo ".concat(globalSuite.testCounts.todo)));
-        this.log($.red("# fail ".concat(globalSuite.testCounts.failed)));
+        this.log("1..".concat(runSuite.testCounts.total));
+        this.log("# pass ".concat(runSuite.testCounts.passed));
+        this.log($.yellow("# skip ".concat(runSuite.testCounts.skipped)));
+        this.log($.cyan("# todo ".concat(runSuite.testCounts.todo)));
+        this.log($.red("# fail ".concat(runSuite.testCounts.failed)));
       }
     }, {
       key: "logAssertion",
@@ -4120,6 +4274,21 @@
     tap: TapReporter
   };
 
+  function makeAddGlobalHook(hookName) {
+    return function addGlobalHook(callback) {
+      if (!config.globalHooks[hookName]) {
+        config.globalHooks[hookName] = [];
+      }
+
+      config.globalHooks[hookName].push(callback);
+    };
+  }
+
+  var hooks = {
+    beforeEach: makeAddGlobalHook("beforeEach"),
+    afterEach: makeAddGlobalHook("afterEach")
+  };
+
   /**
    * Handle a global error that should result in a failed test run.
    *
@@ -4158,7 +4327,7 @@
       // Increase "bad assertion" stats despite no longer pushing an assertion in this case.
       // This ensures "runEnd" and "QUnit.done()" handlers behave as expected, since the "bad"
       // count is typically how reporters decide on the boolean outcome of the test run.
-      globalSuite.globalFailureCount++;
+      runSuite.globalFailureCount++;
       config.stats.bad++;
       config.stats.all++;
       emit("error", error);
@@ -4199,24 +4368,27 @@
     return false;
   }
 
-  var QUnit = {};
-  var globalSuite = new SuiteReport(); // The initial "currentModule" represents the global (or top-level) module that
-  // is not explicitly defined by the user, therefore we add the "globalSuite" to
-  // it since each module has a suiteReport associated with it.
+  var QUnit = {}; // The "currentModule" object would ideally be defined using the createModule()
+  // function. Since it isn't, add the missing suiteReport property to it now that
+  // we have loaded all source code required to do so.
+  //
+  // TODO: Consider defining currentModule in core.js or module.js in its entirely
+  // rather than partly in config.js and partly here.
 
-  config.currentModule.suiteReport = globalSuite;
+  config.currentModule.suiteReport = runSuite;
   var globalStartCalled = false;
   var runStarted = false; // Figure out if we're running the tests from a server or not
 
   QUnit.isLocal = window$1 && window$1.location && window$1.location.protocol === "file:"; // Expose the current QUnit version
 
-  QUnit.version = "2.17.2";
+  QUnit.version = "2.18.0";
 
   extend(QUnit, {
     config: config,
     dump: dump,
     equiv: equiv,
     reporters: reporters,
+    hooks: hooks,
     is: is,
     objectType: objectType,
     on: on,
@@ -4371,7 +4543,7 @@
     } // The test run is officially beginning now
 
 
-    emit("runStart", globalSuite.start(true));
+    emit("runStart", runSuite.start(true));
     runLoggingCallbacks("begin", {
       totalTests: Test.count,
       modules: modulesLog
