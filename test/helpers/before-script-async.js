@@ -1,30 +1,40 @@
-// TODO: make this a web server
-import fs from 'fs/promises';
-import express from 'express';
+import express from 'nanoexpress';
 import cors from "cors";
+import kleur from 'kleur';
+import bindServerToPort from '../../lib/setup/bind-server-to-port.js';
 import './before-script-basic.js';
+import QUnit from '../../index.js';
 
 export default async function(config) {
   console.log('Starting before script with:');
-  console.log(JSON.stringify(config, null, 2));
 
-  const app = express();
+  let ServerConsole = ['log', 'error', 'done', 'warn', 'info'].reduce((result, type) => {
+    return Object.assign(result, {
+      [type]: (...messages) => {
+        console.log(`# HTTPServer[${type}] :`, ...messages);
+      }
+    });
+  }, {});
+  ServerConsole.debug = (...messages) => {
+    console.log('#', kleur.blue(`HTTPServer`), ...messages);
+  };
 
-  app.use(cors());
-
-  app.get("/films", (req, res) => {
+  let hasServerRunning = !!config.expressApp;
+  config.expressApp = config.expressApp || express({ console: ServerConsole });
+  config.expressApp.use(cors());
+  config.expressApp.get("/films", (req, res) => {
     console.log('req received');
     res.json({ film: "responsed correctly" });
   });
-
-  app.get("/movies/too-big-to-fail", (req, res) => {
+  config.expressApp.get("/movies/too-big-to-fail", (req, res) => {
     res.json({ movie: "is too-big-to-fail" });
   });
 
-  await app.listen(4000);
-  console.log("Web server started on port 4000");
-}
+  if (!hasServerRunning) {
+    console.log('DOESNT HAVE SERVER RUNNING');
+    let server = await bindServerToPort(config, config.expressApp);
 
-function wait(duration) {
-  return new Promise((resolve) => setTimeout(() => { resolve() }, duration));
+    QUnit.config.port = server.config.port;
+    console.log(`Web server started on port ${QUnit.config.port}`);
+  }
 }
