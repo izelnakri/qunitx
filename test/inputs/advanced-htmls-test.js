@@ -1,6 +1,7 @@
-import assert from 'assert';
-import { promisify } from 'util';
-import { exec } from 'child_process';
+import { describe, it } from 'node:test';
+import assert from 'node:assert';
+import { promisify } from 'node:util';
+import { exec } from 'node:child_process';
 
 const shell = promisify(exec);
 // runTestInsideHTMLFile

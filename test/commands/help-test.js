@@ -1,7 +1,8 @@
-import assert from 'assert';
-import fs from 'fs';
-import { promisify } from 'util';
-import { exec } from 'child_process';
+import { describe, it } from 'node:test';
+import assert from 'node:assert';
+import fs from 'node:fs';
+import { promisify } from 'node:util';
+import { exec } from 'node:child_process';
 
 const shell = promisify(exec);
 const VERSION = JSON.parse(fs.readFileSync(`${process.cwd()}/package.json`)).version;
@@ -29,46 +30,36 @@ Commands:
 $ qunitx init               # Bootstraps qunitx base html and add qunitx config to package.json if needed
 $ qunitx new $testFileName  # Creates a qunitx test file`;
 
-describe('Commands | Help tests', function() {
-  it('$ qunitx -> prints help text', async function() {
+describe('Commands | Help tests', () => {
+  it('$ qunitx -> prints help text', async () => {
     const { stdout } = await shell(`node ${process.cwd()}/cli.js`);
 
     console.log(stdout);
     assert.ok(stdout.includes(printedHelpOutput));
   });
 
-  it('$ qunitx print -> prints help text', async function() {
+  it('$ qunitx print -> prints help text', async () => {
     const { stdout } = await shell(`node ${process.cwd()}/cli.js print`);
 
     assert.ok(stdout.includes(printedHelpOutput));
   });
 
-  it('$ qunitx p -> prints help text', async function() {
+  it('$ qunitx p -> prints help text', async () => {
     const { stdout } = await shell(`node ${process.cwd()}/cli.js p`);
 
     assert.ok(stdout.includes(printedHelpOutput));
   });
 
-  it('$ qunitx help -> prints help text', async function() {
+  it('$ qunitx help -> prints help text', async () => {
     const { stdout } = await shell(`node ${process.cwd()}/cli.js help`);
 
     assert.ok(stdout.includes(printedHelpOutput));
   });
 
-  it('$ qunitx h -> prints help text', async function() {
+  it('$ qunitx h -> prints help text', async () => {
     const { stdout } = await shell(`node ${process.cwd()}/cli.js h`);
 
     assert.ok(stdout.includes(printedHelpOutput));
   });
 });
 
-// it('$ qunitx unknown -> raises error', async function() {
-//   t.plan(2);
-
-//   try {
-//     await shell(`node ${process.cwd()}/cli.js dasd`);
-//   } catch ({ stdout }) {
-//     assert.ok(stdout.includes('qunitx unknown command. Available options are:'));
-//     assert.ok(stdout.includes(printedHelpOutput));
-//   }
-// });

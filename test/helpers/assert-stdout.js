@@ -7,7 +7,7 @@ export function assertPassingTestCase(assert, stdout, options={ moduleName: '{{m
   let { moduleName, debug } = options;
 
   if (debug) {
-    return assert.ok(new RegExp(`ok ${testNo} ${moduleName} | asserassert.ok works # (\d+ ms)
+    return assert.ok(new RegExp(`ok ${testNo} ${moduleName} | assert.ok works # (\d+ ms)
     resolving async test
     {
       moduleName: 'called resolved async test with object',
@@ -19,7 +19,7 @@ export function assertPassingTestCase(assert, stdout, options={ moduleName: '{{m
     ok ${testNo++} ${moduleName} | deepEqual true works # (\d+ ms)`).test(stdout));
   }
 
-  return assert.ok(new RegExp(`ok ${testNo} ${moduleName} | asserassert.ok works # (\d+ ms)
+  return assert.ok(new RegExp(`ok ${testNo} ${moduleName} | assert.ok works # (\d+ ms)
     ok ${testNo++} ${moduleName} | async test finishes # (\d+ ms)
     ok ${testNo++} ${moduleName} | deepEqual true works # (\d+ ms)`).test(stdout));
 }
