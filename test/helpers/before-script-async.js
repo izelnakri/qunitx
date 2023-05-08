@@ -1,7 +1,7 @@
 // TODO: make this a web server
 import fs from 'fs/promises';
-import express from 'express';
-import cors from "cors";
+import express from 'nanoexpress';
+import cors from 'cors';
 import './before-script-basic.js';
 
 export default async function(config) {

@@ -7,7 +7,13 @@
   "license": "MIT",
   "keywords": [
     "qunit",
-    "qunit-plugin"
+    "qunit-plugin",
+    "cli",
+    "qunit cli",
+    "test",
+    "testing",
+    "browser testing",
+    "universal testing"
   ],
   "main": "index.js",
   "bin": {
@@ -29,7 +35,6 @@
     "release:beta": "node_modules/.bin/release-it --preRelease=beta --no-git.requireUpstream",
     "release": "node_modules/.bin/release-it",
     "test": "node --test test/index.js",
-    "test:old": "node_modules/.bin/mocha --require test/setup.js --bail --exit --check-leaks test/inputs test/commands test/flags/after-test.js test/flags/before-test.js -t=20000",
     "test:sanity-first": "./cli.js test/helpers/failing-tests.js test/helpers/failing-tests.ts",
     "test:sanity-second": "./cli.js test/helpers/passing-tests.js test/helpers/passing-tests.ts"
   },
@@ -37,21 +42,20 @@
     "@nanoexpress/middleware-static-serve": "^1.0.4",
     "cheerio": "^1.0.0-rc.10",
     "chokidar": "^3.5.3",
-    "esbuild": "^0.14.25",
+    "esbuild": "^0.17.18",
     "js-yaml": "^4.1.0",
     "kleur": "^4.1.5",
-    "nanoexpress": "^6.1.0",
+    "nanoexpress": "^6.1.1",
     "picomatch": "^2.3.1",
-    "puppeteer": "13.5.2",
-    "recursive-lookup": "1.0.0",
-    "ts-node": "^10.7.0"
+    "puppeteer": "20.1.2",
+    "recursive-lookup": "1.1.0",
+    "ts-node": "^10.9.1"
   },
   "devDependencies": {
     "auto-changelog": "^2.4.0",
     "cors": "^2.8.5",
-    "express": "^4.17.3",
     "prettier": "^2.8.8",
-    "qunit": "^2.18.0",
+    "qunit": "^2.19.4",
     "qunitx": "^0.3.6",
     "release-it": "^15.10.3"
   },

@@ -85,3 +85,16 @@ everything in deno and make instrumentation for code coverage possible with the 
 
 Esbuild plugin interface is an ongoing development, we might be able to figure out a way to generate this instrumentation
 with esbuild in the future, which could allow code coverage for --browser mode.
+
+### Dependency justifications
+
+cheerio: There is not cross-platform simple JS function to parse JS and CSS assets from HTML Strings. This is needed for web server in --browser mode.
+chokidar: Node.js new --watch still not enough for *not* breaking the websocket connection for html/qunit livereload for --browser mode. Maybe can be removed in future when Node.js providers better WebSocket handling/standards by default.
+esbuild: Bundle the files for puppeteer to run on --browser mode.
+js-yaml: Generate TAP compliant reporting with comments etc on JS assert data diff
+kleur: Color the terminal/CLI
+nanoexpress: Webserver to be able to run the qunit tests on --browser mode,
+picomatch: This is a very good & correct DX improvement for wildcards that works as a Pure JS implementation. Resorting to nodejs specific would be bad & not deno friendly.
+puppeteer: To be able to run the test suite in the cli for --browser mode.
+recursive-lookup: This optimizes recursive lookup file system calls by looking for only .js/.ts files during directory traversal with picomatch since recursiveLookup(glob, filterFunc) has "filterFunc"
+ts-node: Loader for Typescript support on pure node.js testing mode without --browser flag.
