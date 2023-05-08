@@ -33,4 +33,4 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Execute tests
-        run: docker run -t --entrypoint="npm" ${REGISTRY}/${REPO_OWNER}/${DOCKER_TAG} run test:all
+        run: docker run -t --entrypoint="npm" ${REGISTRY}/${REPO_OWNER}/${DOCKER_TAG} run test
