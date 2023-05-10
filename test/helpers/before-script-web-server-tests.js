@@ -2,11 +2,6 @@ import { module, test } from '../../index.js';
 
 module('{{moduleName}} Before script web server tests', function(hooks) {
   test('assert true works', async function (assert) {
-<<<<<<< HEAD
-    let res = await fetch('http://localhost:4000/films');
-
-    assert.deepEqual(await res.json(), { film: 'responsed correctly' });
-=======
     let json;
     try {
       let port = QUnit.config.port || location.port;
@@ -18,7 +13,6 @@ module('{{moduleName}} Before script web server tests', function(hooks) {
     }
 
     assert.deepEqual(json, { film: 'responsed correctly' });
->>>>>>> ed0281f (Lock Node to v19 with TEST RUNNER & PKG REMOVALS)
   });
 
   // test('async test finishes', async function (assert) {
