@@ -1,5 +1,4 @@
-import { describe, it } from 'node:test';
-import assert from 'node:assert';
+import { module, test } from '../../shims/nodejs.js';
 import fs from 'node:fs';
 import { promisify } from 'node:util';
 import { exec } from 'node:child_process';
@@ -30,33 +29,33 @@ Commands:
 $ qunitx init               # Bootstraps qunitx base html and add qunitx config to package.json if needed
 $ qunitx new $testFileName  # Creates a qunitx test file`;
 
-describe('Commands | Help tests', () => {
-  it('$ qunitx -> prints help text', async () => {
+module('Commands | Help tests', () => {
+  test('$ qunitx -> prints help text', async (assert) => {
     const { stdout } = await shell(`node ${process.cwd()}/cli.js`);
 
     console.log(stdout);
     assert.ok(stdout.includes(printedHelpOutput));
   });
 
-  it('$ qunitx print -> prints help text', async () => {
+  test('$ qunitx print -> prints help text', async (assert) => {
     const { stdout } = await shell(`node ${process.cwd()}/cli.js print`);
 
     assert.ok(stdout.includes(printedHelpOutput));
   });
 
-  it('$ qunitx p -> prints help text', async () => {
+  test('$ qunitx p -> prints help text', async (assert) => {
     const { stdout } = await shell(`node ${process.cwd()}/cli.js p`);
 
     assert.ok(stdout.includes(printedHelpOutput));
   });
 
-  it('$ qunitx help -> prints help text', async () => {
+  test('$ qunitx help -> prints help text', async (assert) => {
     const { stdout } = await shell(`node ${process.cwd()}/cli.js help`);
 
     assert.ok(stdout.includes(printedHelpOutput));
   });
 
-  it('$ qunitx h -> prints help text', async () => {
+  test('$ qunitx h -> prints help text', async (assert) => {
     const { stdout } = await shell(`node ${process.cwd()}/cli.js h`);
 
     assert.ok(stdout.includes(printedHelpOutput));

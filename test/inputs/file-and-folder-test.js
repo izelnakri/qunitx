@@ -1,8 +1,7 @@
-import { describe, it } from 'node:test';
-import assert from 'node:assert';
+import { module, test } from '../../shims/nodejs.js';
 
-describe('File and Folder Combination Tests', function() {
-  it('todo', async function() {
+module('File and Folder Combination Tests', function() {
+  test('todo', async function(assert) {
     assert.ok(true);
   });
 });

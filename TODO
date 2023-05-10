@@ -1,13 +1,6 @@
-Remove: express, cors
-Check: cheerio, chokidar, cheerio, picomatch, recursive-lookup
+Turn import { module, test } from '../../shims/nodejs.js' to import { module, test } from 'qunitx'; For this to happen browser bundler should pick up actual qunit
 
 Combine nix with Docker for faster container builds
-
-
-
-
-
-
 
 - also watch subdependencies on browser mode (-- how? investigate esbuild watch)
 - maybe make browser tests per file loading <script>, also could add asset maps maybe if puppeteer supports, this could fix initial "qf" bug

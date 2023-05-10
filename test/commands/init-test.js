@@ -1,12 +1,12 @@
-import { describe, it } from 'node:test';
+import { module, test } from '../../shims/nodejs.js';
 import assert from 'node:assert';
 import { promisify } from 'node:util';
 import { exec } from 'node:child_process';
 
 const shell = promisify(exec);
 
-describe('Commands | init tests', () => {
-  it('$ qunitx init -> creates the test.html and correctly', async () => {
+module('Commands | init tests', () => {
+  test('$ qunitx init -> creates the test.html and correctly', async () => {
     // assert missing
     const { stdout } = await shell(`node ${process.cwd()}/cli.js`);
     // assert added

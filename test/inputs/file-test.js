@@ -1,5 +1,4 @@
-import { describe, it } from 'node:test';
-import assert from 'node:assert';
+import { module, test } from '../../shims/nodejs.js';
 import { promisify } from 'node:util';
 import { exec } from 'node:child_process';
 import kleur from 'kleur';
@@ -8,8 +7,8 @@ import printStdout from '../helpers/print-stdout.js';
 
 const shell = promisify(exec);
 
-describe('File Input Tests', () => {
-  it('testing a single passing js file works', async () => {
+module('File Input Tests', () => {
+  test('testing a single passing js file works', async (assert) => {
     const { stdout } = await shell('node cli.js tmp/test/passing-tests.js');
 
     printStdout(stdout);
@@ -18,7 +17,7 @@ describe('File Input Tests', () => {
     assertTAPResult(assert, stdout, { testCount: 3 });
   });
 
-  it('testing a single failing js file works', async () => {
+  test('testing a single failing js file works', async (assert) => {
     try {
       await shell('node cli.js tmp/test/failing-tests.js');
     } catch(cmd) {
@@ -103,7 +102,7 @@ describe('File Input Tests', () => {
   // test.skip('testing a single failing ts file works', async function() {
   // });
 
-  it('testing a single passing js file with --browser works, console output supressed', async () => {
+  test('testing a single passing js file with --browser works, console output supressed', async (assert) => {
     const { stdout } = await shell('node cli.js tmp/test/passing-tests.js --browser');
 
     printStdout(stdout);
@@ -111,7 +110,7 @@ describe('File Input Tests', () => {
     assertTAPResult(assert, stdout, { testCount: 3 });
   });
 
-  it('testing a single passing js file with --browser --debug works', async () => {
+  test('testing a single passing js file with --browser --debug works', async (assert) => {
     const { stdout } = await shell('node cli.js tmp/test/passing-tests.js --browser --debug');
 
     printStdout(stdout);
@@ -121,7 +120,7 @@ describe('File Input Tests', () => {
     assertTAPResult(assert, stdout, { testCount: 3 });
   });
 
-  it('testing a single failing js with --browser file works', async () => {
+  test('testing a single failing js with --browser file works', async (assert) => {
     try {
       let { stdout } = await shell('node cli.js tmp/test/failing-tests.js --browser');
       printStdout(stdout);
@@ -134,7 +133,7 @@ describe('File Input Tests', () => {
     }
   });
 
-  it('testing a single failing js file with --browser --debug works', async () => {
+  test('testing a single failing js file with --browser --debug works', async (assert) => {
     try {
       await shell('node cli.js tmp/test/failing-tests.js --browser --debug');
     } catch(cmd) {
@@ -146,7 +145,7 @@ describe('File Input Tests', () => {
     }
   });
 
-  it('testing a single passing ts file with --browser works, console output supressed', async () => {
+  test('testing a single passing ts file with --browser works, console output supressed', async (assert) => {
     const { stdout } = await shell('node cli.js tmp/test/passing-tests.ts --browser');
 
     printStdout(stdout);
@@ -156,7 +155,7 @@ describe('File Input Tests', () => {
     assertTAPResult(assert, stdout, { testCount: 3 });
   });
 
-  it('testing a single passing ts file with --browser --debug works', async () => {
+  test('testing a single passing ts file with --browser --debug works', async (assert) => {
     const { stdout } = await shell('node cli.js tmp/test/passing-tests.ts --browser --debug');
 
     printStdout(stdout);
@@ -167,7 +166,7 @@ describe('File Input Tests', () => {
     assertTAPResult(assert, stdout, { testCount: 3 });
   });
 
-  it('testing a single failing ts with --browser file works', async () => {
+  test('testing a single failing ts with --browser file works', async (assert) => {
     try {
       let { stdout } = await shell('node cli.js tmp/test/failing-tests.ts --browser');
       console.log('STDOUT is');
@@ -181,7 +180,7 @@ describe('File Input Tests', () => {
     }
   });
 
-  it('testing a single failing ts file with --browser --debug works', async () => {
+  test('testing a single failing ts file with --browser --debug works', async (assert) => {
     try {
       let { stdout } = await shell('node cli.js tmp/test/failing-tests.ts --browser --debug');
       console.log('STDOUT is');
