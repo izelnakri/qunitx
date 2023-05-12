@@ -9,6 +9,9 @@
     "qunit",
     "qunit-plugin"
   ],
+  "engines": {
+    "node": ">=20.1.0"
+  },
   "main": "index.js",
   "bin": {
     "qunitx": "cli.js"
