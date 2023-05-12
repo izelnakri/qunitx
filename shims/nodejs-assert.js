@@ -9,7 +9,9 @@ export default {
   false: assert.false,
   notDeepEqual: assert.notDeepStrictEqual,
   notEqual: assert.notEqual,
-  notOk: assert.notOk,
+  notOk(state, message) {
+    return assert.ok(!state, message);
+  },
   notPropContains: assert.notPropContains,
   notPropEqual: assert.notPropEqual,
   notStrictEqual: assert.notStrictEqual,

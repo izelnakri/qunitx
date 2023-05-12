@@ -1,42 +1,37 @@
 import { run, describe, it, before, after, beforeEach, afterEach } from 'node:test';
 import assert from './nodejs-assert.js';
 
-export const module = async function(moduleName, _hooks, moduleContent) {
-  let targetModuleContent = moduleContent ? moduleContent : _hooks;
-  let targetHooks = moduleContent ? _hooks : undefined;
+// TODO: how to customize test or module { concurrency: } ? Because it will be needed for sequential tests sometimes
+export const module = async function(moduleName, runtimeOptions, moduleContent) {
+  let targetRuntimeOptions = moduleContent ? runtimeOptions : {};
 
-  const hooks = targetHooks || { before: undefined, after: undefined, beforeEach: undefined, afterEach: undefined};
-  const { before: _before, after: _after, beforeEach: _beforeEach, afterEach: _afterEach } = hooks;
+  assignDefaultValues(targetRuntimeOptions, { concurrency: true });
 
-  // NOTE: add { concurrency: true }
-  return describe(moduleName, async function() {
-    if (_before) {
-      before(_before);
-    }
+  let targetModuleContent = moduleContent ? moduleContent : runtimeOptions;
 
-    if (_after) {
-      after(_after);
-    }
-
-    if (_beforeEach) {
-      beforeEach(_beforeEach);
-    }
-
-    if (_afterEach) {
-      afterEach(_afterEach);
-    }
-
-    return await targetModuleContent(hooks);
+  return describe(moduleName, targetRuntimeOptions, async function() {
+    return await targetModuleContent({ before, after, beforeEach, afterEach });
   });
 }
 
-export const test = async function(testName, testContent) {
-  // return it(testName, { concurrency: true }, async function() {
-  // NOTE: also add timeout here!! then changable when QUnit implemented correctly
-  // NOTE: add { concurrency: true }
-  return it(testName, async function() {
-    return await testContent(assert);
+export const test = async function(testName, runtimeOptions, testContent) {
+  let targetRuntimeOptions = testContent ? runtimeOptions : {};
+
+  assignDefaultValues(targetRuntimeOptions, { concurrency: true });
+
+  let targetTestContent = testContent ? testContent : runtimeOptions;
+
+  return it(testName, targetRuntimeOptions, async function() {
+    return await targetTestContent(assert);
   });
+}
+
+function assignDefaultValues(options, defaultValues) {
+  for (let key in defaultValues) {
+    if (options[key] === undefined) {
+      options[key] = defaultValues[key];
+    }
+  }
 }
 
 
