@@ -1,28 +1,19 @@
 import { module, test } from '../../shims/nodejs.js';
-import { promisify } from 'node:util';
-import { exec } from 'node:child_process';
-import kleur from 'kleur';
 import { assertPassingTestCase, assertFailingTestCase, assertTAPResult } from '../helpers/assert-stdout.js';
-import printStdout from '../helpers/print-stdout.js';
+import shell from '../helpers/shell.js';
 
-const shell = promisify(exec);
-
-module('File Input Tests', () => {
-  test('testing a single passing js file works', async (assert) => {
-    const { stdout } = await shell('node cli.js tmp/test/passing-tests.js');
-
-    printStdout(stdout);
+module('File Input Tests', { concurrency: false }, (_hooks, moduleMetadata) => {
+  test('testing a single passing js file works', async (assert, testMetadata) => {
+    const { stdout } = await shell('node cli.js tmp/test/passing-tests.js', { ...moduleMetadata, ...testMetadata });
 
     assertPassingTestCase(assert, stdout, { debug: true, testNo: 1, moduleName: '{{moduleName}}' });
     assertTAPResult(assert, stdout, { testCount: 3 });
   });
 
-  test('testing a single failing js file works', async (assert) => {
+  test('testing a single failing js file works', async (assert, testMetadata) => {
     try {
-      await shell('node cli.js tmp/test/failing-tests.js');
+      await shell('node cli.js tmp/test/failing-tests.js', { ...moduleMetadata, ...testMetadata });
     } catch(cmd) {
-      printStdout(cmd.stdout);
-
       assert.ok(cmd.stdout.includes('TAP version 13'));
       assert.ok(cmd.stdout.includes('calling assert true test case'));
       assert.ok(new RegExp(`ok 1 {{moduleName}} | assert.ok works # (\d+ ms)`).test(cmd.stdout));
@@ -102,63 +93,53 @@ module('File Input Tests', () => {
   // test.skip('testing a single failing ts file works', async function() {
   // });
 
-  test('testing a single passing js file with --browser works, console output supressed', async (assert) => {
-    const { stdout } = await shell('node cli.js tmp/test/passing-tests.js --browser');
+  test('testing a single passing js file with --browser works, console output supressed', async (assert, testMetadata) => {
+    const { stdout } = await shell('node cli.js tmp/test/passing-tests.js --browser', { ...moduleMetadata, ...testMetadata });
 
-    printStdout(stdout);
     assertPassingTestCase(assert, stdout, { testNo: 1, moduleName: '{{moduleName}}' });
     assertTAPResult(assert, stdout, { testCount: 3 });
   });
 
-  test('testing a single passing js file with --browser --debug works', async (assert) => {
-    const { stdout } = await shell('node cli.js tmp/test/passing-tests.js --browser --debug');
+  test('testing a single passing js file with --browser --debug works', async (assert, testMetadata) => {
+    const { stdout } = await shell('node cli.js tmp/test/passing-tests.js --browser --debug', { ...moduleMetadata, ...testMetadata });
 
-    printStdout(stdout);
     assert.ok(new RegExp(/# HTTPServer \[Server\]: started successfully at \[localhost:\d+\]/).test(stdout));
     assert.ok(stdout.includes('TAP version 13'));
     assertPassingTestCase(assert, stdout, { debug: true, testNo: 1, moduleName: '{{moduleName}}' });
     assertTAPResult(assert, stdout, { testCount: 3 });
   });
 
-  test('testing a single failing js with --browser file works', async (assert) => {
+  test('testing a single failing js with --browser file works', async (assert, testMetadata) => {
     try {
-      let { stdout } = await shell('node cli.js tmp/test/failing-tests.js --browser');
-      printStdout(stdout);
+      let { stdout } = await shell('node cli.js tmp/test/failing-tests.js --browser', { ...moduleMetadata, ...testMetadata });
     } catch(cmd) {
-      printStdout(cmd.stdout);
       assert.ok(cmd.stdout.includes('TAP version 13'));
-
       assertFailingTestCase(assert, cmd.stdout, { testNo: 1, moduleName: '{{moduleName}}' });
       assertTAPResult(assert, cmd.stdout, { testCount: 4, failCount: 3 });
     }
   });
 
-  test('testing a single failing js file with --browser --debug works', async (assert) => {
+  test('testing a single failing js file with --browser --debug works', async (assert, testMetadata) => {
     try {
-      await shell('node cli.js tmp/test/failing-tests.js --browser --debug');
+      await shell('node cli.js tmp/test/failing-tests.js --browser --debug', { ...moduleMetadata, ...testMetadata });
     } catch(cmd) {
-      printStdout(cmd.stdout);
       assert.ok(cmd.stdout.includes('TAP version 13'));
-
       assertFailingTestCase(assert, cmd.stdout, { debug: true, testNo: 1, moduleName: '{{moduleName}}' });
       assertTAPResult(assert, cmd.stdout, { testCount: 4, failCount: 3 });
     }
   });
 
-  test('testing a single passing ts file with --browser works, console output supressed', async (assert) => {
-    const { stdout } = await shell('node cli.js tmp/test/passing-tests.ts --browser');
+  test('testing a single passing ts file with --browser works, console output supressed', async (assert, testMetadata) => {
+    const { stdout } = await shell('node cli.js tmp/test/passing-tests.ts --browser', { ...moduleMetadata, ...testMetadata });
 
-    printStdout(stdout);
     assert.ok(stdout.includes('TAP version 13'));
-
     assertPassingTestCase(assert, stdout, { testNo: 1, moduleName: '{{moduleName}}' });
     assertTAPResult(assert, stdout, { testCount: 3 });
   });
 
-  test('testing a single passing ts file with --browser --debug works', async (assert) => {
-    const { stdout } = await shell('node cli.js tmp/test/passing-tests.ts --browser --debug');
+  test('testing a single passing ts file with --browser --debug works', async (assert, testMetadata) => {
+    const { stdout } = await shell('node cli.js tmp/test/passing-tests.ts --browser --debug', { ...moduleMetadata, ...testMetadata });
 
-    printStdout(stdout);
     assert.ok(new RegExp(/# HTTPServer \[Server\]: started successfully at \[localhost:\d+\]/).test(stdout));
     assert.ok(stdout.includes('TAP version 13'));
 
@@ -166,29 +147,21 @@ module('File Input Tests', () => {
     assertTAPResult(assert, stdout, { testCount: 3 });
   });
 
-  test('testing a single failing ts with --browser file works', async (assert) => {
+  test('testing a single failing ts with --browser file works', async (assert, testMetadata) => {
     try {
-      let { stdout } = await shell('node cli.js tmp/test/failing-tests.ts --browser');
-      console.log('STDOUT is');
-      printStdout(stdout);
+      await shell('node cli.js tmp/test/failing-tests.ts --browser', { ...moduleMetadata, ...testMetadata });
     } catch(cmd) {
-      printStdout(cmd.stdout);
       assert.ok(cmd.stdout.includes('TAP version 13'));
-
       assertPassingTestCase(assert, cmd.stdout, { testNo: 1, moduleName: '{{moduleName}}' });
       assertTAPResult(assert, cmd.stdout, { testCount: 4, failCount: 3 });
     }
   });
 
-  test('testing a single failing ts file with --browser --debug works', async (assert) => {
+  test('testing a single failing ts file with --browser --debug works', async (assert, testMetadata) => {
     try {
-      let { stdout } = await shell('node cli.js tmp/test/failing-tests.ts --browser --debug');
-      console.log('STDOUT is');
-      printStdout(stdout);
+      await shell('node cli.js tmp/test/failing-tests.ts --browser --debug', { ...moduleMetadata, ...testMetadata });
     } catch(cmd) {
-      printStdout(cmd.stdout);
       assert.ok(cmd.stdout.includes('TAP version 13'));
-
       assertPassingTestCase(assert, cmd.stdout, { debug: true, testNo: 1, moduleName: '{{moduleName}}' });
       assertTAPResult(assert, cmd.stdout, { testCount: 4, failCount: 3 });
     }

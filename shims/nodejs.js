@@ -10,7 +10,10 @@ export const module = async function(moduleName, runtimeOptions, moduleContent) 
   let targetModuleContent = moduleContent ? moduleContent : runtimeOptions;
 
   return describe(moduleName, targetRuntimeOptions, async function() {
-    return await targetModuleContent({ before, after, beforeEach, afterEach });
+    return await targetModuleContent({ before, after, beforeEach, afterEach }, {
+      moduleName,
+      options: runtimeOptions
+    });
   });
 }
 
@@ -22,7 +25,7 @@ export const test = async function(testName, runtimeOptions, testContent) {
   let targetTestContent = testContent ? testContent : runtimeOptions;
 
   return it(testName, targetRuntimeOptions, async function() {
-    return await targetTestContent(assert);
+    return await targetTestContent(assert, { testName, options: runtimeOptions });
   });
 }
 

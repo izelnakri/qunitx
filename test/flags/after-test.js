@@ -1,36 +1,26 @@
 import { module, test } from '../../shims/nodejs.js';
-import { promisify } from 'node:util';
-import { exec } from 'node:child_process';
 import { assertPassingTestCase, assertFailingTestCase, assertTAPResult } from '../helpers/assert-stdout.js';
-import printStdout from '../helpers/print-stdout.js';
+import shell from '../helpers/shell.js';
 
-const shell = promisify(exec);
-
-module('--after script tests', () => {
-  test('--after works when it doesnt need to be awaited', async (assert) => {
-    const { stdout } = await shell('node cli.js test/helpers/passing-tests.js --after=test/helpers/after-script-basic.js');
-
-    printStdout(stdout);
+module('--after script tests', (_hooks, moduleMetadata) => {
+  test('--after works when it doesnt need to be awaited', async (assert, testMetadata) => {
+    const { stdout } = await shell('node cli.js test/helpers/passing-tests.js --after=test/helpers/after-script-basic.js', { ...moduleMetadata, ...testMetadata });
 
     assert.ok(stdout.includes('This is running from after script!!'));
     assertPassingTestCase(assert, stdout, { debug: true, testNo: 1, moduleName: '{{moduleName}}' });
     assertTAPResult(assert, stdout, { testCount: 3 });
   });
 
-  test('--after works for --browser mode when it doesnt need to be awaited', async (assert) => {
-    const { stdout } = await shell('node cli.js test/helpers/passing-tests.js --browser --after=test/helpers/after-script-basic.js');
-
-    printStdout(stdout);
+  test('--after works for --browser mode when it doesnt need to be awaited', async (assert, testMetadata) => {
+    const { stdout } = await shell('node cli.js test/helpers/passing-tests.js --browser --after=test/helpers/after-script-basic.js', { ...moduleMetadata, ...testMetadata });
 
     assert.ok(stdout.includes('This is running from after script!!'));
-    assertPassingTestCase(assert, stdout, { debug: true, testNo: 1, moduleName: '{{moduleName}}' });
+    assertPassingTestCase(assert, stdout, { debug: false, testNo: 1, moduleName: '{{moduleName}}' });
     assertTAPResult(assert, stdout, { testCount: 3 });
   });
 
-  test('--after works it needs to be awaited', async (assert) => {
-    const { stdout } = await shell('node cli.js test/helpers/passing-tests.js --after=test/helpers/after-script-async.js');
-
-    printStdout(stdout);
+  test('--after works it needs to be awaited', async (assert, testMetadata) => {
+    const { stdout } = await shell('node cli.js test/helpers/passing-tests.js --after=test/helpers/after-script-async.js', { ...moduleMetadata, ...testMetadata });
 
     assert.ok(stdout.includes('This is running from after script!!'));
     assert.ok(stdout.includes('After script result is written:'));
@@ -39,15 +29,13 @@ module('--after script tests', () => {
     assertTAPResult(assert, stdout, { testCount: 3 });
   });
 
-  test('--after works for --browser mode it needs to be awaited', async (assert) => {
-    const { stdout } = await shell('node cli.js test/helpers/passing-tests.js --browser --after=test/helpers/after-script-async.js');
-
-    printStdout(stdout);
+  test('--after works for --browser mode it needs to be awaited', async (assert, testMetadata) => {
+    const { stdout } = await shell('node cli.js test/helpers/passing-tests.js --browser --after=test/helpers/after-script-async.js', { ...moduleMetadata, ...testMetadata });
 
     assert.ok(stdout.includes('This is running from after script!!'));
     assert.ok(stdout.includes('After script result is written:'));
     assert.ok(stdout.includes(JSON.stringify({ testCount: 3, failCount: 0, skipCount: 0, passCount: 3 }, null, 2)));
-    assertPassingTestCase(assert, stdout, { debug: true, testNo: 1, moduleName: '{{moduleName}}' });
+    assertPassingTestCase(assert, stdout, { debug: false, testNo: 1, moduleName: '{{moduleName}}' });
     assertTAPResult(assert, stdout, { testCount: 3 });
   });
 });

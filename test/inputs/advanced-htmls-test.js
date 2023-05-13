@@ -1,8 +1,5 @@
 import { module, test } from '../../shims/nodejs.js';
-import { promisify } from 'node:util';
-import { exec } from 'node:child_process';
 
-const shell = promisify(exec);
 // runTestInsideHTMLFile
 
 module('Advanced HTML Input Tests', function() {
