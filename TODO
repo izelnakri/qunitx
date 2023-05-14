@@ -1,3 +1,7 @@
+Shim dir structure should be: shims/nodejs/ shims/deno shims/browser
+Make package.json point to them correctly
+Make the package so esbuild build so esbuild builds when qunitx is vendored(if it needs to)
+
 Turn import { module, test } from '../../shims/nodejs.js' to import { module, test } from 'qunitx'; For this to happen browser bundler should pick up actual qunit
 
 Combine nix with Docker for faster container builds

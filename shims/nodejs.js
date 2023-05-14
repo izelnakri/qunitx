@@ -1,15 +1,11 @@
 import { run, describe, it, before, after, beforeEach, afterEach } from 'node:test';
 import assert from './nodejs-assert.js';
 
-// TODO: how to customize test or module { concurrency: } ? Because it will be needed for sequential tests sometimes
 export const module = async function(moduleName, runtimeOptions, moduleContent) {
   let targetRuntimeOptions = moduleContent ? runtimeOptions : {};
-
-  assignDefaultValues(targetRuntimeOptions, { concurrency: true });
-
   let targetModuleContent = moduleContent ? moduleContent : runtimeOptions;
 
-  return describe(moduleName, targetRuntimeOptions, async function() {
+  return describe(moduleName, assignDefaultValues(targetRuntimeOptions, { concurrency: true }), async function() {
     return await targetModuleContent({ before, after, beforeEach, afterEach }, {
       moduleName,
       options: runtimeOptions
@@ -19,12 +15,9 @@ export const module = async function(moduleName, runtimeOptions, moduleContent) 
 
 export const test = async function(testName, runtimeOptions, testContent) {
   let targetRuntimeOptions = testContent ? runtimeOptions : {};
-
-  assignDefaultValues(targetRuntimeOptions, { concurrency: true });
-
   let targetTestContent = testContent ? testContent : runtimeOptions;
 
-  return it(testName, targetRuntimeOptions, async function() {
+  return it(testName, assignDefaultValues(targetRuntimeOptions, { concurrency: true }), async function() {
     return await targetTestContent(assert, { testName, options: runtimeOptions });
   });
 }
@@ -36,7 +29,6 @@ function assignDefaultValues(options, defaultValues) {
     }
   }
 }
-
 
 // NOTE: later maybe expose these as well:
 

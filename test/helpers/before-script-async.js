@@ -38,3 +38,8 @@ export default async function(config) {
     console.log(`Web server started on port ${QUnit.config.port}`);
   }
 }
+
+function wait(duration) {
+  return new Promise((resolve) => setTimeout(() => { resolve() }, duration));
+}
+
