@@ -4,7 +4,7 @@ module('{{moduleName}} Before script web server tests', function(hooks) {
   test('assert true works', async function (assert) {
     let json;
     try {
-      let port = QUnit.config.port || location.port;
+      let port = window.QUnit.config.port || location.port;
 
       await wait(250);
 
