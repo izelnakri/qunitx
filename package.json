@@ -10,7 +10,7 @@
     "qunit-plugin"
   ],
   "engines": {
-    "node": ">=20.1.0"
+    "node": ">=20.2.0"
   },
   "main": "index.js",
   "bin": {
@@ -60,7 +60,7 @@
     "release-it": "^15.10.3"
   },
   "volta": {
-    "node": "20.1.0"
+    "node": "20.2.0"
   },
   "prettier": {
     "printWidth": 100,
