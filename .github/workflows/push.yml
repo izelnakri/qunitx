@@ -24,7 +24,7 @@ jobs:
           username: ${{env.REPO_OWNER}}
           password: ${{secrets.CR_PAT}}
       - name: Build and push
-        uses: docker/build-push-action@v4.0.0
+        uses: docker/build-push-action@v4.1.1
         with:
           context: .
           file: ./Dockerfile
