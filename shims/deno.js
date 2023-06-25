@@ -26,7 +26,12 @@ export const test = async function(testName, runtimeOptions, testContent) {
   let targetTestContent = testContent ? testContent : runtimeOptions;
 
   return it(targetRuntimeOptions, async function() {
-    return await targetTestContent(assert, { testName, options: targetRuntimeOptions });
+    let metadata = { testName, options: targetRuntimeOptions, expectedTestCount: undefined };
+    return await targetTestContent(assert, metadata);
+
+    if (expectedTestCount) {
+
+    }
   });
 }
 

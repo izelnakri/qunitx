@@ -1,12 +1,22 @@
-import { assert, assertEquals, assertNotEquals, assertStrictEquals, assertNotStrictEquals, assertObjectMatch } from "https://deno.land/std@0.192.0/testing/asserts.ts";
+import { assert, assertEquals, assertNotEquals, assertStrictEquals, assertNotStrictEquals, assertObjectMatch, assertRejects, assertThrows } from "https://deno.land/std@0.192.0/testing/asserts.ts";
 
-// TODO: Learn how to build custom assertions on deno.js, read _asserts.ts
-// NOTE: Unstable API for now
+class AssertionError extends Error {
+  override name = 'AssertionError';
+  constructor(message: string) {
+    super(message);
+  }
+}
+
 export default {
-  // async: assert.async,
+  _steps: [],
+  async() {
+    return () => {}; // NOTE: noop, deno has sanitizeResources
+  },
   deepEqual: assertEquals,
   equal: assertEquals,
-  // expect: assert.expect,
+  expect() {
+    return () => {}; // NOTE: NOT implemented
+  },
   false(state, message) {
     return assert(state === false, message);
   },
@@ -15,19 +25,31 @@ export default {
   notOk(state, message) {
     return assert(!state, message);
   },
-  // notPropContains: assertObjectMatch,
-  // notPropEqual: assert.notPropEqual,
+  notPropContains() {
+    throw new AssertionError('assert.notPropContains is not implemented for deno on QUnit');
+  },
+  notPropEqual() {
+    throw new AssertionError('assert.notPropEqual is not implemented for deno on QUnit');
+  },
   notStrictEqual: assertNotStrictEquals,
   ok: assert,
   propContains: assertObjectMatch,
-  // pushResult: assert.pushResult,
-  // rejects: assert.rejects,
-  // step: assert.step,
+  pushResult() {
+    return () => {}; // NOTE: NOT implemented
+  },
+  rejects: assertRejects,
+  step(value = '') {
+    this._steps.push(value);
+  },
   strictEqual: assertStrictEquals,
-  // throws: assert.throws,
-  // timeout: assert.timeout,
+  throws: assertThrows,
+  timeout() {
+    return true; // NOTE: NOT implemented
+  },
   true(state, message) {
     return assert(state === true, message);
   },
-  // verifySteps: assert.verifySteps
+  verifySteps(steps, message = 'Verify steps failed!') {
+    return assertEquals(this._steps, steps, message);
+  }
 };
