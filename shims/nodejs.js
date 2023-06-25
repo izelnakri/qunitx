@@ -28,6 +28,8 @@ function assignDefaultValues(options, defaultValues) {
       options[key] = defaultValues[key];
     }
   }
+
+  return options;
 }
 
 // NOTE: later maybe expose these as well:
