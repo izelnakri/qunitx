@@ -1,7 +1,7 @@
 {
   "name": "qunitx",
   "type": "module",
-  "version": "0.4.5",
+  "version": "0.5.0",
   "description": "Experimental improvements, suggestions for qunit CLI",
   "author": "Izel Nakri",
   "license": "MIT",
@@ -35,7 +35,7 @@
     "bin": "chmod +x cli.js && ./cli.js",
     "build": "npm run build:qunit",
     "build:qunit": "node scripts/hack-qunit.js",
-    "run" : "npm run run:node",
+    "run": "npm run run:node",
     "run:node": "node cli.js",
     "run:deno": "deno run --allow-read deno/cli.js",
     "changelog:unreleased": "node_modules/.bin/auto-changelog --stdout --commit-limit false --package --unreleased-only --hide-credit --sort-commits date-desc",
