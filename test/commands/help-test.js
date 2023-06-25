@@ -1,4 +1,4 @@
-import { module, test } from '../../shims/nodejs.js';
+import { module, test } from 'qunitx';
 import fs from 'node:fs';
 import { promisify } from 'node:util';
 import { exec } from 'node:child_process';

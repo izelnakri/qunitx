@@ -1,4 +1,4 @@
-import { module, test } from '../../shims/nodejs.js';
+import { module, test } from 'qunitx';
 
 module('File and Folder Combination Tests', function() {
   test('todo', async function(assert) {

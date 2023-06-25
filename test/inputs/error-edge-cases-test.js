@@ -1,4 +1,4 @@
-import { module, test } from '../../shims/nodejs.js';
+import { module, test } from 'qunitx';
 
 // TODO: invalid extension, use --debug without browser
 // folder/file doesnt exist to watch

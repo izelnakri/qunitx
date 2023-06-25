@@ -1,4 +1,4 @@
-import { module, test } from '../../shims/nodejs.js';
+import { module, test } from 'qunitx';
 import { assertPassingTestCase, assertFailingTestCase, assertTAPResult } from '../helpers/assert-stdout.js';
 import shell from '../helpers/shell.js';
 

@@ -1,9 +1,8 @@
-import { describe, it } from 'node:test';
-import assert from 'node:assert';
+import { module, test } from 'qunitx';
 import setupTestFilePaths from '../../lib/setup/test-file-paths.js';
 
-describe('Setup | glob(*) input tests | test-file-paths tests', () => {
-  it('setupTestFilePaths() works correctly on different inputs', () => {
+module('Setup | glob(*) input tests | test-file-paths tests', () => {
+  test('setupTestFilePaths() works correctly on different inputs', (assert) => {
     let projectRoot = '/home/izelnakri/Github/qunitx';
 
     assert.deepEqual(setupTestFilePaths(projectRoot, [

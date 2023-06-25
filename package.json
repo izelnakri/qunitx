@@ -12,9 +12,20 @@
   "engines": {
     "node": ">=20.3.0"
   },
-  "main": "index.js",
   "bin": {
     "qunitx": "cli.js"
+  },
+  "imports": {
+    "qunitx": {
+      "node": "./shims/nodejs.js",
+      "deno": "./shims/deno.js",
+      "default": "./index.js"
+    }
+  },
+  "exports": {
+    "node": "./shims/nodejs.js",
+    "deno": "./shims/deno.js",
+    "default": "./index.js"
   },
   "repository": {
     "type": "git",
