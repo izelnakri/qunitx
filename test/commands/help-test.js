@@ -1,10 +1,19 @@
 import { module, test } from 'qunitx';
+import process from "node:process";
 import fs from 'node:fs';
 import { promisify } from 'node:util';
 import { exec } from 'node:child_process';
 
+const CWD = process.cwd();
+const VERSION = JSON.parse(fs.readFileSync(`${CWD}/package.json`)).version;
 const shell = promisify(exec);
-const VERSION = JSON.parse(fs.readFileSync(`${process.cwd()}/package.json`)).version;
+const cli = async function(arg = '') {
+  if (process.argv[0].includes('deno')) {
+    return await shell(`deno run --allow-read ${CWD}/deno/cli.js ${arg}`);
+  }
+
+  return await shell(`deno run --allow-read ${CWD}/cli.js ${arg}`);
+}
 const printedHelpOutput = `[qunitx v${VERSION}] Usage: qunitx [targets] --$flags
 
 Input options:
@@ -31,34 +40,33 @@ $ qunitx new $testFileName  # Creates a qunitx test file`;
 
 module('Commands | Help tests', () => {
   test('$ qunitx -> prints help text', async (assert) => {
-    const { stdout } = await shell(`node ${process.cwd()}/cli.js`);
+    const { stdout } = await cli();
 
     console.log(stdout);
     assert.ok(stdout.includes(printedHelpOutput));
   });
 
   test('$ qunitx print -> prints help text', async (assert) => {
-    const { stdout } = await shell(`node ${process.cwd()}/cli.js print`);
+    const { stdout } = await cli('print');
 
     assert.ok(stdout.includes(printedHelpOutput));
   });
 
   test('$ qunitx p -> prints help text', async (assert) => {
-    const { stdout } = await shell(`node ${process.cwd()}/cli.js p`);
+    const { stdout } = await cli('p');
 
     assert.ok(stdout.includes(printedHelpOutput));
   });
 
   test('$ qunitx help -> prints help text', async (assert) => {
-    const { stdout } = await shell(`node ${process.cwd()}/cli.js help`);
+    const { stdout } = await cli('help');
 
     assert.ok(stdout.includes(printedHelpOutput));
   });
 
   test('$ qunitx h -> prints help text', async (assert) => {
-    const { stdout } = await shell(`node ${process.cwd()}/cli.js h`);
+    const { stdout } = await cli('h');
 
     assert.ok(stdout.includes(printedHelpOutput));
   });
 });
-

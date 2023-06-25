@@ -4,11 +4,18 @@ import { promisify } from 'node:util';
 import { exec } from 'node:child_process';
 
 const shell = promisify(exec);
+const cli = async function(arg = '') {
+  if (process.argv[0].includes('deno')) {
+    return await shell(`deno run --allow-read ${CWD}/deno/cli.js ${arg}`);
+  }
+
+  return await shell(`deno run --allow-read ${CWD}/cli.js ${arg}`);
+}
 
 module('Commands | init tests', () => {
   test('$ qunitx init -> creates the test.html and correctly', async () => {
     // assert missing
-    const { stdout } = await shell(`node ${process.cwd()}/cli.js`);
+    const { stdout } = await cli('init');
     // assert added
   });
 
