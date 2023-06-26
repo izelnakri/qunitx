@@ -44,3 +44,5 @@ function assignDefaultValues(options, defaultValues) {
 
   return options;
 }
+
+export default { module, test, assert };

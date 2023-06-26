@@ -32,6 +32,8 @@ function assignDefaultValues(options, defaultValues) {
   return options;
 }
 
+export default { module, test, assert };
+
 // NOTE: later maybe expose these as well:
 
 // import QUnit from './vendor/qunit.js';
