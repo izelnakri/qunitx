@@ -32,7 +32,7 @@ import { module, test } from 'qunitx';
 Example:
 
 ```js
-// in some-test.js: (typescript is also supported for --browser mode)
+// in some-test.js: (typescript is also supported for --browser mode and node.js with --loader flag)
 import { module, test } from 'qunitx';
 import $ from 'jquery';
 
@@ -63,6 +63,13 @@ $ qunitx some-test.js --browser
 # with browser output enabled:
 
 $ qunitx some-test.js --browser --debug
+
+# TypeScript also works, make sure on node.js mode, tsconfig.json exists with compilerOptions.module & compilerOptions.moduleResolution set to "NodeNext":
+
+$ node --loader=ts-node/esm/transpile-only --test some-test.ts
+
+$ qunitx some-test.ts --browser --debug
+
 ```
 
 ### Code coverage
