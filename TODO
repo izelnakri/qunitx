@@ -1,5 +1,5 @@
 - Continue with nanoexpress removal
-- Implement remaining shims/deno-asserts.js
+- "$ qunitx sanity-test.ts" made redundant due to (node --test mode) this should impact dependencies and internal modules
 - Implement other test cases in deno
 
 Shim dir structure should be: shims/nodejs/ shims/deno shims/browser
