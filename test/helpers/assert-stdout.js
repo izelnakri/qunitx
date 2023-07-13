@@ -1,4 +1,4 @@
-export function assertStdout(assert, folderNames, options={ checkFailure: false, browser: false, debug: false }) {
+export function assertStdout(assert, folderNames, options={ checkFailure: false, debug: false }) {
   // folderNames.forEach((folder
 }
 

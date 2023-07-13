@@ -1,4 +1,4 @@
-import { module, test } from '../../index.js';
+import { module, test } from 'qunitx';
 
 module('{{moduleName}} Passing Tests', function(hooks) {
   test('assert true works', function (assert) {
@@ -13,7 +13,7 @@ module('{{moduleName}} Passing Tests', function(hooks) {
     assert.expect(3);
 
     const wait = new Promise((resolve, reject) => {
-      window.setTimeout(() => {
+      setTimeout(() => {
         console.log('resolving async test');
         console.log({
           moduleName: 'called resolved async test with object',

@@ -1,4 +1,5 @@
 #!/usr/bin/env -S TS_NODE_COMPILER_OPTIONS='{"module":"ES2020"}' node --loader ts-node/esm/transpile-only
+import process from 'node:process';
 import displayHelpOutput from './lib/commands/help.js';
 import initializeProject from './lib/commands/init.js';
 import generateTestFiles from './lib/commands/generate.js';

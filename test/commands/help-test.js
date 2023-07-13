@@ -9,11 +9,12 @@ const VERSION = JSON.parse(fs.readFileSync(`${CWD}/package.json`)).version;
 const shell = promisify(exec);
 const cli = async function(arg = '') {
   if (process.argv[0].includes('deno')) {
-    return await shell(`deno run --allow-read ${CWD}/deno/cli.js ${arg}`);
+    return await shell(`deno run --allow-read --allow-env ${CWD}/deno/cli.js ${arg}`);
   }
 
-  return await shell(`deno run --allow-read ${CWD}/cli.js ${arg}`);
+  return await shell(`node ${CWD}/cli.js ${arg}`);
 }
+
 const printedHelpOutput = `[qunitx v${VERSION}] Usage: qunitx [targets] --$flags
 
 Input options:
