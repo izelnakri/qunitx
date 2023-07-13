@@ -32,6 +32,4 @@ export const testDone = QUnit.testDone;
 export const moduleDone = QUnit.moduleDone;
 export const diff = QUnit.diff;
 
-export default Object.assign(QUnit, {
-  QUnitxVersion: '0.0.1'
-});
+export default QUnit;

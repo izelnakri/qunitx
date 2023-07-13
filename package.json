@@ -6,14 +6,16 @@
   "author": "Izel Nakri",
   "license": "MIT",
   "keywords": [
+    "test",
+    "test framework",
+    "testing",
     "qunit",
-    "qunit-plugin"
+    "node",
+    "deno",
+    "browser"
   ],
   "engines": {
     "node": ">=20.3.0"
-  },
-  "bin": {
-    "qunitx": "cli.js"
   },
   "imports": {
     "qunitx": {
@@ -52,28 +54,11 @@
     "test:sanity-first": "./cli.js test/helpers/failing-tests.js test/helpers/failing-tests.ts",
     "test:sanity-second": "./cli.js test/helpers/passing-tests.js test/helpers/passing-tests.ts"
   },
-  "dependencies": {
-    "cheerio": "^1.0.0-rc.10",
-    "chokidar": "^3.5.3",
-    "esbuild": "^0.18.12",
-    "js-yaml": "^4.1.0",
-    "jsdom": "^22.0.0",
-    "kleur": "^4.1.5",
-    "picomatch": "^2.3.1",
-    "puppeteer": "20.8.2",
-    "recursive-lookup": "1.1.0",
-    "ws": "^8.13.0"
-  },
-  "peerDependencies": {
-    "ts-node": ">=10.7.0"
-  },
   "devDependencies": {
+    "ts-node": ">=10.7.0",
     "auto-changelog": "^2.4.0",
-    "cors": "^2.8.5",
-    "express": "^4.17.3",
     "prettier": "^3.0.0",
     "qunit": "^2.19.4",
-    "qunitx": "^0.6.0",
     "release-it": "^16.1.0"
   },
   "volta": {
