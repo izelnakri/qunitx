@@ -1,5 +1,5 @@
 {
   "imports": {
-    "qunitx": "./shims/deno.js"
+    "qunitx": "./shims/deno/index.js"
   }
 }

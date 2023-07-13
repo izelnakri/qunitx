@@ -6,7 +6,7 @@ import {
   describe,
   it,
 } from "https://deno.land/std@0.192.0/testing/bdd.ts";
-import assert from './deno-assert.js';
+import assert from './assert.js';
 
 // TODO: TEST beforeEach, before, afterEach, after, currently not sure if they work!
 export const module = async function(moduleName, runtimeOptions, moduleContent) {

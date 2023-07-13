@@ -1,5 +1,5 @@
 import { run, describe, it, before, after, beforeEach, afterEach } from 'node:test';
-import assert from './nodejs-assert.js';
+import assert from './assert.js';
 
 export const module = async function(moduleName, runtimeOptions, moduleContent) {
   let targetRuntimeOptions = moduleContent ? runtimeOptions : {};

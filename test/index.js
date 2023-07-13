@@ -1,2 +1,1 @@
-import "./inputs/index.js";
-
+console.log('tests come here');
