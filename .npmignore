@@ -10,3 +10,5 @@ CHANGELOG.md
 Dockerfile
 README.md
 TODO
+test-output.log
+deno-bridge.js
