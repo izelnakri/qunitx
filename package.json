@@ -1,7 +1,7 @@
 {
   "name": "qunitx",
   "type": "module",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Framework testing any js file on node.js, browser or deno with QUnit API",
   "author": "Izel Nakri",
   "license": "MIT",
