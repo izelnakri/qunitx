@@ -1,4 +1,7 @@
 FROM node:20.4.0-slim
+
+ENV PUPPETEER_SKIP_DOWNLOAD=true CHROME_BIN=/usr/bin/google-chrome-stable
+
 RUN apt-get update \
     && apt-get install -y wget gnupg \
     && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
