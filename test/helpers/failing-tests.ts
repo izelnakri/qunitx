@@ -1,4 +1,4 @@
-import { module, test } from '../../index.js';
+import { module, test } from 'qunitx';
 
 module('{{moduleName}} Failing Tests', function(hooks) {
   test('assert true works', function (assert) {

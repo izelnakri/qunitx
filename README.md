@@ -58,27 +58,25 @@ $ node --test some-test.js
 
 # Suggested mode: if you want to run it in CI/google chrome:
 
-$ qunitx some-test.js --browser
+$ qunitx some-test.js
 
 # with browser output enabled:
 
-$ qunitx some-test.js --browser --debug
+$ qunitx some-test.js --debug
 
 # TypeScript also works, make sure on node.js mode, tsconfig.json exists with compilerOptions.module & compilerOptions.moduleResolution set to "NodeNext":
 
 $ node --loader=ts-node/esm/transpile-only --test some-test.ts
 
-$ qunitx some-test.ts --browser --debug
+$ qunitx some-test.ts --debug
 
 ```
 
 ### Code coverage
 
-QUnitX runner on node.js mode(without --browser) supports code coverage with c8, the best coverage tool
-in existence at the moment:
-
+Since QUnitX proxies to default node.js test runner in when executed with node, you can use any code coverage tool you like. When running the tests in `qunit`(the browser mode) code coverage support is limited.
 ```
-c8 qunitx test/attachments test/user
+c8 node test/attachments test/user
 ```
 
 You can browse [c8 documentation](https://github.com/bcoe/c8) for all configuration options.

@@ -1,3 +1,5 @@
+Make it so 'qunitx' is a 0-dependency npm package, qunitx-cli the browser runner
+
 - "$ qunitx sanity-test.ts" made redundant due to (node --test mode) this should impact dependencies and internal modules
 - Implement other test cases in deno
 

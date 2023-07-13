@@ -1,8 +1,8 @@
 import { assert, assertEquals, assertNotEquals, assertStrictEquals, assertNotStrictEquals, assertObjectMatch, assertRejects, assertThrows } from "https://deno.land/std@0.192.0/testing/asserts.ts";
 
 class AssertionError extends Error {
-  override name = 'AssertionError';
-  constructor(message: string) {
+  // override name = 'AssertionError';
+  constructor(message) {
     super(message);
   }
 }
