@@ -7,6 +7,8 @@ Your test JS/TS file(s) can now run interchangably in different runtimes with
 the default test runner of node.js or deno, or with a browser runner of your
 choice!
 
+[![asciicast](https://asciinema.org/a/597066.svg)](https://asciinema.org/a/597066?autoplay=1)
+
 In the browser you can use the same browser test/filter UI of
 [QUnit](https://github.com/qunitjs/qunit) and share the web links with your
 colleagues thanks to the test filters through query params feature of QUnit:
