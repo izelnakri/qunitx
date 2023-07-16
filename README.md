@@ -20,8 +20,9 @@ colleagues thanks to the test filters through query params feature of QUnit:
 ### Installation: Node & Deno
 
 This is a 0-dependency test library that runs code in your target runtime(node,
-deno or browser) test runner. In order to use qunitx to execute existing qunit
-tests please change:
+deno or browser) test runner. Since a default test runner is a new feature of node.js, please use node.js v20.3+.
+
+In order to use qunitx to convert qunit tests files please change:
 
 ```js
 import { module, test } from 'qunit';
