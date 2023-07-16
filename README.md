@@ -1,3 +1,6 @@
+![docker-based-ci](https://github.com/izelnakri/qunitx/workflows/docker-based-ci/badge.svg)
+[![npm version](https://badge.fury.io/js/qunitx.svg)](https://badge.fury.io/js/qunitx)
+
 # QUnitX
 
 ***Truly universal testing for JavaScript with the oldest, most mature & flexible
