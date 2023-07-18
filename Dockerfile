@@ -9,6 +9,8 @@ RUN apt-get update \
   && curl -fsSL https://deno.land/x/install/install.sh | sh \
   && echo 'export DENO_INSTALL="/root/.deno"; export PATH="$DENO_INSTALL/bin:$PATH"' >> ~/.bashrc
 
+ENV DENO_INSTALL=/root/.deno PATH=${PATH}:/root/.deno/bin
+
 WORKDIR /code/
 
 ADD package.json package-lock.json /code/
