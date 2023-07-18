@@ -45,9 +45,11 @@
     "release:alpha": "node_modules/.bin/release-it --preRelease=alpha --no-git.requireUpstream",
     "release:beta": "node_modules/.bin/release-it --preRelease=beta --no-git.requireUpstream",
     "release": "node_modules/.bin/release-it",
-    "test": "node --test test/index.js",
-    "test:deno": "deno test --allow-read --allow-env --allow-run test/commands/index.js",
-    "test:dev": "node --test test/index.js | tee test-output.log"
+    "test": "npm run test:browser && npm run test:node && npm run test:deno",
+    "test:dev": "npm run test | tee test-output.log",
+    "test:browser": "qunitx test/index.js --debug",
+    "test:deno": "deno test --allow-read --allow-env --allow-run test/index.js",
+    "test:node": "node --test test/index.js"
   },
   "devDependencies": {
     "ts-node": ">=10.7.0",

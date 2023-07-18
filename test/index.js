@@ -1,1 +1,1 @@
-console.log('tests come here');
+import "./deepEqual-test.js";
