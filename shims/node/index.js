@@ -32,7 +32,7 @@ function assignDefaultValues(options, defaultValues) {
   return options;
 }
 
-export default { module, test, assert, config: {} };
+export default { module, test, config: {} };
 
 // NOTE: later maybe expose these as well:
 
