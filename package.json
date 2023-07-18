@@ -52,11 +52,13 @@
     "test:node": "node --test test/index.js"
   },
   "devDependencies": {
-    "ts-node": ">=10.7.0",
     "auto-changelog": "^2.4.0",
     "prettier": "^3.0.0",
     "qunit": "^2.19.4",
-    "release-it": "^16.1.0"
+    "qunitx": "^0.8.0",
+    "qunitx-cli": "^0.0.3",
+    "release-it": "^16.1.0",
+    "ts-node": ">=10.7.0"
   },
   "volta": {
     "node": "20.4.0"
