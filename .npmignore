@@ -3,8 +3,10 @@ test
 dist
 docs
 tmp
+.dockerignore
 .github
 .gitignore
+build.js
 CHANGELOG.md
 Dockerfile
 README.md

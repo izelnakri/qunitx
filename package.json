@@ -56,7 +56,7 @@
     "prettier": "^3.0.0",
     "qunit": "^2.19.4",
     "qunitx": "^0.8.0",
-    "qunitx-cli": "^0.0.3",
+    "qunitx-cli": "^0.1.0",
     "release-it": "^16.1.0",
     "ts-node": ">=10.7.0"
   },
