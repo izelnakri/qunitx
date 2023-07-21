@@ -2,7 +2,7 @@
 // NOTE: consequetive arguments(2+) on deepEqual behavior removed, not a good feature and creates problems on interop
 import { module, test } from 'qunitx';
 
-module('deepEqual', function () {
+module('Assertion: deepEqual tests', function () {
   test('Primitive types and constants', function (assert) {
     assert.deepEqual(null, null, 'null');
     assert.notDeepEqual(null, {}, 'null');
