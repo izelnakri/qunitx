@@ -1,5 +1,5 @@
 import QUnit from '../../vendor/qunit.js';
-import { objectValuesSubset } from '../shared/index.js';
+import { objectValues, objectValuesSubset, validateExpectedExceptionArgs, validateException } from '../shared/index.js';
 import assert, { AssertionError } from 'node:assert';
 import util from 'node:util';
 
@@ -56,7 +56,7 @@ export default {
     }
   },
   true(state, message) {
-    if (state === true) {
+    if (state !== true) {
       throw new AssertionError({
         actual: state,
         expected: true,
@@ -66,7 +66,7 @@ export default {
     }
   },
   false(state, message) {
-    if (state === false) {
+    if (state !== false) {
       throw new AssertionError({
         actual: state,
         expected: true,
@@ -76,7 +76,7 @@ export default {
     }
   },
   equal(actual, expected, message) {
-    if (actual == expected) {
+    if (actual != expected) {
       throw new AssertionError({
         actual,
         expected,
@@ -87,7 +87,7 @@ export default {
     }
   },
   notEqual(actual, expected, message) {
-    if (actual != expected) {
+    if (actual == expected) {
       throw new AssertionError({
         actual,
         expected,
@@ -189,23 +189,73 @@ export default {
       });
     }
   },
-  throws: assert.throws,
-  rejects: assert.rejects,
-};
+  throws(blockFn, expectedInput, assertionMessage) {
+    let [expected, message] = validateExpectedExceptionArgs(expectedInput, assertionMessage, 'rejects');
+    if (typeof blockFn !== 'function') {
+      throw new AssertionError({
+        actual: blockFn,
+        expected: Function,
+        message: 'The value provided to `assert.throws` was not a function.',
+        stackStartFn: this.throws,
+      });
+    }
 
-function objectValues(obj) {
-  let allowArray = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
-  let vals = allowArray && is('array', obj) ? [] : {};
+    try {
+      blockFn();
+    } catch (error) {
+      let validation = validateException(error, expected, message);
+      if (validation.result === false) {
+        throw new AssertionError({
+          actual: validation.result,
+          expected: validation.expected,
+          message: validation.message,
+          stackStartFn: this.throws,
+        });
+      }
 
-  for (var key in obj) {
-    if (hasOwn$1.call(obj, key)) {
-      let val = obj[key];
-      vals[key] = val === Object(val) ? objectValues(val, allowArray) : val;
+      return;
+    }
+
+    throw new AssertionError({
+      actual: blockFn,
+      expected: expected,
+      message: 'Function passed to `assert.throws` did not throw an exception!',
+      stackStartFn: this.throws,
+    });
+  },
+  async rejects(promise, expectedInput, assertionMessage) {
+    let [expected, message] = validateExpectedExceptionArgs(expectedInput, assertionMessage, 'rejects');
+    let then = promise && promise.then;
+    if (typeof then !== 'function') {
+      throw new AssertionError({
+        actual: promise,
+        expected: expected,
+        message: 'The value provided to `assert.rejects` was not a promise!',
+        stackStartFn: this.rejects,
+      });
+    }
+
+    try {
+      await promise;
+      throw new AssertionError({
+        actual: promise,
+        expected: expected,
+        message: 'The promise returned by the `assert.rejects` callback did not reject!',
+        stackStartFn: this.rejects,
+      });
+    } catch (error) {
+      let validation = validateException(error, expected, message);
+      if (validation.result === false) {
+        throw new AssertionError({
+          actual: validation.result,
+          expected: validation.expected,
+          message: validation.message,
+          stackStartFn: this.rejects,
+        });
+      }
     }
   }
-
-  return vals;
-}
+};
 
 function defaultMessage(actual, description, expected) {
   return `
