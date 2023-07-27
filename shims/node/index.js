@@ -1,24 +1,161 @@
-import { run, describe, it, before, after, beforeEach, afterEach } from 'node:test';
-import assert from './assert.js';
+import { run, describe, it, before as _before, after as _after, beforeEach as _beforeEach, afterEach as _afterEach } from 'node:test';
+import Assert, { AssertionError } from './assert.js';
+
+class TestContext {
+  assert;
+  name;
+  timeout;
+  steps = [];
+  expectedAssertionCount;
+  totalExecutedAssertions = 0;
+
+  constructor(name, moduleContext) {
+    this.name = `${ModuleContext.moduleChain.map((module) => module.name).join(' | ')}}${name}`;
+    this.module = moduleContext;
+    this.module.tests.push(this);
+    this.assert = new Assert(moduleContext, this);
+  }
+
+  complete() {
+    // TODO: below should only work if moduleChain is one level deep
+    // if (this.totalExecutedAssertions === 0) {
+    //   this.assert.pushResult({
+    //     result: false,
+    //     actual: this.totalExecutedAssertions,
+    //     expected: '> 0',
+    //     message: `Expected at least one assertion to be run for test: ${this.name}`,
+    //   });
+    // } else
+
+    if (this.steps.length > 0) {
+      this.assert.pushResult({
+        result: false,
+        actual: this.steps,
+        expected: [],
+        message: `Expected assert.verifySteps() to be called before end of test after using assert.step(). Unverified steps: ${this.steps.join(', ')}`
+      });
+    }
+
+    // TODO: how to build this for nested modules(?)
+    // if (this.expectedAssertionCount && this.expectedAssertionCount !== this.totalExecutedAssertions) {
+    //   this.assert.pushResult({
+    //     result: false,
+    //     actual: this.totalExecutedAssertions,
+    //     expected: this.expectedAssertionCount,
+    //     message: `Expected ${this.expectedAssertionCount} assertions, but ${this.totalExecutedAssertions} were run for test: ${this.name}`
+    //   });
+    // }
+  }
+}
+
+class ModuleContext {
+  static moduleChain = [];
+
+  static get current() {
+    return this.moduleChain[this.moduleChain.length - 1] || null;
+  }
+
+  #tests = [];
+  get tests() {
+    return this.#tests;
+  }
+
+  constructor(name) {
+    this.name = name;
+    ModuleContext.moduleChain.push(this);
+  }
+}
 
 export const module = async function(moduleName, runtimeOptions, moduleContent) {
   let targetRuntimeOptions = moduleContent ? runtimeOptions : {};
   let targetModuleContent = moduleContent ? moduleContent : runtimeOptions;
 
-  return describe(moduleName, assignDefaultValues(targetRuntimeOptions, { concurrency: true }), async function() {
-    return await targetModuleContent({ before, after, beforeEach, afterEach }, {
-      moduleName,
-      options: runtimeOptions
-    });
+  const moduleContext = new ModuleContext(moduleName);
+
+  return describe(moduleName, assignDefaultValues(targetRuntimeOptions, { concurrency: true }), async function () {
+    let afterHooks = [];
+    let assert;
+    let userProvidedModuleContent = targetModuleContent({
+      _context: moduleContext,
+      before(beforeFn) {
+        return _before(async function () {
+          assert = assert || new Assert(moduleContext);
+          return await beforeFn.call(moduleContext, assert);
+        });
+      },
+      beforeEach(beforeEachFn) {
+        let i = 0;
+        return _beforeEach(async function () {
+          return await beforeEachFn.call(moduleContext, moduleContext.tests[i++].assert);
+        });
+      },
+      afterEach(afterEachFn) {
+        let i = 0;
+        return _afterEach(async function () {
+          return await afterEachFn.call(moduleContext, moduleContext.tests[i++].assert);
+        });
+      },
+      after(afterFn) {
+        assert = assert || new Assert(moduleContext);
+        afterHooks.push(afterFn); // Save user-provided hooks
+
+        return _after(async function () {
+          for (const assert of moduleContext.tests.map(testContext => testContext.assert)) {
+            await assert.waitForAsyncOps();
+          }
+
+          for (let hook of afterHooks) {
+            let result = await hook.call(moduleContext, assert);
+          }
+
+          moduleContext.tests.forEach(testContext => testContext.complete());
+        });
+      }
+    }, { moduleName, options: runtimeOptions });
+
+    ModuleContext.moduleChain.pop();
+
+    let result = await userProvidedModuleContent;
+
+    if (afterHooks.length === 0) {
+      await _after(async () => {
+        for (const assert of moduleContext.tests.map(testContext => testContext.assert)) {
+          await assert.waitForAsyncOps();
+        }
+
+        return moduleContext.tests.forEach(testContext => testContext.complete());
+      });
+    }
+
+    return result;
   });
 }
 
 export const test = async function(testName, runtimeOptions, testContent) {
+  const moduleContext = ModuleContext.current;
+  if (!moduleContext) {
+    throw new Error(`Test '${testName}' called outside of module context.`);
+  }
+
   let targetRuntimeOptions = testContent ? runtimeOptions : {};
   let targetTestContent = testContent ? testContent : runtimeOptions;
 
-  return it(testName, assignDefaultValues(targetRuntimeOptions, { concurrency: true }), async function() {
-    return await targetTestContent(assert, { testName, options: runtimeOptions });
+  const testContext = new TestContext(testName, moduleContext);
+
+  return it(testName, assignDefaultValues(targetRuntimeOptions, { concurrency: true }), async function () {
+    let result;
+    try {
+      result = await targetTestContent.call(moduleContext, testContext.assert, { testName, options: runtimeOptions });
+
+      await testContext.assert.waitForAsyncOps();
+    } catch (error) {
+      throw error;
+    } finally {
+      // testContext.complete();
+    }
+
+    console.log('test() call finish');
+    return result;
   });
 }
 
@@ -33,43 +170,3 @@ function assignDefaultValues(options, defaultValues) {
 }
 
 export default { module, test, config: {} };
-
-// NOTE: later maybe expose these as well:
-
-// import QUnit from './vendor/qunit.js';
-
-// QUnit.config.autostart = false;
-
-// export const isLocal = QUnit.isLocal;
-// export const on = QUnit.on;
-// export const test = QUnit.test;
-// export const skip = QUnit.skip;
-// export const start = QUnit.start;
-// export const is = QUnit.is;
-// export const extend = QUnit.extend;
-// export const stack = QUnit.stack;
-// export const onUnhandledRejection = QUnit.onUnhandledRejection;
-// export const assert = QUnit.assert;
-// export const dump = QUnit.dump;
-// export const done = QUnit.done;
-// export const testStart = QUnit.testStart;
-// export const moduleStart = QUnit.moduleStart;
-// export const version = QUnit.version;
-// export const module = QUnit.module;
-// export const todo = QUnit.todo;
-// export const only = QUnit.only;
-// export const config = QUnit.config;
-// export const objectType = QUnit.objectType;
-// export const load = QUnit.load;
-// export const onError = QUnit.onError;
-// export const pushFailure = QUnit.pushFailure;
-// export const equiv = QUnit.equiv;
-// export const begin = QUnit.begin;
-// export const log = QUnit.log;
-// export const testDone = QUnit.testDone;
-// export const moduleDone = QUnit.moduleDone;
-// export const diff = QUnit.diff;
-
-// export default Object.assign(QUnit, {
-//   QUnitxVersion: '0.0.1'
-// });
