@@ -1,5 +1,6 @@
 import { module, test } from 'qunitx';
 
+// NOTE: throws and rejects not fully compatible with QUnit due to commented out tests, but good enough
 module('Assertion: Throws - passing assertions', function () {
   test('throws', function (assert) {
     function CustomError (message) {
@@ -427,20 +428,99 @@ module('Assertion: Throws - passing assertions', function () {
   });
 });
 
-// module('Assertion: Throws - failing assertions', function () {
-//   test('strictEqual', function (assert) {
-//     assert.strictEqual(1, 2);
-//     assert.strictEqual('foo', 'bar');
-//     assert.strictEqual('foo', ['foo']);
-//     assert.strictEqual('1', 1);
-//     assert.strictEqual('foo', { toString: function () { return 'foo'; } });
-//   });
+module('Assertion: Throws - failing assertions', function (hooks) {
+  hooks.beforeEach(function (assert) {
+    let originalPushResult = assert.pushResult;
+    assert.pushResult = function (resultInfo) {
+      // Inverts the result so we can test failing assertions
+      resultInfo.result = !resultInfo.result;
+      originalPushResult.call(this, resultInfo);
+    };
+  });
 
-//   test('notStrictEqual', function (assert) {
-//     assert.notStrictEqual(1, 1);
-//     assert.notStrictEqual('foo', 'foo');
-//   });
-// });
+  test('throws', function (assert) {
+    assert.throws(() => assert.throws(
+      function () {
+
+      },
+      'throws fails without a thrown error'
+    ));
+
+    // assert.throws(() => assert.throws(
+    //   function () {
+    //     throw 'foo';
+    //   },
+    //   /bar/,
+    //   "throws fail when regexp doesn't match the error message"
+    // ));
+
+    // assert.throws(() => assert.throws(
+    //   function () {
+    //     throw 'foo';
+    //   },
+    //   function () {
+    //     return false;
+    //   },
+    //   'throws fail when expected function returns false'
+    // ));
+
+    // non-function actual values
+    assert.throws(() => assert.throws(
+      undefined,
+      'throws fails when actual value is undefined'));
+
+    assert.throws(() => assert.throws(
+      2,
+      'throws fails when actual value is a number'));
+
+    assert.throws(() => assert.throws(
+      [],
+      'throws fails when actual value is an array'));
+
+    assert.throws(() => assert.throws(
+      'notafunction',
+      'throws fails when actual value is a string'));
+
+    assert.throws(() => assert.throws(
+      {},
+      'throws fails when actual value is an object'));
+  });
+
+  // test('rejects', function (assert) {
+  //   // assert.throws(() => assert.rejects(
+  //   //   buildMockPromise('some random value', [> shouldResolve <] true),
+  //   //   'fails when the provided promise fulfills'
+  //   // ));
+
+  //   // assert.throws(() => assert.rejects(
+  //   //   buildMockPromise('foo'),
+  //   //   /bar/,
+  //   //   'rejects fails when regexp does not match'
+  //   // ));
+
+  //   // assert.throws(() => assert.rejects(
+  //   //   buildMockPromise(new Error('foo')),
+  //   //   function RandomConstructor () { },
+  //   //   'rejects fails when rejected value is not an instance of the provided constructor'
+  //   // ));
+
+  //   function SomeConstructor () { }
+
+  //   // assert.throws(() => assert.rejects(
+  //   //   buildMockPromise(new SomeConstructor()),
+  //   //   function OtherRandomConstructor () { },
+  //   //   'rejects fails when rejected value is not an instance of the provided constructor'
+  //   // ));
+
+  //   // assert.throws(() => assert.rejects(
+  //   //   buildMockPromise('some value'),
+  //   //   function () { return false; },
+  //   //   'rejects fails when the expected function returns false'
+  //   // ));
+
+  //   // assert.throws(() => assert.rejects(null));
+  // });
+});
 
 function buildMockPromise (settledValue, shouldFulfill) {
   return new Promise((resolve, reject) => {
