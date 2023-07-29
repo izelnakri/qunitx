@@ -9,39 +9,79 @@ export class AssertionError extends DenoAssertionError {
   }
 }
 
-// NOTE: Maybe do the expect, steps in some object, and also do timeout and async(?)
-export default {
-  _steps: [],
-  timeout() {
-    return true; // NOTE: NOT implemented
-  },
-  step(value = '') {
-    this._steps.push(value);
-  },
+export default class Assert {
+  AssertionError = AssertionError
+
+  #asyncOps = [];
+
+  constructor(module, test) {
+    this.test = test || module;
+  }
+  _incrementAssertionCount() {
+    this.test.totalExecutedAssertions++;
+  }
+  timeout(number) {
+    if (!Number.isInteger(number) || number < 0) {
+      throw new Error('assert.timeout() expects a positive integer.');
+    }
+
+    this.test.timeout = number;
+  }
+  step(message) {
+    let assertionMessage = message;
+    let result = !!message;
+
+    this.test.steps.push(message);
+
+    if (typeof message === 'undefined' || message === '') {
+      assertionMessage = 'You must provide a message to assert.step';
+    } else if (typeof message !== 'string') {
+      assertionMessage = 'You must provide a string value to assert.step';
+      result = false;
+    }
+
+    this.pushResult({
+      result,
+      message: assertionMessage
+    });
+  }
   verifySteps(steps, message = 'Verify steps failed!') {
-    const result = this.deepEqual(this._steps, steps, message);
+    this.deepEqual(this.test.steps, steps, message);
+    this.test.steps.length = 0;
+  }
+  expect(number) {
+    if (!Number.isInteger(number) || number < 0) {
+      throw new Error('assert.expect() expects a positive integer.');
+    }
 
-    this._steps.length = 0;
-
-    return result;
-  },
-  expect() {
-    return () => {}; // NOTE: NOT implemented
-  },
+    this.test.expectedAssertionCount = number;
+  }
   async() {
-    return () => {}; // NOTE: noop, node should have sanitizeResources
-  },
+    let resolveFn;
+    let done = new Promise(resolve => { resolveFn = resolve; });
+
+    this.#asyncOps.push(done);
+
+    return () => { resolveFn(); };
+  }
+  async waitForAsyncOps() {
+    return Promise.all(this.#asyncOps);
+  }
   pushResult(resultInfo = {}) {
-    if (!result) {
+    this._incrementAssertionCount();
+    if (!resultInfo.result) {
       throw new AssertionError({
         actual: resultInfo.actual,
         expected: resultInfo.expected,
-        message: result.Infomessage || 'Custom assertion failed!',
+        message: resultInfo.message || 'Custom assertion failed!',
         stackStartFn: this.pushResult,
       });
     }
-  },
+
+    return this;
+  }
   ok(state, message) {
+    this._incrementAssertionCount();
     if (!state) {
       throw new AssertionError({
         actual: state,
@@ -50,8 +90,9 @@ export default {
         stackStartFn: this.ok,
       });
     }
-  },
+  }
   notOk(state, message) {
+    this._incrementAssertionCount();
     if (state) {
       throw new AssertionError({
         actual: state,
@@ -60,8 +101,9 @@ export default {
         stackStartFn: this.notOk,
       });
     }
-  },
+  }
   true(state, message) {
+    this._incrementAssertionCount();
     if (state !== true) {
       throw new AssertionError({
         actual: state,
@@ -70,8 +112,9 @@ export default {
         stackStartFn: this.true,
       });
     }
-  },
+  }
   false(state, message) {
+    this._incrementAssertionCount();
     if (state !== false) {
       throw new AssertionError({
         actual: state,
@@ -80,8 +123,9 @@ export default {
         stackStartFn: this.false,
       });
     }
-  },
+  }
   equal(actual, expected, message) {
+    this._incrementAssertionCount();
     if (actual != expected) {
       throw new AssertionError({
         actual,
@@ -91,8 +135,9 @@ export default {
         stackStartFn: this.equal,
       });
     }
-  },
+  }
   notEqual(actual, expected, message) {
+    this._incrementAssertionCount();
     if (actual == expected) {
       throw new AssertionError({
         actual,
@@ -102,11 +147,12 @@ export default {
         stackStartFn: this.notEqual,
       });
     }
-  },
+  }
   propEqual(actual, expected, message) {
+    this._incrementAssertionCount();
     let targetActual = objectValues(actual);
     let targetExpected = objectValues(expected);
-    if (!window.QUnit.equiv(targetActual, targetExpected)) {
+    if (!QUnit.equiv(targetActual, targetExpected)) {
       throw new AssertionError({
         actual: targetActual,
         expected: targetExpected,
@@ -114,11 +160,12 @@ export default {
         stackStartFn: this.propEqual,
       });
     }
-  },
+  }
   notPropEqual(actual, expected, message) {
+    this._incrementAssertionCount();
     let targetActual = objectValues(actual);
     let targetExpected = objectValues(expected);
-    if (window.QUnit.equiv(targetActual, targetExpected)) {
+    if (QUnit.equiv(targetActual, targetExpected)) {
       throw new AssertionError({
         actual: targetActual,
         expected: targetExpected,
@@ -126,11 +173,12 @@ export default {
         stackStartFn: this.notPropEqual,
       });
     }
-  },
+  }
   propContains(actual, expected, message) {
+    this._incrementAssertionCount();
     let targetActual = objectValuesSubset(actual, expected);
     let targetExpected = objectValues(expected, false);
-    if (!window.QUnit.equiv(targetActual, targetExpected)) {
+    if (!QUnit.equiv(targetActual, targetExpected)) {
       throw new AssertionError({
         actual: targetActual,
         expected: targetExpected,
@@ -138,11 +186,12 @@ export default {
         stackStartFn: this.propContains,
       });
     }
-  },
+  }
   notPropContains(actual, expected, message) {
+    this._incrementAssertionCount();
     let targetActual = objectValuesSubset(actual, expected);
     let targetExpected = objectValues(expected);
-    if (window.QUnit.equiv(targetActual, targetExpected)) {
+    if (QUnit.equiv(targetActual, targetExpected)) {
       throw new AssertionError({
         actual: targetActual,
         expected: targetExpected,
@@ -150,9 +199,10 @@ export default {
         stackStartFn: this.notPropContains,
       });
     }
-  },
+  }
   deepEqual(actual, expected, message) {
-    if (!window.QUnit.equiv(actual, expected)) {
+    this._incrementAssertionCount();
+    if (!QUnit.equiv(actual, expected)) {
       throw new AssertionError({
         actual,
         expected,
@@ -161,9 +211,10 @@ export default {
         stackStartFn: this.deepEqual,
       });
     }
-  },
+  }
   notDeepEqual(actual, expected, message) {
-    if (window.QUnit.equiv(actual, expected)) {
+    this._incrementAssertionCount();
+    if (QUnit.equiv(actual, expected)) {
       throw new AssertionError({
         actual,
         expected,
@@ -172,8 +223,9 @@ export default {
         stackStartFn: this.notDeepEqual,
       });
     }
-  },
+  }
   strictEqual(actual, expected, message) {
+    this._incrementAssertionCount();
     if (actual !== expected) {
       throw new AssertionError({
         actual,
@@ -183,8 +235,9 @@ export default {
         stackStartFn: this.strictEqual,
       });
     }
-  },
+  }
   notStrictEqual(actual, expected, message) {
+    this._incrementAssertionCount();
     if (actual === expected) {
       throw new AssertionError({
         actual,
@@ -194,8 +247,9 @@ export default {
         stackStartFn: this.notStrictEqual,
       });
     }
-  },
+  }
   throws(blockFn, expectedInput, assertionMessage) {
+    this?._incrementAssertionCount();
     let [expected, message] = validateExpectedExceptionArgs(expectedInput, assertionMessage, 'rejects');
     if (typeof blockFn !== 'function') {
       throw new AssertionError({
@@ -228,8 +282,9 @@ export default {
       message: 'Function passed to `assert.throws` did not throw an exception!',
       stackStartFn: this.throws,
     });
-  },
+  }
   async rejects(promise, expectedInput, assertionMessage) {
+    this._incrementAssertionCount();
     let [expected, message] = validateExpectedExceptionArgs(expectedInput, assertionMessage, 'rejects');
     let then = promise && promise.then;
     if (typeof then !== 'function') {
@@ -276,4 +331,3 @@ ${inspect(expected)}`
 function inspect(value) {
   return util.inspect(value, { depth: 10, colors: true, compact: false });
 }
-

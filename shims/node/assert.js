@@ -6,7 +6,6 @@ import util from 'node:util';
 export const AssertionError = _AssertionError;
 
 // More: contexts needed for timeout
-
 // NOTE: QUnit API provides assert on hooks, which makes it hard to make it concurrent
 // NOTE: Another approach for a global report Make this._assertions.set(this.currentTest, (this._assertions.get(this.currentTest) || 0) + 1); for pushResult
 // NOTE: This should *always* be a singleton(?), passed around as an argument for hooks. Seems difficult with concurrency. Singleton needs to be a concurrent data structure.
@@ -48,8 +47,6 @@ export default class Assert {
     });
   }
   verifySteps(steps, message = 'Verify steps failed!') {
-    // const actualStepsClone = this.module.test.steps.slice(); // TODO: is this needed(?)
-
     this.deepEqual(this.test.steps, steps, message);
     this.test.steps.length = 0;
   }

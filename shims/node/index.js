@@ -1,4 +1,4 @@
-import { describe, it, before as _before, after as _after, beforeEach as _beforeEach, afterEach as _afterEach } from 'node:test';
+import { describe, it, before as beforeAll, after as afterAll } from 'node:test';
 import Assert from './assert.js';
 
 // NOTE: node.js beforeEach & afterEach is buggy because the TestContext it has is NOT correct reference when called, it gets the last context
@@ -143,7 +143,7 @@ export const module = (moduleName, runtimeOptions, moduleContent) => {
     let beforeHooks = [];
     let afterHooks = [];
 
-    _before(async function () {
+    beforeAll(async function () {
       Object.assign(moduleContext, moduleContext.moduleChain.reduce((result, module) => {
         const { name, ...moduleWithoutName } = module;
 
@@ -169,7 +169,7 @@ export const module = (moduleName, runtimeOptions, moduleContent) => {
         });
       });
     });
-    _after(async () => {
+    afterAll(async () => {
       for (const assert of moduleContext.tests.map(testContext => testContext.assert)) {
         await assert.waitForAsyncOps();
       }
