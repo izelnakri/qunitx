@@ -1,0 +1,15 @@
+create runtime error for module with no tests, create runtime error for hooks declared in inner modules without hooks reference(typo)
+
+context parameter to module() and test() instead of this
+
+Test left: custom assertions(?)[pushResult], timeout
+
+Add .match() for pattern match
+
+interested in node.js doctool(?)
+
+function innerFail(obj) {
+  if (obj.message instanceof Error) throw obj.message;
+
+  throw new AssertionError(obj);
+}

@@ -40,22 +40,31 @@ module('Assertion: Truthy - passing assertions', function () {
   });
 });
 
-// module('Assertion: Truthy - failing assertions', function () {
-//   test('ok', function (assert) {
-//     assert.ok(false);
-//     assert.ok(0);
-//     assert.ok('');
-//     assert.ok(null);
-//     assert.ok(undefined);
-//     assert.ok(NaN);
-//   });
+module('Assertion: Truthy - failing assertions', function (hooks) {
+  hooks.beforeEach(function (assert) {
+    let originalPushResult = assert.pushResult;
+    assert.pushResult = function (resultInfo) {
+      // Inverts the result so we can test failing assertions
+      resultInfo.result = !resultInfo.result;
+      originalPushResult.call(this, resultInfo);
+    };
+  });
 
-//   test('notOk', function (assert) {
-//     assert.notOk(true);
-//     assert.notOk(1);
-//     assert.notOk('1');
-//     assert.notOk(Infinity);
-//     assert.notOk({});
-//     assert.notOk([]);
-//   });
-// });
+  test('ok', function (assert) {
+    assert.throws(() => assert.ok(false));
+    assert.throws(() => assert.ok(0));
+    assert.throws(() => assert.ok(''));
+    assert.throws(() => assert.ok(null));
+    assert.throws(() => assert.ok(undefined));
+    assert.throws(() => assert.ok(NaN));
+  });
+
+  test('notOk', function (assert) {
+    assert.throws(() => assert.notOk(true));
+    assert.throws(() => assert.notOk(1));
+    assert.throws(() => assert.notOk('1'));
+    assert.throws(() => assert.notOk(Infinity));
+    assert.throws(() => assert.notOk({}));
+    assert.throws(() => assert.notOk([]));
+  });
+});

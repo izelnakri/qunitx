@@ -220,42 +220,51 @@ module('Assertion: Property Equality - passing assertions', function () {
   });
 });
 
-// module('Assertion: Property Equality - failing assertions', function () {
-//   test('propEqual', function (assert) {
-//     function Foo (x, y, z) {
-//       this.x = x;
-//       this.y = y;
-//       this.z = z;
-//     }
-//     Foo.prototype.baz = function () {};
-//     Foo.prototype.bar = 'prototype';
+module('Assertion: Property Equality - failing assertions', function (hooks) {
+  hooks.beforeEach(function (assert) {
+    let originalPushResult = assert.pushResult;
+    assert.pushResult = function (resultInfo) {
+      // Inverts the result so we can test failing assertions
+      resultInfo.result = !resultInfo.result;
+      originalPushResult.call(this, resultInfo);
+    };
+  });
 
-//     assert.propEqual(
-//       new Foo('1', 2, 3),
-//       {
-//         x: 1,
-//         y: '2',
-//         z: 3
-//       }
-//     );
-//   });
+  test('propEqual', function (assert) {
+    function Foo (x, y, z) {
+      this.x = x;
+      this.y = y;
+      this.z = z;
+    }
+    Foo.prototype.baz = function () {};
+    Foo.prototype.bar = 'prototype';
 
-//   test('notPropEqual', function (assert) {
-//     function Foo (x, y, z) {
-//       this.x = x;
-//       this.y = y;
-//       this.z = z;
-//     }
-//     Foo.prototype.baz = function () {};
-//     Foo.prototype.bar = 'prototype';
+    assert.throws(() => assert.propEqual(
+      new Foo('1', 2, 3),
+      {
+        x: 1,
+        y: '2',
+        z: 3
+      }
+    ));
+  });
 
-//     assert.notPropEqual(
-//       new Foo(1, '2', []),
-//       {
-//         x: 1,
-//         y: '2',
-//         z: []
-//       }
-//     );
-//   });
-// });
+  test('notPropEqual', function (assert) {
+    function Foo (x, y, z) {
+      this.x = x;
+      this.y = y;
+      this.z = z;
+    }
+    Foo.prototype.baz = function () {};
+    Foo.prototype.bar = 'prototype';
+
+    assert.throws(() => assert.notPropEqual(
+      new Foo(1, '2', []),
+      {
+        x: 1,
+        y: '2',
+        z: []
+      }
+    ));
+  });
+});
