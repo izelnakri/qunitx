@@ -61,7 +61,7 @@
     "ts-node": ">=10.7.0"
   },
   "volta": {
-    "node": "20.4.0"
+    "node": "20.5.0"
   },
   "prettier": {
     "printWidth": 100,
