@@ -144,33 +144,29 @@ export const module = (moduleName, runtimeOptions, moduleContent) => {
     let afterHooks = [];
 
     _before(async function () {
-      let targetContext = moduleContext.moduleChain.reduce((result, module) => {
+      Object.assign(moduleContext, moduleContext.moduleChain.reduce((result, module) => {
         const { name, ...moduleWithoutName } = module;
 
-        Object.assign(result, moduleWithoutName);
-
-        result.steps = result.steps.concat(module.steps);
-
-        if (module.expectedAssertionCount) {
-          result.expectedAssertionCount = moduleContext.expectedAssertionCount;
-        }
-
-        return result;
-      }, { steps: [], expectedAssertionCount: undefined });
-      Object.assign(moduleContext, targetContext);
+        return Object.assign(result, moduleWithoutName, {
+          steps: result.steps.concat(module.steps),
+          expectedAssertionCount: module.expectedAssertionCount
+            ? module.expectedAssertionCount
+            : result.expectedAssertionCount
+        });
+      }, { steps: [], expectedAssertionCount: undefined }));
 
       for (let hook of beforeHooks) {
         await hook.call(moduleContext, moduleContext.assert);
       }
 
       moduleContext.tests.forEach((testContext) => {
-        const { name, ...targetContext } = module;
+        const { name, ...moduleContextWithoutName } = moduleContext;
 
-        Object.assign(testContext, targetContext);
-
-        testContext.steps = moduleContext.steps;
-        testContext.totalExecutedAssertions = moduleContext.totalExecutedAssertions;
-        testContext.expectedAssertionCount = moduleContext.expectedAssertionCount;
+        Object.assign(testContext, moduleContextWithoutName, {
+          steps: moduleContext.steps,
+          totalExecutedAssertions: moduleContext.totalExecutedAssertions,
+          expectedAssertionCount: moduleContext.expectedAssertionCount,
+        });
       });
     });
     _after(async () => {
