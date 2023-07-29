@@ -5,9 +5,8 @@ import util from 'node:util';
 
 export const AssertionError = _AssertionError;
 
-// const STEP_ERROR = { result: false, message: 'You must provide a string or object to assert.step()' };
-
 // More: contexts needed for timeout
+
 // NOTE: QUnit API provides assert on hooks, which makes it hard to make it concurrent
 // NOTE: Another approach for a global report Make this._assertions.set(this.currentTest, (this._assertions.get(this.currentTest) || 0) + 1); for pushResult
 // NOTE: This should *always* be a singleton(?), passed around as an argument for hooks. Seems difficult with concurrency. Singleton needs to be a concurrent data structure.
@@ -18,49 +17,23 @@ export default class Assert {
   #asyncOps = [];
 
   constructor(module, test) {
-    this.module = module;
-    this.test = test;
+    this.test = test || module;
   }
   _incrementAssertionCount() {
-    if (this.test) {
-      this.test.totalExecutedAssertions++;
-    } else {
-      this.module.tests.forEach(test => {
-        test.totalExecutedAssertions++;
-      });
-    }
+    this.test.totalExecutedAssertions++;
   }
-  // _applyToContext(func) {
-  //   if (this.test) {
-  //     return func(this.test);
-  //   } else {
-  //     return this.module.tests.map(func);
-  //   }
-  // },
   timeout(number) {
     if (!Number.isInteger(number) || number < 0) {
       throw new Error('assert.timeout() expects a positive integer.');
     }
 
-    if (this.test) {
-      this.test.timeout = number;
-    } else {
-      this.module.tests.forEach(test => {
-        test.timeout = number;
-      });
-    }
+    this.test.timeout = number;
   }
   step(message) {
     let assertionMessage = message;
     let result = !!message;
 
-    if (this.test) {
-      this.test.steps.push(message);
-    } else {
-      this.module.tests.forEach(test => {
-        test.steps.push(message);
-      });
-    }
+    this.test.steps.push(message);
 
     if (typeof message === 'undefined' || message === '') {
       assertionMessage = 'You must provide a message to assert.step';
@@ -77,50 +50,23 @@ export default class Assert {
   verifySteps(steps, message = 'Verify steps failed!') {
     // const actualStepsClone = this.module.test.steps.slice(); // TODO: is this needed(?)
 
-    if (this.test) {
-      let result = this.deepEqual(this.test.steps, steps, message);
-      this.test.steps.length = 0;
-    } else {
-      this.module.tests.forEach(test => {
-        let result = this.deepEqual(test.steps, steps, message);
-        test.steps.length = 0;
-      });
-    }
+    this.deepEqual(this.test.steps, steps, message);
+    this.test.steps.length = 0;
   }
   expect(number) {
     if (!Number.isInteger(number) || number < 0) {
       throw new Error('assert.expect() expects a positive integer.');
     }
 
-    if (this.test) {
-      this.test.expectedAssertionCount = number;
-    } else {
-      this.module.tests.forEach(test => {
-        test.expectedAssertionCount = number;
-      });
-    }
+    this.test.expectedAssertionCount = number;
   }
   async() {
     let resolveFn;
     let done = new Promise(resolve => { resolveFn = resolve; });
-    this.#asyncOps.push(done);
-    return () => { resolveFn(); };
 
-    // let resolve;
-    // const promise = new Promise((_resolve) => {
-    //   resolve = _resolve;
-    // });
-    // const doneFn = () => {
-    //   resolve();
-    // };
-    // if (this.test) {
-    //   this.test.asyncOp = promise;
-    // } else {
-    //   this.module.tests.forEach(test => {
-    //     test.asyncOp = promise;
-    //   });
-    // }
-    // return doneFn;
+    this.#asyncOps.push(done);
+
+    return () => { resolveFn(); };
   }
   async waitForAsyncOps() {
     return Promise.all(this.#asyncOps);
@@ -307,7 +253,6 @@ export default class Assert {
     }
   }
   throws(blockFn, expectedInput, assertionMessage) {
-    // TODO: This probably happens on increse shit
     this?._incrementAssertionCount();
     let [expected, message] = validateExpectedExceptionArgs(expectedInput, assertionMessage, 'rejects');
     if (typeof blockFn !== 'function') {

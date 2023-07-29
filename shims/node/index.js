@@ -1,58 +1,101 @@
-import { run, describe, it, before as _before, after as _after, beforeEach as _beforeEach, afterEach as _afterEach } from 'node:test';
-import Assert, { AssertionError } from './assert.js';
+import { describe, it, before as _before, after as _after, beforeEach as _beforeEach, afterEach as _afterEach } from 'node:test';
+import Assert from './assert.js';
+
+// NOTE: node.js beforeEach & afterEach is buggy because the TestContext it has is NOT correct reference when called, it gets the last context
+// NOTE: QUnit expect() logic is buggy in nested modules
+// NOTE: after gets the last direct children test of the module, not last defined context of a module(last defined context is a module)
 
 class TestContext {
-  assert;
   name;
-  timeout;
-  steps = [];
-  expectedAssertionCount;
-  totalExecutedAssertions = 0;
 
-  constructor(name, moduleContext) {
-    this.name = `${ModuleContext.moduleChain.map((module) => module.name).join(' | ')}}${name}`;
-    this.module = moduleContext;
-    this.module.tests.push(this);
-    this.assert = new Assert(moduleContext, this);
+  #module;
+  get module() {
+    return this.#module;
+  }
+  set module(value) {
+    this.#module = value;
   }
 
-  complete() {
-    // TODO: below should only work if moduleChain is one level deep
-    // if (this.totalExecutedAssertions === 0) {
-    //   this.assert.pushResult({
-    //     result: false,
-    //     actual: this.totalExecutedAssertions,
-    //     expected: '> 0',
-    //     message: `Expected at least one assertion to be run for test: ${this.name}`,
-    //   });
-    // } else
+  #assert;
+  get assert() {
+    return this.#assert;
+  }
+  set assert(value) {
+    this.#assert = value;
+  }
 
-    if (this.steps.length > 0) {
+  #timeout;
+  get timeout() {
+    return this.#timeout;
+  }
+  set timeout(value) {
+    this.#timeout = value;
+  }
+
+  #steps = [];
+  get steps() {
+    return this.#steps;
+  }
+  set steps(value) {
+    this.#steps = value;
+  }
+
+  #expectedAssertionCount;
+  get expectedAssertionCount() {
+    return this.#expectedAssertionCount;
+  }
+  set expectedAssertionCount(value) {
+    this.#expectedAssertionCount = value;
+  }
+
+  #totalExecutedAssertions = 0;
+  get totalExecutedAssertions() {
+    return this.#totalExecutedAssertions;
+  }
+  set totalExecutedAssertions(value) {
+    this.#totalExecutedAssertions = value;
+  }
+
+  constructor(name, moduleContext) {
+    if (moduleContext) {
+      this.name = `${moduleContext.name} | ${name}`;
+      this.module = moduleContext;
+      this.module.tests.push(this);
+      this.assert = new Assert(moduleContext, this);
+    }
+  }
+
+  finish() {
+    if (this.totalExecutedAssertions === 0) {
+      this.assert.pushResult({
+        result: false,
+        actual: this.totalExecutedAssertions,
+        expected: '> 0',
+        message: `Expected at least one assertion to be run for test: ${this.name}`,
+      });
+    } else if (this.steps.length > 0) {
       this.assert.pushResult({
         result: false,
         actual: this.steps,
         expected: [],
-        message: `Expected assert.verifySteps() to be called before end of test after using assert.step(). Unverified steps: ${this.steps.join(', ')}`
+        message: `Expected assert.verifySteps() to be called before end of test after using assert.step(). Unverified steps: ${this.steps.join(', ')}`,
+      });
+    } else if (this.expectedAssertionCount && this.expectedAssertionCount !== this.totalExecutedAssertions) {
+      this.assert.pushResult({
+        result: false,
+        actual: this.totalExecutedAssertions,
+        expected: this.expectedAssertionCount,
+        message: `Expected ${this.expectedAssertionCount} assertions, but ${this.totalExecutedAssertions} were run for test: ${this.name}`,
       });
     }
-
-    // TODO: how to build this for nested modules(?)
-    // if (this.expectedAssertionCount && this.expectedAssertionCount !== this.totalExecutedAssertions) {
-    //   this.assert.pushResult({
-    //     result: false,
-    //     actual: this.totalExecutedAssertions,
-    //     expected: this.expectedAssertionCount,
-    //     message: `Expected ${this.expectedAssertionCount} assertions, but ${this.totalExecutedAssertions} were run for test: ${this.name}`
-    //   });
-    // }
   }
 }
 
-class ModuleContext {
-  static moduleChain = [];
+class ModuleContext extends TestContext {
+  static currentModuleChain = [];
 
-  static get current() {
-    return this.moduleChain[this.moduleChain.length - 1] || null;
+  static get lastModule() {
+    return this.currentModuleChain[this.currentModuleChain.length - 1];
   }
 
   #tests = [];
@@ -60,113 +103,139 @@ class ModuleContext {
     return this.#tests;
   }
 
+  #beforeEachHooks = [];
+  get beforeEachHooks() {
+    return this.#beforeEachHooks;
+  }
+
+  #afterEachHooks = [];
+  get afterEachHooks() {
+    return this.#afterEachHooks;
+  }
+
+  #moduleChain = [];
+  get moduleChain() {
+    return this.#moduleChain;
+  }
+  set moduleChain(value) {
+    this.#moduleChain = value;
+  }
+
   constructor(name) {
-    this.name = name;
-    ModuleContext.moduleChain.push(this);
+    super(name);
+
+    let parentModule = ModuleContext.currentModuleChain[ModuleContext.currentModuleChain.length - 1];
+
+    ModuleContext.currentModuleChain.push(this);
+
+    this.moduleChain = ModuleContext.currentModuleChain.slice(0);
+    this.name = parentModule ? `${parentModule.name} > ${name}` : name;
+    this.assert = new Assert(this);
   }
 }
 
-export const module = async function(moduleName, runtimeOptions, moduleContent) {
+export const module = (moduleName, runtimeOptions, moduleContent) => {
   let targetRuntimeOptions = moduleContent ? runtimeOptions : {};
   let targetModuleContent = moduleContent ? moduleContent : runtimeOptions;
+  let moduleContext = new ModuleContext(moduleName);
 
-  const moduleContext = new ModuleContext(moduleName);
-
-  return describe(moduleName, assignDefaultValues(targetRuntimeOptions, { concurrency: true }), async function () {
+  return describe(moduleName, { concurrency: true, ...targetRuntimeOptions }, async function () {
+    let beforeHooks = [];
     let afterHooks = [];
-    let assert;
-    let userProvidedModuleContent = targetModuleContent({
-      _context: moduleContext,
+
+    _before(async function () {
+      let targetContext = moduleContext.moduleChain.reduce((result, module) => {
+        const { name, ...moduleWithoutName } = module;
+
+        Object.assign(result, moduleWithoutName);
+
+        result.steps = result.steps.concat(module.steps);
+
+        if (module.expectedAssertionCount) {
+          result.expectedAssertionCount = moduleContext.expectedAssertionCount;
+        }
+
+        return result;
+      }, { steps: [], expectedAssertionCount: undefined });
+      Object.assign(moduleContext, targetContext);
+
+      for (let hook of beforeHooks) {
+        await hook.call(moduleContext, moduleContext.assert);
+      }
+
+      moduleContext.tests.forEach((testContext) => {
+        const { name, ...targetContext } = module;
+
+        Object.assign(testContext, targetContext);
+
+        testContext.steps = moduleContext.steps;
+        testContext.totalExecutedAssertions = moduleContext.totalExecutedAssertions;
+        testContext.expectedAssertionCount = moduleContext.expectedAssertionCount;
+      });
+    });
+    _after(async () => {
+      for (const assert of moduleContext.tests.map(testContext => testContext.assert)) {
+        await assert.waitForAsyncOps();
+      }
+
+      let targetContext = moduleContext.tests[moduleContext.tests.length - 1];
+      for (let j = afterHooks.length - 1; j >= 0; j--) {
+        await afterHooks[j].call(targetContext, targetContext.assert);
+      }
+
+      moduleContext.tests.forEach(testContext => testContext.finish());
+    });
+
+    targetModuleContent.call(moduleContext, {
       before(beforeFn) {
-        return _before(async function () {
-          assert = assert || new Assert(moduleContext);
-          return await beforeFn.call(moduleContext, assert);
-        });
+        return beforeHooks.push(beforeFn);
       },
       beforeEach(beforeEachFn) {
-        let i = 0;
-        return _beforeEach(async function () {
-          return await beforeEachFn.call(moduleContext, moduleContext.tests[i++].assert);
-        });
+        return moduleContext.beforeEachHooks.push(beforeEachFn);
       },
       afterEach(afterEachFn) {
-        let i = 0;
-        return _afterEach(async function () {
-          return await afterEachFn.call(moduleContext, moduleContext.tests[i++].assert);
-        });
+        return moduleContext.afterEachHooks.push(afterEachFn);
       },
       after(afterFn) {
-        assert = assert || new Assert(moduleContext);
-        afterHooks.push(afterFn); // Save user-provided hooks
-
-        return _after(async function () {
-          for (const assert of moduleContext.tests.map(testContext => testContext.assert)) {
-            await assert.waitForAsyncOps();
-          }
-
-          for (let hook of afterHooks) {
-            let result = await hook.call(moduleContext, assert);
-          }
-
-          moduleContext.tests.forEach(testContext => testContext.complete());
-        });
+        return afterHooks.push(afterFn);
       }
     }, { moduleName, options: runtimeOptions });
 
-    ModuleContext.moduleChain.pop();
-
-    let result = await userProvidedModuleContent;
-
-    if (afterHooks.length === 0) {
-      await _after(async () => {
-        for (const assert of moduleContext.tests.map(testContext => testContext.assert)) {
-          await assert.waitForAsyncOps();
-        }
-
-        return moduleContext.tests.forEach(testContext => testContext.complete());
-      });
-    }
-
-    return result;
+    ModuleContext.currentModuleChain.pop();
   });
 }
 
-export const test = async function(testName, runtimeOptions, testContent) {
-  const moduleContext = ModuleContext.current;
+export const test = (testName, runtimeOptions, testContent) => {
+  let moduleContext = ModuleContext.lastModule;
   if (!moduleContext) {
     throw new Error(`Test '${testName}' called outside of module context.`);
   }
 
   let targetRuntimeOptions = testContent ? runtimeOptions : {};
   let targetTestContent = testContent ? testContent : runtimeOptions;
+  let context = new TestContext(testName, moduleContext);
 
-  const testContext = new TestContext(testName, moduleContext);
-
-  return it(testName, assignDefaultValues(targetRuntimeOptions, { concurrency: true }), async function () {
+  return it(testName, { concurrency: true, ...targetRuntimeOptions }, async function () {
     let result;
-    try {
-      result = await targetTestContent.call(moduleContext, testContext.assert, { testName, options: runtimeOptions });
-
-      await testContext.assert.waitForAsyncOps();
-    } catch (error) {
-      throw error;
-    } finally {
-      // testContext.complete();
+    for (let module of context.module.moduleChain) {
+      for (let hook of module.beforeEachHooks) {
+        await hook.call(context, context.assert);
+      }
     }
 
-    console.log('test() call finish');
+    result = await targetTestContent.call(context, context.assert, { testName, options: runtimeOptions });
+
+    await context.assert.waitForAsyncOps();
+
+    for (let i = context.module.moduleChain.length - 1; i >= 0; i--) {
+      let module = context.module.moduleChain[i];
+      for (let j = module.afterEachHooks.length - 1; j >= 0; j--) {
+        await module.afterEachHooks[j].call(context, context.assert);
+      }
+    }
+
     return result;
   });
-}
-
-function assignDefaultValues(options, defaultValues) {
-  for (let key in defaultValues) {
-    if (options[key] === undefined) {
-      options[key] = defaultValues[key];
-    }
-  }
-
-  return options;
 }
 
 export default { module, test, config: {} };
