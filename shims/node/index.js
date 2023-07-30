@@ -8,8 +8,13 @@ import Test from './test.js';
 
 Assert.QUnit = QUnit;
 Assert.AssertionError = AssertionError;
+
 ModuleContext.Assert = Assert;
 TestContext.Assert = Assert;
+
+Object.freeze(Assert);
+Object.freeze(ModuleContext);
+Object.freeze(TestContext);
 
 export const module = Module;
 export const test = Test;

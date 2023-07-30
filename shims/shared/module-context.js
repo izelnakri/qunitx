@@ -41,5 +41,7 @@ export default class ModuleContext {
     this.moduleChain = ModuleContext.currentModuleChain.slice(0);
     this.name = parentModule ? `${parentModule.name} > ${name}` : name;
     this.assert = new ModuleContext.Assert(this);
+
+    return Object.freeze(this);
   }
 }
