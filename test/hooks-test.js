@@ -67,14 +67,14 @@ module('module', function () {
 
   module('Test context object', function (hooks) {
     hooks.beforeEach(function (assert) {
-      this.name = 'Test context object';
+      this.helper = 'Test context object';
       var key;
       var keys = [];
 
       for (key in this) {
         keys.push(key);
       }
-      assert.deepEqual(keys, ['name']);
+      assert.deepEqual(keys, ['helper']);
     });
 
     test('keys', function (assert) {
