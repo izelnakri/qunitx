@@ -1,22 +1,19 @@
-import { AssertionError as DenoAssertionError, assertRejects, assertThrows } from "https://deno.land/std@0.192.0/testing/asserts.ts";
 import '../../vendor/qunit.js';
 import { objectValues, objectValuesSubset, validateExpectedExceptionArgs, validateException } from '../shared/index.js';
 import util from 'node:util';
 
-export class AssertionError extends DenoAssertionError {
-  constructor(object) {
-    super(object.message);
-  }
-}
+// More: contexts needed for timeout
+// NOTE: Another approach for a global report Make this._assertions.set(this.currentTest, (this._assertions.get(this.currentTest) || 0) + 1); for pushResult
+// NOTE: This should *always* be a singleton(?), passed around as an argument for hooks. Seems difficult with concurrency. Singleton needs to be a concurrent data structure.
 
 export default class Assert {
-  AssertionError = AssertionError
-
-  #asyncOps = [];
+  static QUnit;
+  static AssertionError;
 
   constructor(module, test) {
-    this.test = test || module;
+    this.test = test || module.context;
   }
+
   _incrementAssertionCount() {
     this.test.totalExecutedAssertions++;
   }
@@ -60,17 +57,17 @@ export default class Assert {
     let resolveFn;
     let done = new Promise(resolve => { resolveFn = resolve; });
 
-    this.#asyncOps.push(done);
+    this.test.asyncOps.push(done);
 
     return () => { resolveFn(); };
   }
   async waitForAsyncOps() {
-    return Promise.all(this.#asyncOps);
+    return Promise.all(this.test.asyncOps);
   }
   pushResult(resultInfo = {}) {
     this._incrementAssertionCount();
     if (!resultInfo.result) {
-      throw new AssertionError({
+      throw new Assert.AssertionError({
         actual: resultInfo.actual,
         expected: resultInfo.expected,
         message: resultInfo.message || 'Custom assertion failed!',
@@ -83,7 +80,7 @@ export default class Assert {
   ok(state, message) {
     this._incrementAssertionCount();
     if (!state) {
-      throw new AssertionError({
+      throw new Assert.AssertionError({
         actual: state,
         expected: true,
         message: message || `Expected argument to be truthy, it was: ${inspect(state)}`,
@@ -94,7 +91,7 @@ export default class Assert {
   notOk(state, message) {
     this._incrementAssertionCount();
     if (state) {
-      throw new AssertionError({
+      throw new Assert.AssertionError({
         actual: state,
         expected: false,
         message: message || `Expected argument to be falsy, it was: ${inspect(state)}`,
@@ -105,7 +102,7 @@ export default class Assert {
   true(state, message) {
     this._incrementAssertionCount();
     if (state !== true) {
-      throw new AssertionError({
+      throw new Assert.AssertionError({
         actual: state,
         expected: true,
         message: message || `Expected argument to be true, it was: ${inspect(state)}`,
@@ -116,7 +113,7 @@ export default class Assert {
   false(state, message) {
     this._incrementAssertionCount();
     if (state !== false) {
-      throw new AssertionError({
+      throw new Assert.AssertionError({
         actual: state,
         expected: true,
         message: message || `Expected argument to be false, it was: ${inspect(state)}`,
@@ -127,7 +124,7 @@ export default class Assert {
   equal(actual, expected, message) {
     this._incrementAssertionCount();
     if (actual != expected) {
-      throw new AssertionError({
+      throw new Assert.AssertionError({
         actual,
         expected,
         message: message || `Expected: ${defaultMessage(actual, 'should equal to:', expected)}`,
@@ -139,7 +136,7 @@ export default class Assert {
   notEqual(actual, expected, message) {
     this._incrementAssertionCount();
     if (actual == expected) {
-      throw new AssertionError({
+      throw new Assert.AssertionError({
         actual,
         expected,
         operator: '!=',
@@ -152,8 +149,8 @@ export default class Assert {
     this._incrementAssertionCount();
     let targetActual = objectValues(actual);
     let targetExpected = objectValues(expected);
-    if (!QUnit.equiv(targetActual, targetExpected)) {
-      throw new AssertionError({
+    if (!Assert.QUnit.equiv(targetActual, targetExpected)) {
+      throw new Assert.AssertionError({
         actual: targetActual,
         expected: targetExpected,
         message: message || `Expected properties to be propEqual: ${defaultMessage(targetActual, 'should propEqual to:', targetExpected)}`,
@@ -165,8 +162,8 @@ export default class Assert {
     this._incrementAssertionCount();
     let targetActual = objectValues(actual);
     let targetExpected = objectValues(expected);
-    if (QUnit.equiv(targetActual, targetExpected)) {
-      throw new AssertionError({
+    if (Assert.QUnit.equiv(targetActual, targetExpected)) {
+      throw new Assert.AssertionError({
         actual: targetActual,
         expected: targetExpected,
         message: message || `Expected properties to NOT be propEqual: ${defaultMessage(targetActual, 'should notPropEqual to:', targetExpected)}`,
@@ -178,8 +175,8 @@ export default class Assert {
     this._incrementAssertionCount();
     let targetActual = objectValuesSubset(actual, expected);
     let targetExpected = objectValues(expected, false);
-    if (!QUnit.equiv(targetActual, targetExpected)) {
-      throw new AssertionError({
+    if (!Assert.QUnit.equiv(targetActual, targetExpected)) {
+      throw new Assert.AssertionError({
         actual: targetActual,
         expected: targetExpected,
         message: message || `propContains assertion fail on: ${defaultMessage(targetActual, 'should propContains to:', targetExpected)}`,
@@ -191,8 +188,8 @@ export default class Assert {
     this._incrementAssertionCount();
     let targetActual = objectValuesSubset(actual, expected);
     let targetExpected = objectValues(expected);
-    if (QUnit.equiv(targetActual, targetExpected)) {
-      throw new AssertionError({
+    if (Assert.QUnit.equiv(targetActual, targetExpected)) {
+      throw new Assert.AssertionError({
         actual: targetActual,
         expected: targetExpected,
         message: message || `notPropContains assertion fail on: ${defaultMessage(targetActual, 'should notPropContains of:', targetExpected)}`,
@@ -202,8 +199,8 @@ export default class Assert {
   }
   deepEqual(actual, expected, message) {
     this._incrementAssertionCount();
-    if (!QUnit.equiv(actual, expected)) {
-      throw new AssertionError({
+    if (!Assert.QUnit.equiv(actual, expected)) {
+      throw new Assert.AssertionError({
         actual,
         expected,
         message: message || `Expected values to be deepEqual: ${defaultMessage(actual, 'should deepEqual to:', expected)}`,
@@ -214,8 +211,8 @@ export default class Assert {
   }
   notDeepEqual(actual, expected, message) {
     this._incrementAssertionCount();
-    if (QUnit.equiv(actual, expected)) {
-      throw new AssertionError({
+    if (Assert.QUnit.equiv(actual, expected)) {
+      throw new Assert.AssertionError({
         actual,
         expected,
         message: message || `Expected values to be NOT deepEqual: ${defaultMessage(actual, 'should notDeepEqual to:', expected)}`,
@@ -227,7 +224,7 @@ export default class Assert {
   strictEqual(actual, expected, message) {
     this._incrementAssertionCount();
     if (actual !== expected) {
-      throw new AssertionError({
+      throw new Assert.AssertionError({
         actual,
         expected,
         message: message || `Expected: ${defaultMessage(actual, 'is strictEqual to:', expected)}`,
@@ -239,7 +236,7 @@ export default class Assert {
   notStrictEqual(actual, expected, message) {
     this._incrementAssertionCount();
     if (actual === expected) {
-      throw new AssertionError({
+      throw new Assert.AssertionError({
         actual,
         expected,
         message: message || `Expected: ${defaultMessage(actual, 'is notStrictEqual to:', expected)}`,
@@ -252,7 +249,7 @@ export default class Assert {
     this?._incrementAssertionCount();
     let [expected, message] = validateExpectedExceptionArgs(expectedInput, assertionMessage, 'rejects');
     if (typeof blockFn !== 'function') {
-      throw new AssertionError({
+      throw new Assert.AssertionError({
         actual: blockFn,
         expected: Function,
         message: 'The value provided to `assert.throws` was not a function.',
@@ -265,7 +262,7 @@ export default class Assert {
     } catch (error) {
       let validation = validateException(error, expected, message);
       if (validation.result === false) {
-        throw new AssertionError({
+        throw new Assert.AssertionError({
           actual: validation.result,
           expected: validation.expected,
           message: validation.message,
@@ -276,7 +273,7 @@ export default class Assert {
       return;
     }
 
-    throw new AssertionError({
+    throw new Assert.AssertionError({
       actual: blockFn,
       expected: expected,
       message: 'Function passed to `assert.throws` did not throw an exception!',
@@ -288,7 +285,7 @@ export default class Assert {
     let [expected, message] = validateExpectedExceptionArgs(expectedInput, assertionMessage, 'rejects');
     let then = promise && promise.then;
     if (typeof then !== 'function') {
-      throw new AssertionError({
+      throw new Assert.AssertionError({
         actual: promise,
         expected: expected,
         message: 'The value provided to `assert.rejects` was not a promise!',
@@ -298,7 +295,7 @@ export default class Assert {
 
     try {
       await promise;
-      throw new AssertionError({
+      throw new Assert.AssertionError({
         actual: promise,
         expected: expected,
         message: 'The promise returned by the `assert.rejects` callback did not reject!',
@@ -307,7 +304,7 @@ export default class Assert {
     } catch (error) {
       let validation = validateException(error, expected, message);
       if (validation.result === false) {
-        throw new AssertionError({
+        throw new Assert.AssertionError({
           actual: validation.result,
           expected: validation.expected,
           message: validation.message,
