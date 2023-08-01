@@ -115,7 +115,7 @@ export default class Assert {
     if (state !== false) {
       throw new Assert.AssertionError({
         actual: state,
-        expected: true,
+        expected: false,
         message: message || `Expected argument to be false, it was: ${inspect(state)}`,
         stackStartFn: this.false,
       });

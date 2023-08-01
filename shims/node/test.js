@@ -13,14 +13,13 @@ export default function test(testName, runtimeOptions, testContent) {
   let context = new TestContext(testName, moduleContext);
 
   return it(testName, { concurrency: true, ...targetRuntimeOptions }, async function () {
-    let result;
     for (let module of context.module.moduleChain) {
       for (let hook of module.beforeEachHooks) {
         await hook.call(context, context.assert);
       }
     }
 
-    result = await targetTestContent.call(context, context.assert, { testName, options: runtimeOptions });
+    let result = await targetTestContent.call(context, context.assert, { testName, options: runtimeOptions });
 
     await context.assert.waitForAsyncOps();
 
