@@ -1,4 +1,5 @@
 node_modules
+result
 tmp
 test-output.log
 deno-bridge.js

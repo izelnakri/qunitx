@@ -75,7 +75,7 @@
     "release": "node_modules/.bin/release-it",
     "test": "npm run test:browser && npm run test:node && npm run test:deno",
     "test:dev": "npm run test | tee test-output.log",
-    "test:browser": "qunitx test/index.js --debug",
+    "test:browser": "node_modules/.bin/qunitx test/index.js --debug",
     "test:deno": "deno test --allow-read --allow-env --allow-run test/index.js",
     "test:node": "node --test test/index.js"
   },
