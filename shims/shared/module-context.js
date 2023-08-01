@@ -10,28 +10,10 @@ export default class ModuleContext {
 
   context = new TestContext();
 
-  #tests = [];
-  get tests() {
-    return this.#tests;
-  }
-
-  #beforeEachHooks = [];
-  get beforeEachHooks() {
-    return this.#beforeEachHooks;
-  }
-
-  #afterEachHooks = [];
-  get afterEachHooks() {
-    return this.#afterEachHooks;
-  }
-
-  #moduleChain = [];
-  get moduleChain() {
-    return this.#moduleChain;
-  }
-  set moduleChain(value) {
-    this.#moduleChain = value;
-  }
+  moduleChain = [];
+  beforeEachHooks = [];
+  afterEachHooks = [];
+  tests = [];
 
   constructor(name) {
     let parentModule = ModuleContext.currentModuleChain[ModuleContext.currentModuleChain.length - 1];
