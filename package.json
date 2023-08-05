@@ -1,7 +1,7 @@
 {
   "name": "qunitx",
   "type": "module",
-  "version": "0.9.2",
+  "version": "0.9.3",
   "description": "A universal test framework for testing any js file on node.js, browser or deno with QUnit API",
   "author": "Izel Nakri",
   "license": "MIT",
