@@ -12,7 +12,7 @@ export class AssertionError extends DenoAssertionError {
   }
 }
 
-Assert.QUnit = QUnit;
+Assert.QUnit = globalThis.QUnit;
 Assert.AssertionError = AssertionError;
 ModuleContext.Assert = Assert;
 TestContext.Assert = Assert;
