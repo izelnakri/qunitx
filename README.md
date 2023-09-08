@@ -1,9 +1,12 @@
 ![docker-based-ci](https://github.com/izelnakri/qunitx/workflows/docker-based-ci/badge.svg)
 [![npm version](https://badge.fury.io/js/qunitx.svg)](https://badge.fury.io/js/qunitx)
+[![Ask me anything](https://img.shields.io/badge/ask%20me-anything-1abc9c.svg)](https://github.com/izelnakri/qunitx/issues)
 
 # QUnitX
 
-***Truly universal testing for JavaScript with the oldest, most mature & flexible
+Mature, fast, 0 dependency & flexible test API for JavaScript/TypeScript.
+
+***Universal testing for JavaScript with the oldest, most mature & flexible
 testing API in the JavaScript ecosystem. Run the same test file in node.js, deno or in the browser***
 
 Your test JS/TS file(s) can now run interchangably in different runtimes with
