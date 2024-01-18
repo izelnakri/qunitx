@@ -38,6 +38,7 @@
     "frontend",
     "backend",
     "qunit",
+    "qunit-plugin",
     "node",
     "deno",
     "browser"
