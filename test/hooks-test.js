@@ -1,49 +1,55 @@
 import { module, test } from 'qunitx';
 
 module('module', function () {
-  module('before/beforeEach/afterEach/after', function(hooks) {
+  module('before/beforeEach/afterEach/after', function (hooks) {
     hooks.before(function (assert) {
       this.lastHook = 'module-before';
     });
     hooks.beforeEach(function (assert) {
-      assert.strictEqual(this.lastHook, 'module-before',
-        "Module's beforeEach runs after before");
+      assert.strictEqual(this.lastHook, 'module-before', "Module's beforeEach runs after before");
       this.lastHook = 'module-beforeEach';
     });
     hooks.afterEach(function (assert) {
-      assert.strictEqual(this.lastHook, 'test-block',
-        "Module's afterEach runs after current test block");
+      assert.strictEqual(
+        this.lastHook,
+        'test-block',
+        "Module's afterEach runs after current test block",
+      );
       this.lastHook = 'module-afterEach';
     });
     hooks.after(function (assert) {
-      assert.strictEqual(this.lastHook, 'module-afterEach',
-        "Module's afterEach runs before after");
+      assert.strictEqual(this.lastHook, 'module-afterEach', "Module's afterEach runs before after");
       this.lastHook = 'module-after';
     });
 
     test('hooks order', function (assert) {
       assert.expect(4);
 
-      assert.strictEqual(this.lastHook, 'module-beforeEach',
-        "Module's beforeEach runs before current test block");
+      assert.strictEqual(
+        this.lastHook,
+        'module-beforeEach',
+        "Module's beforeEach runs before current test block",
+      );
       this.lastHook = 'test-block';
     });
   });
 
-  module('modules with async hooks', hooks => {
-    hooks.before(async assert => { assert.step('before'); });
-    hooks.beforeEach(async assert => { assert.step('beforeEach'); });
-    hooks.afterEach(async assert => { assert.step('afterEach'); });
-
-    hooks.after(assert => {
-      assert.verifySteps([
-        'before',
-        'beforeEach',
-        'afterEach'
-      ]);
+  module('modules with async hooks', (hooks) => {
+    hooks.before(async (assert) => {
+      assert.step('before');
+    });
+    hooks.beforeEach(async (assert) => {
+      assert.step('beforeEach');
+    });
+    hooks.afterEach(async (assert) => {
+      assert.step('afterEach');
     });
 
-    test('all hooks', assert => {
+    hooks.after((assert) => {
+      assert.verifySteps(['before', 'beforeEach', 'afterEach']);
+    });
+
+    test('all hooks', (assert) => {
       assert.expect(4);
     });
   });
@@ -84,7 +90,7 @@ module('module', function () {
   });
 
   module('afterEach and assert.async', function (hooks) {
-    hooks.beforeEach(function() {
+    hooks.beforeEach(function () {
       this.state = false;
     });
     hooks.afterEach(function (assert) {
@@ -133,7 +139,7 @@ module('module', function () {
   });
 
   module('save scope', function (hooks) {
-    hooks.before(function(assert) {
+    hooks.before(function (assert) {
       this.foo = 'bar';
     });
     hooks.beforeEach(function (assert) {
@@ -170,8 +176,7 @@ module('module', function () {
 
         test('in module, before-/afterEach called in out-in-out order', function (assert) {
           var module = assert.test.module;
-          assert.equal(module.name,
-            'module > nested modules > first outer > first inner');
+          assert.equal(module.name, 'module > nested modules > first outer > first inner');
           assert.expect(5);
         });
       });
@@ -250,8 +255,9 @@ module('module', function () {
 
     hooks.afterEach(function (assert) {
       assert.equal(
-        this.outer, 42,
-        'in-test environment modifications are visible by afterEach callbacks'
+        this.outer,
+        42,
+        'in-test environment modifications are visible by afterEach callbacks',
       );
     });
 
@@ -346,14 +352,26 @@ module('module', function () {
   });
 
   module('multiple hooks', function (hooks) {
-    hooks.before(function (assert) { assert.step('before1'); });
-    hooks.before(function (assert) { assert.step('before2'); });
+    hooks.before(function (assert) {
+      assert.step('before1');
+    });
+    hooks.before(function (assert) {
+      assert.step('before2');
+    });
 
-    hooks.beforeEach(function (assert) { assert.step('beforeEach1'); });
-    hooks.beforeEach(function (assert) { assert.step('beforeEach2'); });
+    hooks.beforeEach(function (assert) {
+      assert.step('beforeEach1');
+    });
+    hooks.beforeEach(function (assert) {
+      assert.step('beforeEach2');
+    });
 
-    hooks.afterEach(function (assert) { assert.step('afterEach1'); });
-    hooks.afterEach(function (assert) { assert.step('afterEach2'); });
+    hooks.afterEach(function (assert) {
+      assert.step('afterEach1');
+    });
+    hooks.afterEach(function (assert) {
+      assert.step('afterEach2');
+    });
 
     hooks.after(function (assert) {
       assert.verifySteps([
@@ -367,12 +385,16 @@ module('module', function () {
         'afterEach2',
         'afterEach1',
         'after2',
-        'after1'
+        'after1',
       ]);
     });
 
-    hooks.after(function (assert) { assert.step('after1'); });
-    hooks.after(function (assert) { assert.step('after2'); });
+    hooks.after(function (assert) {
+      assert.step('after1');
+    });
+    hooks.after(function (assert) {
+      assert.step('after2');
+    });
 
     test('all hooks', function (assert) {
       assert.expect(9);

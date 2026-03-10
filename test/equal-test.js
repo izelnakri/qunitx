@@ -5,7 +5,11 @@ module('Assertion: Equality - passing assertions', function () {
     assert.equal(1, 1);
     assert.equal('foo', 'foo');
     assert.equal('foo', ['foo']);
-    assert.equal('foo', { toString: function () { return 'foo'; } });
+    assert.equal('foo', {
+      toString: function () {
+        return 'foo';
+      },
+    });
     assert.equal(0, [0]);
   });
 
@@ -43,7 +47,13 @@ module('Assertion: Equality - failing assertions', function (hooks) {
     throws(() => assert.notEqual(1, 1));
     throws(() => assert.notEqual('foo', 'foo'));
     throws(() => assert.notEqual('foo', ['foo']));
-    throws(() => assert.notEqual('foo', { toString: function () { return 'foo'; } }));
+    throws(() =>
+      assert.notEqual('foo', {
+        toString: function () {
+          return 'foo';
+        },
+      }),
+    );
     throws(() => assert.notEqual(0, [0]));
   });
 });

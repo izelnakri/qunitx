@@ -24,7 +24,7 @@ module('Assertion: Truthy - passing assertions', function () {
   });
 
   test('true', function (assert) {
-    function functionThatReturnsTrue () {
+    function functionThatReturnsTrue() {
       return true;
     }
     assert.true(true);
@@ -32,7 +32,7 @@ module('Assertion: Truthy - passing assertions', function () {
   });
 
   test('false', function (assert) {
-    function functionThatReturnsFalse () {
+    function functionThatReturnsFalse() {
       return false;
     }
     assert.false(false);

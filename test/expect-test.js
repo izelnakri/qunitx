@@ -10,4 +10,3 @@ module('Assertion: Expect | Passing Assertions', function (hooks) {
     assert.ok(true);
   });
 });
-

@@ -3,7 +3,7 @@ import fs from 'fs/promises';
 let [qunitJS, qunitCSS, _] = await Promise.all([
   fs.readFile('./node_modules/qunit/qunit/qunit.js'),
   fs.readFile('./node_modules/qunit/qunit/qunit.css'),
-  fs.mkdir('./vendor', { recursive: true })
+  fs.mkdir('./vendor', { recursive: true }),
 ]);
 
 let newQUnit = qunitJS.toString().replace(
@@ -32,12 +32,13 @@ let newQUnit = qunitJS.toString().replace(
 
 		config.modules.push( config.currentModule );
   },
-  start: function start(count) {`);
+  start: function start(count) {`,
+);
 
 await Promise.all([
   fs.writeFile('./vendor/qunit.js', newQUnit),
   fs.writeFile('./vendor/qunit.css', qunitCSS),
-  createPackageJSONIfNotExists()
+  createPackageJSONIfNotExists(),
 ]);
 
 async function createPackageJSONIfNotExists() {
@@ -46,9 +47,12 @@ async function createPackageJSONIfNotExists() {
 
     return true;
   } catch (error) {
-    await fs.writeFile('./vendor/package.json', JSON.stringify({
-      name: 'qunitx-vendor',
-      version: '0.0.1'
-    }));
+    await fs.writeFile(
+      './vendor/package.json',
+      JSON.stringify({
+        name: 'qunitx-vendor',
+        version: '0.0.1',
+      }),
+    );
   }
 }

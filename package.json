@@ -44,7 +44,7 @@
     "browser"
   ],
   "engines": {
-    "node": ">=20.3.0"
+    "node": ">=24.0.0"
   },
   "imports": {
     "qunitx": {
@@ -63,49 +63,34 @@
     "url": "https://github.com/izelnakri/qunitx.git"
   },
   "scripts": {
+    "lint": "prettier --check \"test/**/*.js\" \"*.js\" \"package.json\"",
+    "lint:fix": "prettier --write \"test/**/*.js\" \"*.js\" \"package.json\"",
     "build": "node build.js",
     "run:all": "npm run run:node && npm run run:deno",
     "run:node": "node --test test/helpers/passing-tests.js && node --test test/helpers/failing-tests.js",
     "run:deno": "deno test test/helpers/passing-tests.js && deno test test/helpers/failing-tests.js",
-    "changelog:unreleased": "node_modules/.bin/auto-changelog --stdout --commit-limit false --package --unreleased-only --hide-credit --sort-commits date-desc",
-    "changelog:preview": "node_modules/.bin/auto-changelog --stdout --commit-limit false --package -u --sort-commits date-desc",
-    "changelog:update": "node_modules/.bin/auto-changelog --commit-limit false --package --sort-commits date-desc",
+    "changelog:unreleased": "git-cliff --unreleased --strip all",
+    "changelog:preview": "git-cliff",
+    "changelog:update": "git-cliff --output CHANGELOG.md",
     "prepack": "npm run build",
-    "release:alpha": "node_modules/.bin/release-it --preRelease=alpha --no-git.requireUpstream",
-    "release:beta": "node_modules/.bin/release-it --preRelease=beta --no-git.requireUpstream",
-    "release": "node_modules/.bin/release-it",
     "test": "npm run test:browser && npm run test:node && npm run test:deno",
     "test:dev": "npm run test | tee test-output.log",
-    "test:browser": "CHROME_BIN=$(which google-chrome-stable 2>/dev/null || which google-chrome 2>/dev/null || which chromium 2>/dev/null || which chromium-browser 2>/dev/null || echo '') node_modules/.bin/qunitx test/index.js --debug",
+    "test:browser": "node_modules/.bin/qunitx test/index.js --debug",
     "test:deno": "deno test --allow-read --allow-env --allow-run test/index.js",
     "test:node": "node --test test/index.js"
   },
   "devDependencies": {
-    "auto-changelog": "^2.5.0",
     "prettier": "^3.8.1",
     "qunit": "^2.25.0",
     "qunitx": "^0.9.3",
-    "qunitx-cli": "^0.1.2",
-    "release-it": "^19.2.4",
-    "ts-node": "^10.9.2"
+    "qunitx-cli": "^0.5.0"
   },
   "volta": {
-    "node": "22.22.0"
+    "node": "24.14.0"
   },
   "prettier": {
     "printWidth": 100,
     "singleQuote": true,
     "arrowParens": "always"
-  },
-  "release-it": {
-    "git": {
-      "changelog": "npm run changelog:unreleased"
-    },
-    "github": {
-      "release": true
-    },
-    "hooks": {
-      "after:bump": "npm run changelog:update"
-    }
   }
 }

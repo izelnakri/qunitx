@@ -19,13 +19,10 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
-        "npm:auto-changelog@^2.5.0",
         "npm:prettier@^3.8.1",
         "npm:qunit@^2.25.0",
-        "npm:qunitx-cli@~0.1.2",
-        "npm:qunitx@~0.9.3",
-        "npm:release-it@^19.2.4",
-        "npm:ts-node@^10.9.2"
+        "npm:qunitx-cli@0.5",
+        "npm:qunitx@~0.9.3"
       ]
     }
   }

@@ -3,7 +3,7 @@ import { module, test } from 'qunitx';
 // NOTE: throws and rejects not fully compatible with QUnit due to commented out tests, but good enough
 module('Assertion: Throws - passing assertions', function () {
   test('throws', function (assert) {
-    function CustomError (message) {
+    function CustomError(message) {
       this.message = message;
     }
 
@@ -11,25 +11,20 @@ module('Assertion: Throws - passing assertions', function () {
       return this.message;
     };
 
-    assert.throws(
-      function () {
-        throw 'my error';
-      }
-    );
+    assert.throws(function () {
+      throw 'my error';
+    });
 
-    assert.throws(
-      function () {
-        throw 'my error';
-      },
-      "simple string throw, no 'expected' value given"
-    );
+    assert.throws(function () {
+      throw 'my error';
+    }, "simple string throw, no 'expected' value given");
 
     assert.throws(function () {
       // eslint-disable-next-line qunit/no-throws-string
       assert.throws(
         undefined, // irrelevant - errors before even verifying this
         'expected is a string',
-        'message is non-null'
+        'message is non-null',
       );
     }, /^Error: assert\.throws does not accept a string value for the expected argument/);
 
@@ -40,7 +35,7 @@ module('Assertion: Throws - passing assertions', function () {
         throw new Error('error message');
       },
       /error message/,
-      'use regexp against instance of Error'
+      'use regexp against instance of Error',
     );
 
     assert.throws(
@@ -48,7 +43,7 @@ module('Assertion: Throws - passing assertions', function () {
         throw new TypeError();
       },
       Error,
-      'thrown TypeError without a message is an instance of Error'
+      'thrown TypeError without a message is an instance of Error',
     );
 
     assert.throws(
@@ -56,7 +51,7 @@ module('Assertion: Throws - passing assertions', function () {
         throw new TypeError();
       },
       TypeError,
-      'thrown TypeError without a message is an instance of TypeError'
+      'thrown TypeError without a message is an instance of TypeError',
     );
 
     assert.throws(
@@ -64,7 +59,7 @@ module('Assertion: Throws - passing assertions', function () {
         throw new TypeError('error message');
       },
       Error,
-      'thrown TypeError with a message is an instance of Error'
+      'thrown TypeError with a message is an instance of Error',
     );
 
     // This test is for IE 8 and prior which goes against the standards
@@ -76,7 +71,7 @@ module('Assertion: Throws - passing assertions', function () {
         throw new TypeError('error message');
       },
       TypeError,
-      'thrown TypeError with a message is an instance of TypeError'
+      'thrown TypeError with a message is an instance of TypeError',
     );
 
     assert.throws(
@@ -84,7 +79,7 @@ module('Assertion: Throws - passing assertions', function () {
         throw new CustomError('some error description');
       },
       CustomError,
-      'thrown error is an instance of CustomError'
+      'thrown error is an instance of CustomError',
     );
 
     assert.throws(
@@ -92,7 +87,7 @@ module('Assertion: Throws - passing assertions', function () {
         throw new Error('some error description');
       },
       /description/,
-      'use a regex to match against the stringified error'
+      'use a regex to match against the stringified error',
     );
 
     assert.throws(
@@ -100,7 +95,7 @@ module('Assertion: Throws - passing assertions', function () {
         throw new Error('foo');
       },
       new Error('foo'),
-      'thrown error object is similar to the expected Error object'
+      'thrown error object is similar to the expected Error object',
     );
 
     assert.throws(
@@ -108,40 +103,40 @@ module('Assertion: Throws - passing assertions', function () {
         throw new CustomError('some error description');
       },
       new CustomError('some error description'),
-      'thrown error object is similar to the expected CustomError object'
+      'thrown error object is similar to the expected CustomError object',
     );
 
     assert.throws(
       function () {
         throw {
           name: 'SomeName',
-          message: 'some message'
+          message: 'some message',
         };
       },
       { name: 'SomeName', message: 'some message' },
-      'thrown object is similar to the expected plain object'
+      'thrown object is similar to the expected plain object',
     );
 
     assert.throws(
       function () {
         throw {
           name: 'SomeName',
-          message: 'some message'
+          message: 'some message',
         };
       },
       /^SomeName: some message$/,
-      'thrown object matches formatted error message'
+      'thrown object matches formatted error message',
     );
 
     assert.throws(
       function () {
         throw {
           name: true,
-          message: 'some message'
+          message: 'some message',
         };
       },
       /^true: some message$/,
-      'formatted string for Error object with non-string name property'
+      'formatted string for Error object with non-string name property',
     );
 
     assert.throws(
@@ -149,27 +144,27 @@ module('Assertion: Throws - passing assertions', function () {
         throw {};
       },
       /^Error$/,
-      'thrown object with no name or message matches formatted error message'
+      'thrown object with no name or message matches formatted error message',
     );
 
     assert.throws(
       function () {
         throw {
-          name: 'SomeName'
+          name: 'SomeName',
         };
       },
       /^SomeName$/,
-      'thrown object with name but no message matches formatted error message'
+      'thrown object with name but no message matches formatted error message',
     );
 
     assert.throws(
       function () {
         throw {
-          message: 'some message'
+          message: 'some message',
         };
       },
       /^Error: some message$/,
-      'thrown object with message but no name matches formatted error message'
+      'thrown object with message but no name matches formatted error message',
     );
 
     assert.throws(
@@ -179,7 +174,7 @@ module('Assertion: Throws - passing assertions', function () {
       function (err) {
         return err instanceof CustomError && /description/.test(err);
       },
-      'custom validation function'
+      'custom validation function',
     );
 
     assert.throws(
@@ -187,7 +182,7 @@ module('Assertion: Throws - passing assertions', function () {
         throw new CustomError('some error description');
       },
       /description/,
-      "throw error from property of 'this' context"
+      "throw error from property of 'this' context",
     );
 
     // the following are nested assertions, validating that it
@@ -197,11 +192,11 @@ module('Assertion: Throws - passing assertions', function () {
       function () {
         assert.throws(
           undefined, // irrelevant
-          2
+          2,
         );
       },
       /^Error: Invalid expected value type \(number\) provided to assert\.throws\.$/,
-      'throws errors when provided a number'
+      'throws errors when provided a number',
     );
 
     // note that "falsey" values are actually ok
@@ -210,18 +205,18 @@ module('Assertion: Throws - passing assertions', function () {
         throw new CustomError('some error description');
       },
       0,
-      'throws passes when expected is falsey (0)'
+      'throws passes when expected is falsey (0)',
     );
 
     assert.throws(
       function () {
         assert.throws(
           undefined, // irrelevant
-          true
+          true,
         );
       },
       /^Error: Invalid expected value type \(boolean\) provided to assert\.throws\.$/,
-      'throws errors when provided a boolean'
+      'throws errors when provided a boolean',
     );
 
     // note that "falsey" values are actually ok
@@ -230,23 +225,23 @@ module('Assertion: Throws - passing assertions', function () {
         throw new CustomError('some error description');
       },
       false,
-      'throws passes when expected is falsey (false)'
+      'throws passes when expected is falsey (false)',
     );
 
     assert.throws(
       function () {
         assert.throws(
           undefined, // irrelevant
-          []
+          [],
         );
       },
       /^Error: Invalid expected value type \(array\) provided to assert\.throws\.$/,
-      'throws errors when provided an array'
+      'throws errors when provided an array',
     );
   });
 
   test('rejects', function (assert) {
-    function CustomError (message) {
+    function CustomError(message) {
       this.message = message;
     }
 
@@ -254,19 +249,13 @@ module('Assertion: Throws - passing assertions', function () {
       return this.message;
     };
 
-    var rejectsReturnValue = assert.rejects(
-      buildMockPromise('my error')
-    );
+    var rejectsReturnValue = assert.rejects(buildMockPromise('my error'));
 
-    assert.equal(
-      typeof rejectsReturnValue.then,
-      'function',
-      'rejects returns a thennable'
-    );
+    assert.equal(typeof rejectsReturnValue.then, 'function', 'rejects returns a thennable');
 
     assert.rejects(
       buildMockPromise('my error'),
-      "simple string rejection, no 'expected' value given"
+      "simple string rejection, no 'expected' value given",
     );
 
     // This test is for IE 7 and prior which does not properly
@@ -274,25 +263,25 @@ module('Assertion: Throws - passing assertions', function () {
     assert.rejects(
       buildMockPromise(new Error('error message')),
       /error message/,
-      'use regexp against instance of Error'
+      'use regexp against instance of Error',
     );
 
     assert.rejects(
       buildMockPromise(new TypeError()),
       Error,
-      'thrown TypeError without a message is an instance of Error'
+      'thrown TypeError without a message is an instance of Error',
     );
 
     assert.rejects(
       buildMockPromise(new TypeError()),
       TypeError,
-      'thrown TypeError without a message is an instance of TypeError'
+      'thrown TypeError without a message is an instance of TypeError',
     );
 
     assert.rejects(
       buildMockPromise(new TypeError('error message')),
       Error,
-      'thrown TypeError with a message is an instance of Error'
+      'thrown TypeError with a message is an instance of Error',
     );
 
     // This test is for IE 8 and prior which goes against the standards
@@ -302,40 +291,40 @@ module('Assertion: Throws - passing assertions', function () {
     assert.rejects(
       buildMockPromise(new TypeError('error message')),
       TypeError,
-      'thrown TypeError with a message is an instance of TypeError'
+      'thrown TypeError with a message is an instance of TypeError',
     );
 
     assert.rejects(
       buildMockPromise(new CustomError('some error description')),
       CustomError,
-      'thrown error is an instance of CustomError'
+      'thrown error is an instance of CustomError',
     );
 
     assert.rejects(
       buildMockPromise(new Error('some error description')),
       /description/,
-      'use a regex to match against the stringified error'
+      'use a regex to match against the stringified error',
     );
 
     assert.rejects(
       buildMockPromise(new Error('foo')),
       new Error('foo'),
-      'thrown error object is similar to the expected Error object'
+      'thrown error object is similar to the expected Error object',
     );
 
     assert.rejects(
       buildMockPromise(new CustomError('some error description')),
       new CustomError('some error description'),
-      'thrown error object is similar to the expected CustomError object'
+      'thrown error object is similar to the expected CustomError object',
     );
 
     assert.rejects(
       buildMockPromise({
         name: 'SomeName',
-        message: 'some message'
+        message: 'some message',
       }),
       { name: 'SomeName', message: 'some message' },
-      'thrown object is similar to the expected plain object'
+      'thrown object is similar to the expected plain object',
     );
 
     assert.rejects(
@@ -343,19 +332,16 @@ module('Assertion: Throws - passing assertions', function () {
       function (err) {
         return err instanceof CustomError && /description/.test(err);
       },
-      'custom validation function'
+      'custom validation function',
     );
 
     assert.rejects(
       buildMockPromise(new CustomError('some error description')),
       /description/,
-      "throw error from property of 'this' context"
+      "throw error from property of 'this' context",
     );
 
-    assert.rejects(
-      buildMockPromise(undefined),
-      'reject with undefined against no matcher'
-    );
+    assert.rejects(buildMockPromise(undefined), 'reject with undefined against no matcher');
 
     // the following are nested assertions, validating that it
     // initially throws due to an invalid expected value
@@ -372,11 +358,7 @@ module('Assertion: Throws - passing assertions', function () {
     // );
 
     // note that "falsey" values are actually ok
-    assert.rejects(
-      buildMockPromise(undefined),
-      0,
-      'rejects passes when expected is falsey (0)'
-    );
+    assert.rejects(buildMockPromise(undefined), 0, 'rejects passes when expected is falsey (0)');
 
     // assert.throws(
     //   function () {
@@ -420,9 +402,7 @@ module('Assertion: Throws - passing assertions', function () {
     // );
 
     // should return a thenable
-    var returnValue = assert.rejects(
-      buildMockPromise(undefined)
-    );
+    var returnValue = assert.rejects(buildMockPromise(undefined));
     assert.strictEqual(typeof returnValue, 'object');
     assert.strictEqual(typeof returnValue.then, 'function');
   });
@@ -439,12 +419,7 @@ module('Assertion: Throws - failing assertions', function (hooks) {
   });
 
   test('throws', function (assert) {
-    assert.throws(() => assert.throws(
-      function () {
-
-      },
-      'throws fails without a thrown error'
-    ));
+    assert.throws(() => assert.throws(function () {}, 'throws fails without a thrown error'));
 
     // assert.throws(() => assert.throws(
     //   function () {
@@ -465,25 +440,17 @@ module('Assertion: Throws - failing assertions', function (hooks) {
     // ));
 
     // non-function actual values
-    assert.throws(() => assert.throws(
-      undefined,
-      'throws fails when actual value is undefined'));
+    assert.throws(() => assert.throws(undefined, 'throws fails when actual value is undefined'));
 
-    assert.throws(() => assert.throws(
-      2,
-      'throws fails when actual value is a number'));
+    assert.throws(() => assert.throws(2, 'throws fails when actual value is a number'));
 
-    assert.throws(() => assert.throws(
-      [],
-      'throws fails when actual value is an array'));
+    assert.throws(() => assert.throws([], 'throws fails when actual value is an array'));
 
-    assert.throws(() => assert.throws(
-      'notafunction',
-      'throws fails when actual value is a string'));
+    assert.throws(() =>
+      assert.throws('notafunction', 'throws fails when actual value is a string'),
+    );
 
-    assert.throws(() => assert.throws(
-      {},
-      'throws fails when actual value is an object'));
+    assert.throws(() => assert.throws({}, 'throws fails when actual value is an object'));
   });
 
   // test('rejects', function (assert) {
@@ -522,12 +489,10 @@ module('Assertion: Throws - failing assertions', function (hooks) {
   // });
 });
 
-function buildMockPromise (settledValue, shouldFulfill) {
+function buildMockPromise(settledValue, shouldFulfill) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
-      return shouldFulfill
-        ? resolve(settledValue)
-        : reject(settledValue)
+      return shouldFulfill ? resolve(settledValue) : reject(settledValue);
     });
   });
 }

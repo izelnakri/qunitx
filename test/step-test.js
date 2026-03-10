@@ -48,7 +48,7 @@ module('assert.step', function () {
     assert.deepEqual(pushed, [
       { result: false, message: 'You must provide a string value to assert.step' },
       { result: false, message: 'You must provide a string value to assert.step' },
-      { result: false, message: 'You must provide a string value to assert.step' }
+      { result: false, message: 'You must provide a string value to assert.step' },
     ]);
     assert.verifySteps([1, null, false]);
   });
@@ -70,7 +70,7 @@ module('assert.step', function () {
   });
 
   // NOTE: running test() should make the module change(?)
-  module('assert.verifySteps', function() {
+  module('assert.verifySteps', function () {
     test('verifies the order and value of steps', function (assert) {
       assert.step('One step');
       assert.step('Two step');
@@ -100,7 +100,7 @@ module('assert.step', function () {
       assert.step('One step');
 
       var original = assert.pushResult;
-      assert.pushResult = function noop () {};
+      assert.pushResult = function noop() {};
       assert.step();
       assert.step('');
       assert.pushResult = original;

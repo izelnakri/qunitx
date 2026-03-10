@@ -11,7 +11,11 @@ module('Assertion: Strict Equality - passing assertions', function () {
     assert.notStrictEqual('foo', 'bar');
     assert.notStrictEqual('foo', ['foo']);
     assert.notStrictEqual('1', 1);
-    assert.notStrictEqual('foo', { toString: function () { return 'foo'; } });
+    assert.notStrictEqual('foo', {
+      toString: function () {
+        return 'foo';
+      },
+    });
   });
 });
 
@@ -30,7 +34,13 @@ module('Assertion: Strict Equality - failing assertions', function (hooks) {
     assert.throws(() => assert.strictEqual('foo', 'bar'));
     assert.throws(() => assert.strictEqual('foo', ['foo']));
     assert.throws(() => assert.strictEqual('1', 1));
-    assert.throws(() => assert.strictEqual('foo', { toString: function () { return 'foo'; } }));
+    assert.throws(() =>
+      assert.strictEqual('foo', {
+        toString: function () {
+          return 'foo';
+        },
+      }),
+    );
   });
 
   test('notStrictEqual', function (assert) {
