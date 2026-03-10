@@ -1,23 +1,47 @@
 [changelog]
-header = """# Changelog
-
-All notable changes to this project will be documented in this file.
-"""
+header = "# Changelog\n\n"
 body = """
-{% if version %}\
-## {{ version | trim_start_matches(pat="v") }} — {{ timestamp | date(format="%Y-%m-%d") }}
-{% else %}\
-## Unreleased
-{% endif %}\
-{% for commit in commits %}\
-- {{ commit.message | split(pat="\n") | first | trim | upper_first }}
+{%- set host     = "https://github.com" -%}
+{%- set repo_url = host ~ "/" ~ remote.github.owner ~ "/" ~ remote.github.repo -%}
+{% if version -%}
+## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
+{% if previous.version %}[`{{ previous.version }}...{{ version }}`]({{ repo_url }}/compare/{{ previous.version }}...{{ version }})
+{% endif %}
+{% else -%}
+## [unreleased]
+{% endif -%}
+{% for group, commits in commits | group_by(attribute="group") -%}
+### {{ group | upper_first }}
+{% for commit in commits -%}
+- {% if commit.breaking %}[**breaking**] {% endif %}{{ commit.message | upper_first }} — {{ commit.author.timestamp | date(format="%Y-%m-%d") }} by {% if commit.github.username %}[@{{ commit.github.username }}]({{ host }}/{{ commit.github.username }}){% else %}{{ commit.author.name }}{% endif %} ([`{{ commit.id | truncate(length=7, end="") }}`]({{ repo_url }}/commit/{{ commit.id }}))
 {% endfor %}
+{% endfor %}\
 """
 footer = ""
 trim = true
 
 [git]
-conventional_commits = false
-filter_unconventional = false
+conventional_commits = true
+filter_unconventional = true
+split_commits = false
+commit_parsers = [
+    { message = "^feat",     group = "Features" },
+    { message = "^feature",  group = "Features" },
+    { message = "^fix",      group = "Bug Fixes" },
+    { message = "^perf",     group = "Performance" },
+    { message = "^refactor", group = "Refactoring" },
+    { message = "^docs?",    group = "Documentation" },
+    { message = "^chore",    skip = true },
+    { message = "^ci",       skip = true },
+    { message = "^dev",      skip = true },
+    { message = "^test",     skip = true },
+    { message = "^build",    skip = true },
+]
+filter_commits = true
 tag_pattern = "v[0-9].*"
-sort_commits = "newest"
+topo_order = false
+sort_commits = "oldest"
+
+[remote.github]
+owner = "izelnakri"
+repo  = "qunitx-cli"
