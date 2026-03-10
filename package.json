@@ -76,21 +76,21 @@
     "release": "node_modules/.bin/release-it",
     "test": "npm run test:browser && npm run test:node && npm run test:deno",
     "test:dev": "npm run test | tee test-output.log",
-    "test:browser": "node_modules/.bin/qunitx test/index.js --debug",
+    "test:browser": "CHROME_BIN=$(which google-chrome-stable 2>/dev/null || which google-chrome 2>/dev/null || which chromium 2>/dev/null || which chromium-browser 2>/dev/null || echo '') node_modules/.bin/qunitx test/index.js --debug",
     "test:deno": "deno test --allow-read --allow-env --allow-run test/index.js",
     "test:node": "node --test test/index.js"
   },
   "devDependencies": {
-    "auto-changelog": "^2.4.0",
-    "prettier": "^3.0.0",
-    "qunit": "^2.19.4",
-    "qunitx": "^0.9.1",
-    "qunitx-cli": "^0.1.1",
-    "release-it": "^16.1.3",
-    "ts-node": ">=10.7.0"
+    "auto-changelog": "^2.5.0",
+    "prettier": "^3.8.1",
+    "qunit": "^2.25.0",
+    "qunitx": "^0.9.3",
+    "qunitx-cli": "^0.1.2",
+    "release-it": "^19.2.4",
+    "ts-node": "^10.9.2"
   },
   "volta": {
-    "node": "20.5.0"
+    "node": "22.22.0"
   },
   "prettier": {
     "printWidth": 100,
