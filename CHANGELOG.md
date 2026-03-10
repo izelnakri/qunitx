@@ -1,51 +1,421 @@
-## [0.10.0] - 2026-03-10
+# Changelog
 
-### 🚀 Features
+All notable changes to this project will be documented in this file.
+## Unreleased
+- Release 0.11.0
+## 0.10.0 — 2026-03-10
+- Release 0.10.0
+- Feature: MAJOR updates of packages, CI to qunitx
+- Dev: update all packages
+- Dev: update flake.nix for develop shell
+- Merge pull request #88 from Krinkle/patch-1
+- Restore qunit-plugin keyword in package.json
+- Make flake run forAllSystems supported
+- Napalm update & lockfileVersion 3
+- Release 0.9.3
+- QUnit reference fix for deno on esm.sh
+- Remove redundant test/helpers from dev environment
+- Release 0.9.2
+- Update devDependencies
+- Merge pull request #78 from izelnakri/optimizations
+- Optimize ModuleContext module: remove extra props
+- Cosmetic code changes to the some shim modules
+- Refactor CI to use Nix (#77)
+- Release 0.9.1
+- Merge pull request #76 from izelnakri/optimize-context
+- Freeze Assert, ModuleContext and TestContext
+- Optimize TestContext
+- Release 0.9.0
+- Merge pull request #75 from izelnakri/stateful-tests
+- Pin to node v20.5 and add TODO
+- First mature deno implementation for the tests
+- First mature node.js implementation for the tests
+- First mature node.js implementation for the tests
+- Tests complete for beta release
+- Tests for stateful assertions
+- Add initial assert.step, expect & async support
+- Release 0.8.3
+- Bump docker/setup-buildx-action from 2.9.0 to 2.9.1 (#72)
+- Initial tests for necessary assertions
+- Lock the logic of necessary assertions
+- Release 0.8.2
+- Distribution for deno.land
+- Make deno bin in docker PATH for CI
+- Comment out qunitx-cli specific test
+- Release 0.8.1
+- Deno CI setup
+- Test script setup
+- Initial 1-1 mapping of QUnit API to deno
+- Initial 1-1 mapping of QUnit API to node assert API
+- Add dev badges to README
+- Add asciicast to README
+- Improve documentation
+- Added initial deepEqual tests
+- Update README
+- Release 0.8.0
+- Prepare 0-dep qunitx package
+- Removed all cli code from this repo
+- Release 0.7.0
+- Update package-lock.json
+- Npmignore dev files
+- Rm redundant nodejs-environment setup code (#73)
+- Release 0.6.1
+- Optimize CI docker image building
+- Add connections.server.close()
+- Pin node.js to v20.4
+- Update dependencies
+- Release 0.6.0
+- Merge pull request #64 from izelnakri/dependabot/github_actions/docker/login-action-2.2.0
+- Bump docker/login-action from 2.1.0 to 2.2.0
+- Merge pull request #67 from izelnakri/dependabot/github_actions/docker/build-push-action-4.1.1
+- Bump docker/build-push-action from 4.0.0 to 4.1.1
+- Merge pull request #70 from izelnakri/dependabot/github_actions/docker/setup-buildx-action-2.9.0
+- Bump docker/setup-buildx-action from 2.5.0 to 2.9.0
+- Merge pull request #71 from izelnakri/remove-nanoexpress
+- Nanoexpress replaced with pure node server
+- Release 0.5.3
+- Improve shims & assertions to match QUnit API more
+- Add msg on tsconfig.json creation
+- Release 0.5.2
+- Fix tsconfig.json boilerplate
+- Release 0.5.1
+- Fix & document ts-node/esm loader for node.js mode
+- Update Dockerfile node.js to v20.3.1
+- Release 0.5.0
+- Update assertion shims
+- Test/commands now work for deno
+- Initial deno cli setup
+- Bugfix: assignDefaultValues node test runner shim
+- Moved to new node.js imports feature
+- V20.3 node upgrade
+- V20.2 node upgrade
+- --browser --debug make debugger available for node
+- Node std lib imports now namespaced to 'node:'
+- Release 0.4.5
+- Improve test result output
+- Release 0.4.4
+- FIX: --browser handle circular objects on asserts
+- Release 0.4.3
+- Add jsdom for "window" ref parity in node.js
+- Release 0.4.2
+- Upgrade: esbuild v0.17.19, puppeteer v20.2.0
+- Release 0.4.1
+- Test stability improvements
+- Improved shell.js test helper & QUnit upgrade
+- Make qunitx engine warning for node version < 20.1
+- Improve nodejs shims
+- Release 0.4.0
+- Merge pull request #63 from izelnakri/big-updates
+- Build packages updated
+- Moved tests to qunitx node test shim
+- Lock Node to v19 with TEST RUNNER & PKG REMOVALS
+- Upgrade mocha, node & nanoexpress deps
+- Release 0.3.8
+- Bump docker/login-action from 2.0.0 to 2.1.0 (#51)
+- Bump docker/build-push-action from 3.1.1 to 4.0.0 (#58)
+- Bump docker/setup-buildx-action from 2.0.0 to 2.5.0 (#60)
+- Big updates for newer Node versions (#61)
+- Bump docker/login-action from 1.14.1 to 2.0.0 (#46)
+- Bump docker/setup-buildx-action from 1.6.0 to 2.0.0 (#48)
+- Bump docker/build-push-action from 2.9.0 to 3.1.1 (#50)
+- Release 0.3.6
+- Update packages (#44)
+- Update README.md (#43)
+- Release 0.3.5
+- Esbuild updated to v0.14.24
+- Release 0.3.4
+- Update qunit
+- Release 0.3.3
+- Update npm packages
+- Add keywords to package.json (#37)
+- Bump actions/checkout from 2.4.0 to 3 (#40)
+- Bump docker/build-push-action from 2.7.0 to 2.9.0 (#36)
+- Bump docker/login-action from 1.12.0 to 1.14.1 (#41)
+- Bump docker/login-action from 1.10.0 to 1.12.0 (#34)
+- Release 0.3.2
+- Optimize CI docker container space
+- Fix CI container dependencies
+- Release 0.3.1
+- Pin to node v16 LTS
+- Packages upgraded
+- Merge pull request #32 from izelnakri/dependabot/github_actions/actions/checkout-2.4.0
+- Bump actions/checkout from 2.3.5 to 2.4.0
+- Merge pull request #28 from izelnakri/dependabot/github_actions/actions/checkout-2.3.5
+- Bump actions/checkout from 2.3.4 to 2.3.5
+- Release 0.3.0
+- Release 0.3.0-3
+- Fix qunit hack stats reference clearing
+- Release 0.3.0-2
+- Merge pull request #26 from izelnakri/dependabot/github_actions/docker/build-push-action-2.7.0
+- Bump docker/build-push-action from 2.6.1 to 2.7.0
+- Merge pull request #27 from izelnakri/dependabot/github_actions/docker/setup-buildx-action-1.6.0
+- Bump docker/setup-buildx-action from 1.5.1 to 1.6.0
+- Add github container registry cache to ci
+- Update pkgs and add sanity tests
+- Release 0.3.0-1
+- Add keepNames option to esbuild on --browser
+- Release 0.3.0-0
+- Add .js copies of test helpers for tests
+- Pin node.js to v16.5
+- Typescript support in node.js mode
+- Release 0.2.4
+- Remove redundant fs.mkdir option
+- Update nanoexpress package
+- Packages upgraded
+- Merge pull request #20 from izelnakri/dependabot/github_actions/docker/login-action-1.10.0
+- Bump docker/login-action from 1.9.0 to 1.10.0
+- Merge pull request #23 from izelnakri/dependabot/github_actions/docker/build-push-action-2.6.1
+- Bump docker/build-push-action from 2.5.0 to 2.6.1
+- Merge pull request #25 from izelnakri/dependabot/github_actions/docker/setup-buildx-action-1.5.1
+- Bump docker/setup-buildx-action from 1.3.0 to 1.5.1
+- Release 0.2.2
+- Fix test cleanup
+- Update all packages to latest versions
+- Merge pull request #17 from izelnakri/dependabot/github_actions/docker/build-push-action-2.5.0
+- Bump docker/build-push-action from 2.4.0 to 2.5.0
+- Merge pull request #18 from izelnakri/dependabot/github_actions/actions/cache-2.1.6
+- Bump actions/cache from 2.1.5 to 2.1.6
+- Release 0.2.1
+- Refreshed and reduced deps
+- Release 0.2.0
+- Important output node mode test error
+- Release 0.1.14
+- Merge pull request #19 from izelnakri/before-and-after
+- Fix CI add vendor folder to containers
+- Fix existing tests, add more to help output
+- Tests for before and after script feature
+- Before-n-after user script feature implementation
+- Release 0.1.13
+- Downgrade nanoexpress version due to buggy release
+- Release 0.1.12
+- Rm indent-string pkg, update js-yaml
+- Release 0.1.11
+- Packages upgraded
+- Release 0.1.10
+- Upgrade pkgs & escaping script fix
+- Release 0.1.9
+- Add TODO for maybe per file loading in future
+- Merge pull request #10 from izelnakri/dependabot/github_actions/docker/build-push-action-2.4.0
+- Bump docker/build-push-action from 2 to 2.4.0
+- Merge pull request #11 from izelnakri/dependabot/github_actions/docker/setup-buildx-action-1.3.0
+- Bump docker/setup-buildx-action from 1 to 1.3.0
+- Merge pull request #12 from izelnakri/dependabot/github_actions/actions/checkout-2.3.4
+- Bump actions/checkout from 2 to 2.3.4
+- Merge pull request #13 from izelnakri/dependabot/github_actions/docker/login-action-1.9.0
+- Bump docker/login-action from 1 to 1.9.0
+- Merge pull request #14 from izelnakri/dependabot/github_actions/actions/cache-2.1.5
+- Bump actions/cache from 2.1.4 to 2.1.5
+- Merge pull request #16 from izelnakri/escape-script-closing
+- Escape embedded '</script>' from js;
+- Release 0.1.8
+- Merge pull request #15 from izelnakri/watch-browser-fix
+- Advanced and correct browser target file filtering
+- Add LICENSE
+- Release 0.1.7
+- Add TODO and small missing import ref
+- Refresh stdout image
+- Release 0.1.6
+- Code coverage strategy explanation
+- Add node.js mode code coverage documentation
+- Release 0.1.5
+- Packages upgraded
+- Small reference bugfixes
+- Release 0.1.4
+- Merge pull request #9 from izelnakri/globs
+- Finalize globs/inputs with absolute paths
+- Major watcher adjustments/improvements
+- Cleanups after glob refactors
+- Move logic to setup/test-file-paths
+- Glob filter algorithm final implementation
+- Simplify v1 glob filter algorithm
+- Very complex glob filtering algorithm v1 design
+- Move config object generation to setup/config
+- Rename fileOrFolderInputs > userFileOrFolderInputs
+- Release 0.1.3
+- Merge pull request #8 from izelnakri/abort
+- Abort key handling for browser mode
+- Keyboard events refactor and abort
+- Todo & small script update
+- Release 0.1.2
+- Merge pull request #7 from izelnakri/fail-fast
+- --failFast feature
+- Release 0.1.1
+- --httpPort flag renamed to --port
+- Release 0.1.0
+- Merge pull request #6 from izelnakri/keyboard-shortcuts
+- Keyboard shortcuts without aborting
+- Release 0.0.47
+- Small optimization and bugfix
+- Release 0.0.46
+- Bugfix and more parallel setup
+- Release 0.0.45
+- Merge pull request #5 from izelnakri/internal-tweaks
+- Optimize browser building and setup
+- Release 0.0.44
+- BuildCachedContentTree internal function
+- Release 0.0.43
+- Add coloring to important console messages
+- Add console coloring
+- Improve cli help messages
+- Release 0.0.42
+- Mature dynamic html file removals before build
+- Release 0.0.41
+- Fix: dynamicHTML js change not cached by staticsrv
+- Release 0.0.40
+- Only show TAP on console actions not browser visits
+- BUGFIX: connection references on close
+- Cleanup qunitx console further
+- Small fix for $ qunit new input parsing
+- Release 0.0.39
+- Merge pull request #4 from izelnakri/autorefresh
+- Autorefresh & server migrate to nanoexpress
+- Release 0.0.38
+- Bugfix for CSS without htmlPaths
+- Release 0.0.37
+- Folder path existence bugfixes
+- Release 0.0.36
+- Bugfixes: htmlPath normalization & server closure
+- Release 0.0.35
+- Merge pull request #3 from izelnakri/advanced-html-parsing
+- Direct setup boilerplate to qunitx.css
+- Remove unused code
+- Initial working asset-writing prototype
+- Add vendored qunit.css to the npm releases
+- Writing assets to output directory
+- Update TODOs
+- Improve watch message for browser mode
+- Init config.COUNTER only inside runners
+- Listen-to-keyboard-key util for key shortcuts
+- Fix and move qunit to devDependencies due to patch
+- Smarter code generation
+- Fix boilerplate test code
+- Release 0.0.34
+- Better test error handling on watch & error msges
+- Release 0.0.33
+- First working $ qunitx init
+- Release 0.0.32
+- Add http logging on --debug
+- Fix http server html serving
+- Release 0.0.31
+- --browser reference fix
+- Qunitx generate command make .js default
+- Release 0.0.30
+- Fix qunitx generate command
+- Release 0.0.29
+- Fix projectRoot reference on browser mode
+- Release 0.0.28
+- Upgrade esbuild & puppeteer
+- Fix qunitx file generation directory
+- Release 0.0.27
+- Improve qunitx test generation
+- Release 0.0.26
+- Make vendor included in npm dist
+- Release 0.0.25
+- Add chokidar dep
+- Release 0.0.24
+- Merge pull request #2 from izelnakri/watcher
+- Move file-watcher util func to correct place
+- Fix css lookup until a middleware implementation
+- Cleanup code for new release
+- Finalize qunit.js hacking for test state reset
+- Give up on node.js --watch mode
+- Time-counter.js module usage
+- Hacking node.js QUnit restart runs
+- --browser --watch initial prototype
+- Seperate 2 different run modes to functions
+- Fix init problem
+- Better help command message for --watch
+- Reorder default-project-config-values.js
+- Release 0.0.23
+- $ qunitx init smarter html output path generation
+- Small DX for browser test runtime info
+- Release 0.0.22
+- Fix CI
+- Better handling of html input/outputs
+- Better failure when package.json doesnt exist
+- DX: better failure on boilerplate test
+- Read and set config on package.json
+- Release 0.0.21
+- Feedback from run
+- Make $ qunit new | n # create a file NOT do init
+- Release 0.0.20
+- Packages upgraded
+- Make it possible for qunitx run multiple htmls
+- Rename --outputPath to --output
+- Restructure tests for mocha layout
+- Refresh help output
+- Move help command test to mocha
+- Release 0.0.19
+- Moved tests to mocha
+- Make file tests serial
+- More mature server & wss bindings
+- Better timeout error messages
+- Major refactor to remove wsPort and optimize tests
+- Folder tests complete
+- Upgrade node.js test run logic
+- Replace chalk npm dep with kleur
+- Assert-stdout test helper to dry up test code
+- Add test/helper/fs-writers.js
+- Test cases written for folder-test
+- Todo: advanced htmls test cases
+- Finalize flags for alpha release
+- Make qunitx build to tmp not dist
+- Update README.md
+- Release 0.0.18
+- Small optimizations on browser error handling
+- Release 0.0.17
+- Fix for directory lookup
+- Show errors for build & browser
+- Md with zsh
+- Release 0.0.16
+- Basic usage documentation
+- Add chalk to parse-fs-inputs.js
+- Release 0.0.15
+- Add indent-string dep
+- Release 0.0.14
+- Add js-yaml to deps
+- Release 0.0.13
+- Snapshot for first POC
+- First wide file-test coverage, file testing works
+- Esbuild integration
+- Add console.logs for --debug test templates
+- First test for --browser
+- First working browser setup
+- Tap printers modularized
+- All needed packages added
+- Init and generate commands added
+- Base for very advanced setup/browser.js
+- Adjust test setup
+- Todo tests added
+- Update package-lock.json
+- Add Dockerfile
+- Add github actions
+- First passing single file tests
+- Add boilerplates/setup for $ qunitx init
+- Test boilerplate file to generate in cli
+- Add time elapsed to TAP output
+- First working TAP output
+- TODO notes
+- FileOrFolder execution moved to file
+- Add few commands files todo
+- ParseCliFlags() util
+- Rename few todo test files
+- Release 0.0.11
+- Revert global qunit rewire
+- Release 0.0.10
+- Global qunit rewire fix
+- Release 0.0.9
+- Rewire qunit es module globally
+- Release 0.0.8
+- Fix cli relative path lookup
+- Release 0.0.7
+- First file runner prototype
+- Initial node.js API
+- Release 0.0.6
+- Add docs: qunitx-help-stdout.png
+- Add README.md and help output adjustment
+- Release 0.0.3
+- Add release-it, changelog, prettier
+- Help command
+- Init
 
-- MAJOR updates of packages, CI to qunitx
-
-### 💼 Other
-
-- Update flake.nix for develop shell
-- Update all packages
-## [0.5.0] - 2023-06-25
-
-### 💼 Other
-
-- AssignDefaultValues node test runner shim
-## [0.4.4] - 2023-05-16
-
-### 💼 Other
-
-- --browser handle circular objects on asserts
-## [0.4.2] - 2023-05-14
-
-### 💼 Other
-
-- Esbuild v0.17.19, puppeteer v20.2.0
-## [0.0.41] - 2021-04-25
-
-### 🐛 Bug Fixes
-
-- DynamicHTML js change not cached by staticsrv
-## [0.0.40] - 2021-04-25
-
-### 💼 Other
-
-- Connection references on close
-## [0.0.36] - 2021-04-24
-
-### 💼 Other
-
-- HtmlPath normalization & server closure
-## [0.0.22] - 2021-03-28
-
-### 💼 Other
-
-- Better failure on boilerplate test
-## [0.0.19] - 2021-03-21
-
-### 💼 Other
-
-- Advanced htmls test cases
-## [0.0.3] - 2021-01-17
