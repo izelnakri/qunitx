@@ -13,8 +13,14 @@ Set Padding 20
 Set TypingSpeed 55ms
 Set PlaybackSpeed 0.85
 
-# --- Show the test file ---
-Type "cat docs/demo-math-test.js"
+# Enable # comments in zsh interactive mode (silences "command not found: #")
+Hide
+Type "setopt interactive_comments"
+Enter
+Show
+
+# --- Show the test file with syntax highlighting ---
+Type "bat --paging=never docs/demo-math-test.js"
 Enter
 Sleep 3500ms
 
@@ -26,15 +32,15 @@ Type "node --test docs/demo-math-test.js"
 Enter
 Sleep 4500ms
 
-# --- Watch mode hint ---
-Type "# Watch mode reruns on every file save"
+# --- Watch mode ---
+Type "# Watch mode: reruns on every file save"
 Enter
 Sleep 300ms
-Type "node --test --watch docs/demo-math-test.js"
+Type "node --test --test-reporter=tap --watch docs/demo-math-test.js"
 Enter
-Sleep 2000ms
+Sleep 3500ms
 Ctrl+C
-Sleep 400ms
+Sleep 600ms
 
 # --- Run in Deno ---
 Type "# Deno — same file, same results"

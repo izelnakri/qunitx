@@ -31,7 +31,7 @@ echo "==> Taking browser screenshots..."
 if [[ -z "${CHROME_BIN:-}" ]]; then
   CHROME_BIN=$(nix eval --raw nixpkgs#chromium.outPath)/bin/chromium
 fi
-CHROME_BIN="$CHROME_BIN" node "$DOCS/take-browser-screenshots.mjs"
+CHROME_BIN="$CHROME_BIN" node "$DOCS/take-browser-screenshots.js"
 
 # ── 3. Get terminal duration ───────────────────────────────────────────────────
 DURATION=$(ffprobe -v error -show_entries format=duration \
@@ -46,18 +46,26 @@ ffmpeg -y -i "$DOCS/terminal.gif" \
 nix run nixpkgs#gifsicle -- -O3 --lossy=80 "$TMP/terminal_small.gif" -o "$TMP/terminal_opt.gif" 2>/dev/null
 
 # ── 5. Browser slideshow: scale to 500×500, 2fps ──────────────────────────────
-D1=15
-D2=$(( (DURATION - D1) / 2 ))
-D3=$(( DURATION - D1 - D2 ))
-echo "==> Building browser slideshow (${D1}s / ${D2}s / ${D3}s)..."
+# Frame timing:
+#   1. Failing tests + deepEqual diff  — 14s (give viewers time to read the diff)
+#   2. All passing (simulated refresh) —  8s (quick "it's fixed!")
+#   3. Filtered to Async module        —  8s (shareable URL demo)
+#   4. deepEqual test expanded         — remainder
+D1=14
+D2=8
+D3=8
+D4=$(( DURATION - D1 - D2 - D3 ))
+echo "==> Building browser slideshow (${D1}s / ${D2}s / ${D3}s / ${D4}s)..."
 cat > "$TMP/browser_list.txt" << EOF
-file '$(realpath $DOCS/browser-1-all-passed.png)'
+file '$(realpath $DOCS/browser-1-failing.png)'
 duration $D1
-file '$(realpath $DOCS/browser-2-filtered.png)'
+file '$(realpath $DOCS/browser-2-all-passed.png)'
 duration $D2
-file '$(realpath $DOCS/browser-3-expanded.png)'
+file '$(realpath $DOCS/browser-3-filtered.png)'
 duration $D3
-file '$(realpath $DOCS/browser-3-expanded.png)'
+file '$(realpath $DOCS/browser-4-expanded.png)'
+duration $D4
+file '$(realpath $DOCS/browser-4-expanded.png)'
 EOF
 
 ffmpeg -y -f concat -safe 0 -i "$TMP/browser_list.txt" \

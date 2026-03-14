@@ -1,4 +1,4 @@
-.PHONY: check test lint build release
+.PHONY: check test lint build demo release
 
 check: lint test
 
@@ -10,6 +10,9 @@ test:
 
 build:
 	npm run build
+
+demo:
+	bash docs/make-demo-gif.sh
 
 # Lint, bump version, update changelog, commit, tag, push, publish to npm.
 # CI then creates the GitHub release.
