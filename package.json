@@ -1,7 +1,7 @@
 {
   "name": "qunitx",
   "type": "module",
-  "version": "0.12.1",
+  "version": "0.12.2",
   "description": "A universal test framework for testing any js file on node.js, browser or deno with QUnit API",
   "author": "Izel Nakri",
   "license": "MIT",
@@ -60,7 +60,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/izelnakri/qunitx.git"
+    "url": "git+https://github.com/izelnakri/qunitx.git"
   },
   "scripts": {
     "lint": "prettier --check \"test/**/*.js\" \"*.js\" \"package.json\"",
@@ -75,7 +75,7 @@
     "prepack": "npm run build",
     "test": "npm run test:browser && npm run test:node && npm run test:deno",
     "test:dev": "npm run test | tee test-output.log",
-    "test:browser": "node_modules/.bin/qunitx test/index.js --debug",
+    "test:browser": "qunitx test/index.js --debug",
     "test:deno": "deno test --allow-read --allow-env --allow-run test/index.js",
     "test:node": "node --test test/index.js"
   },
