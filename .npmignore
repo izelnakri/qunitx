@@ -18,3 +18,4 @@ test
 tmp
 TODO
 test-output.log
+Makefile

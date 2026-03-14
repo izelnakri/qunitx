@@ -1,3 +1,7 @@
+<div align="center">
+
+# QUnitX
+
 [![CI](https://github.com/izelnakri/qunitx/actions/workflows/ci.yml/badge.svg)](https://github.com/izelnakri/qunitx/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/qunitx)](https://www.npmjs.com/package/qunitx)
 [![npm downloads](https://img.shields.io/npm/dm/qunitx)](https://www.npmjs.com/package/qunitx)
@@ -5,7 +9,7 @@
 [![Ask me anything](https://img.shields.io/badge/ask%20me-anything-1abc9c.svg)](https://github.com/izelnakri/qunitx/issues)
 [![Sponsor](https://img.shields.io/badge/sponsor-%E2%99%A5-pink)](https://github.com/sponsors/izelnakri)
 
-# QUnitX
+</div>
 
 **The oldest, most battle-tested JavaScript test API — now universal.**
 
@@ -36,6 +40,10 @@ ecosystem:
 QUnitX wraps this API to work with **Node.js's built-in `node:test` runner** and
 **Deno's native test runner** — no Jest, Vitest, or other framework needed.
 
+QUnit includes the fastest assertion and test runtime in JS world. I've previously contributed to some [speed optimizations](https://qunitjs.com/blog/2022/02/15/qunit-2-18-0/) to QUnit, we benchmark every possible thing to make it the fastest test
+runtime, faster than node.js and deno default assertions in most cases. Therefore I consider myself very objective
+when I say QUnit(X) is the best JS/TS testing tool out there.
+
 ---
 
 ## Demo
@@ -51,14 +59,12 @@ Live browser UI example (click to see filterable QUnit test suite):
 
 [objectmodel.js.org/test/?moduleId=6e15ed5f](https://objectmodel.js.org/test/?moduleId=6e15ed5f&moduleId=950ec9c5)
 
-![QUnitX CLI help](https://raw.githubusercontent.com/izelnakri/qunitx/main/docs/qunitx-help-stdout.png)
-
 ---
 
 ## Installation
 
 ```sh
-npm install qunitx
+npm install qunitx --save-dev
 ```
 
 Requires **Node.js >= 22** (LTS) or **Deno >= 2**.
@@ -203,6 +209,8 @@ familiar browser UI with zero extra layers.
 ---
 
 ## Code coverage
+
+Probably c8 isn't even needed since qunitx runs as a dependency(rather than runtime) on node.js and deno.
 
 ```sh
 # Node (any c8-compatible reporter)

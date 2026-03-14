@@ -13,9 +13,11 @@ build:
 
 # Lint, bump version, update changelog, commit, tag, push, publish to npm.
 # CI then creates the GitHub release.
-# Usage: make release LEVEL=patch|minor|major
+# Usage: make release          (defaults to patch)
+#        make release LEVEL=minor|major
+LEVEL ?= patch
 release:
-	@test -n "$(LEVEL)" || (echo "Usage: make release LEVEL=patch|minor|major" && exit 1)
+	@npm whoami 2>/dev/null || npm login
 	npm run lint
 	npm version $(LEVEL) --no-git-tag-version
 	npm run changelog:update
