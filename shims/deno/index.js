@@ -1,4 +1,4 @@
-import { AssertionError as DenoAssertionError } from "https://deno.land/std@0.192.0/testing/asserts.ts";
+import { AssertionError as DenoAssertionError } from "jsr:@std/assert";
 import '../../vendor/qunit.js';
 import Assert from '../shared/assert.js';
 import ModuleContext from '../shared/module-context.js';

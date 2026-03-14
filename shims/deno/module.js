@@ -1,4 +1,4 @@
-import { describe, beforeAll, afterAll } from "https://deno.land/std@0.192.0/testing/bdd.ts";
+import { describe, beforeAll, afterAll } from "jsr:@std/testing/bdd";
 import ModuleContext from '../shared/module-context.js';
 
 // NOTE: node.js beforeEach & afterEach is buggy because the TestContext it has is NOT correct reference when called, it gets the last context
@@ -10,7 +10,7 @@ export default function module(moduleName, runtimeOptions, moduleContent) {
   let targetModuleContent = moduleContent ? moduleContent : runtimeOptions;
   let moduleContext = new ModuleContext(moduleName);
 
-  return describe(moduleName, { concurrency: true, ...targetRuntimeOptions }, async function () {
+  return describe(moduleName, { concurrency: true, ...targetRuntimeOptions }, function () {
     let beforeHooks = [];
     let afterHooks = [];
 

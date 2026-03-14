@@ -1,156 +1,226 @@
-![docker-based-ci](https://github.com/izelnakri/qunitx/workflows/docker-based-ci/badge.svg)
-[![npm version](https://badge.fury.io/js/qunitx.svg)](https://badge.fury.io/js/qunitx)
+[![CI](https://github.com/izelnakri/qunitx/actions/workflows/ci.yml/badge.svg)](https://github.com/izelnakri/qunitx/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/qunitx)](https://www.npmjs.com/package/qunitx)
+[![npm downloads](https://img.shields.io/npm/dm/qunitx)](https://www.npmjs.com/package/qunitx)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Ask me anything](https://img.shields.io/badge/ask%20me-anything-1abc9c.svg)](https://github.com/izelnakri/qunitx/issues)
+[![Sponsor](https://img.shields.io/badge/sponsor-%E2%99%A5-pink)](https://github.com/sponsors/izelnakri)
 
 # QUnitX
 
-Mature, fast, 0 dependency & flexible test API for JavaScript/TypeScript.
+**The oldest, most battle-tested JavaScript test API — now universal.**
 
-***Universal testing for JavaScript with the oldest, most mature & flexible
-testing API in the JavaScript ecosystem. Run the same test file in node.js, deno or in the browser***
+Run the **same test file** in Node.js, Deno, and the browser without changes.
+Zero dependencies. No config needed for Node. TypeScript works out of the box.
 
-Your test JS/TS file(s) can now run interchangably in different runtimes with
-the default test runner of node.js or deno, or with a browser runner of your
-choice!
+---
 
-[![asciicast](https://asciinema.org/a/597066.svg)](https://asciinema.org/a/597066?autoplay=1)
+## Why QUnit?
 
-In the browser you can use the same browser test/filter UI of
-[QUnit](https://github.com/qunitjs/qunit) and share the web links with your
-colleagues thanks to the test filters through query params feature of QUnit:
+QUnit was created in 2008 by the jQuery team. While newer frameworks come and go,
+QUnit has quietly accumulated 16+ years of real-world edge-case handling that younger
+tools are still catching up to. Its assertion API is the most mature in the JavaScript
+ecosystem:
 
-[QUnit Test Suite Example](https://objectmodel.js.org/test/?moduleId=6e15ed5f&moduleId=950ec9c5)
+- **`assert.deepEqual`** — handles circular references, prototype chains, Sets, Maps,
+  typed arrays, Dates, RegExps, and getters correctly
+- **`assert.throws` / `assert.rejects`** — match errors by constructor, regex, or custom validator
+- **`assert.step` / `assert.verifySteps`** — declarative execution-order verification;
+  catches missing async callbacks that other frameworks silently swallow
+- **`assert.expect(n)`** — fails the test if exactly _n_ assertions didn't run;
+  invaluable for async code where missing assertions would otherwise pass silently
+- **Hooks** — `before`, `beforeEach`, `afterEach`, `after` with correct FIFO/LIFO ordering,
+  properly scoped across nested modules
+- **Shareable browser URLs** — the QUnit browser UI filters tests via query params, so you can
+  share `https://yourapp.test/?moduleId=abc123` with a colleague and they see exactly the same view
 
-**UI visual automated tests also possible with QUnit!**
+QUnitX wraps this API to work with **Node.js's built-in `node:test` runner** and
+**Deno's native test runner** — no Jest, Vitest, or other framework needed.
 
-![QunitX terminal output](https://raw.githubusercontent.com/izelnakri/qunitx/main/docs/qunitx-help-stdout.png)
+---
 
-### Installation: Node & Deno
+## Demo
 
-This is a 0-dependency test library that runs code in your target runtime(node,
-deno or browser) test runner. Since a default test runner is a new feature of node.js, please use node.js v20.3+.
+> Left window: `node --test` and `deno test` running the same file.
+> Right window: QUnit browser UI with filterable, shareable test results.
 
-In order to use qunitx to convert qunit tests files please change:
+<!-- Demo GIF: see docs/demo.tape (VHS script) for terminal portion.
+     For the combined terminal + browser recording, see "Recording the demo" below. -->
+![QUnitX demo](https://raw.githubusercontent.com/izelnakri/qunitx/main/docs/demo.gif)
+
+Live browser UI example (click to see filterable QUnit test suite):
+
+[objectmodel.js.org/test/?moduleId=6e15ed5f](https://objectmodel.js.org/test/?moduleId=6e15ed5f&moduleId=950ec9c5)
+
+![QUnitX CLI help](https://raw.githubusercontent.com/izelnakri/qunitx/main/docs/qunitx-help-stdout.png)
+
+---
+
+## Installation
+
+```sh
+npm install qunitx
+```
+
+Requires **Node.js >= 22** (LTS) or **Deno >= 2**.
+
+---
+
+## Quick start
 
 ```js
+// math-test.js  (works in Node, Deno, and browser unchanged)
+import { module, test } from 'qunitx';
+
+module('Math utilities', (hooks) => {
+  hooks.before((assert) => {
+    assert.step('setup complete');
+  });
+
+  test('addition', (assert) => {
+    assert.equal(2 + 2, 4);
+    assert.notEqual(2 + 2, 5);
+  });
+
+  test('deepEqual', (assert) => {
+    assert.deepEqual({ a: 1, b: [2, 3] }, { a: 1, b: [2, 3] });
+  });
+
+  module('Async', () => {
+    test('resolves correctly', async (assert) => {
+      const result = await Promise.resolve(42);
+      assert.strictEqual(result, 42);
+    });
+  });
+});
+```
+
+### Node.js
+
+```sh
+# No extra dependencies — uses the Node built-in test runner
+node --test math-test.js
+
+# Watch mode (re-runs on save)
+node --test --watch math-test.js
+
+# Glob pattern
+node --test --watch 'test/**/*.js'
+
+# TypeScript (tsconfig.json with moduleResolution: NodeNext required)
+node --import=tsx/esm --test math-test.ts
+
+# Code coverage
+npx c8 node --test math-test.js
+```
+
+### Deno
+
+```sh
+# One-time: create a deno.json import map
+echo '{"imports": {"qunitx": "https://esm.sh/qunitx/shims/deno/index.js"}}' > deno.json
+
+# Run
+deno test math-test.js
+
+# With explicit permissions
+deno test --allow-read --allow-env math-test.js
+```
+
+### Browser
+
+Use [qunitx-cli](https://github.com/izelnakri/qunitx-cli) to get browser test output
+in your terminal / CI, or to open the live QUnit UI during development:
+
+```sh
+npm install -g qunitx-cli
+
+# Headless (CI-friendly — outputs TAP to stdout)
+qunitx math-test.js
+
+# Open QUnit browser UI alongside terminal output
+qunitx math-test.js --debug
+```
+
+The browser UI lets you:
+- Filter by module or test name (filter state is preserved in the URL)
+- Share a link that reproduces the exact filtered view with a colleague
+- Re-run individual tests by clicking them
+- See full assertion diffs inline
+
+---
+
+## Migrating from QUnit
+
+One import line is all that changes:
+
+```js
+// Before:
 import { module, test } from 'qunit';
 
-// to:
+// After:
 import { module, test } from 'qunitx';
 ```
 
-Example:
+---
+
+## Concurrency options
+
+`module()` and `test()` accept an optional options object forwarded directly to the underlying
+Node / Deno test runner:
 
 ```js
-// in some-test.js: (typescript also works)
 import { module, test } from 'qunitx';
-import $ from 'jquery';
 
-module('Basic sanity check', function (hooks) {
-  test('it works', function (assert) {
-    assert.equal(true, true);
-  });
+// Run tests in this module serially
+module('Serial suite', { concurrency: false }, (hooks) => {
+  test('first', (assert) => { assert.ok(true); });
+  test('second', (assert) => { assert.ok(true); });
+});
 
-  module('More advanced cases', function (hooks) {
-    test('deepEqual works', function (assert) {
-      assert.deepEqual({ username: 'izelnakri' }, { username: 'izelnakri' });
-    });
-    test('can import ES & npm modules', function (assert) {
-      assert.ok(Object.keys($));
-    });
+// Deno-specific: permissions, sanitizeExit, etc.
+module('Deno file access', { permissions: { read: true }, sanitizeExit: false }, (hooks) => {
+  test('reads a file', async (assert) => {
+    const text = await Deno.readTextFile('./README.md');
+    assert.ok(text.length > 0);
   });
 });
 ```
 
-```zsh
-# you can run the test in node with ES modules package.json{ "type": "module" }
-$ node --test some-test.js
+---
 
-# TypeScript also works, make sure on node.js mode, tsconfig.json exists with compilerOptions.module & compilerOptions.moduleResolution set to "NodeNext":
-$ node --loader=ts-node/esm/transpile-only --test some-test.ts
+## How it works
 
-# You can use the new watch mode of node.js to watch for files or folder patterns
-$ node --test --watch some-test.js some-folder/*.js
+| Runtime | Adapter |
+|---------|---------|
+| Node.js | Wraps `node:test` `describe` / `it` with QUnit lifecycle |
+| Deno | Wraps Deno BDD helpers with the same QUnit lifecycle |
+| Browser | Thin re-export of QUnit's native browser API |
 
-# You can also run this test on deno. Unfortunately today deno requires one extra step to create a deno.json file:
-$ echo '{"imports": { "qunitx": "https://esm.sh/qunitx/shims/deno/index.js" } }' > deno.json
+The browser path is literally QUnit itself, so you get full QUnit compatibility:
+plugins, custom reporters, the event API (`QUnit.on`, `QUnit.done`, etc.), and the
+familiar browser UI with zero extra layers.
 
-# then run the tests in default deno test runner:
-$ deno test some-test.js
+---
+
+## Code coverage
+
+```sh
+# Node (any c8-compatible reporter)
+npx c8 node --test test/
+
+# View HTML report
+npx c8 --reporter=html node --test test/ && open coverage/index.html
 ```
 
-### Installation: Browser
+Browser-mode coverage is limited because qunitx-cli bundles test files with esbuild.
+Native ES import maps support in Puppeteer/Chrome would eliminate the bundling step
+and unlock v8 instrumentation for browser coverage.
 
-QUnitX mainly proxies to [QUnit
-API](https://api.qunitjs.com/QUnit/module/#hooks-on-nested-modules) in browser.
-You can use [QUnitX CLI](https://github.com/izelnakri/qunitx-cli) to get your
-browser tests to stdout/CI or use the watch mode during the development.
+---
 
-```zsh
-# Install QUnitX browser runner/cli:
-$ npm install -g qunitx-cli
-$ qunitx
-$ qunitx some-test.js
+## Links
 
-# with browser output enabled:
-$ qunitx some-test.js --debug
-
-```
-
-### Concurrency options
-
-QUnitX API accepts an optional options object as 2nd argument to:
-- `QUnit.module(testName, optionsOrHandler?, handler?)`
-- `QUnit.test(testName, optionsOrHandler?, handler?)`
-
-So you can run tests in parallel(default) or in series. You can even run them
-through the [node.js test runner run()
-api](https://nodejs.org/api/test.html#runoptions):
-
-```js
-// in some-test.js: (typescript also works)
-import { module, test } from 'qunitx';
-import $ from 'jquery';
-
-module('Basic sanity check', function (hooks) {
-  test('it works', { concurrency: false }, function (assert) {
-    assert.equal(true, true);
-  });
-
-  module('More advanced cases', { concurrency: false, permissions: { read: true }, sanitizeExit: false }, function (hooks) {
-    test('deepEqual works', function (assert) {
-      assert.deepEqual({ username: 'izelnakri' }, { username: 'izelnakri' });
-    });
-    test('can import ES & npm modules', function (assert) {
-      assert.ok(Object.keys($));
-    });
-  });
-});
-```
-
-### Code coverage
-
-Since QUnitX proxies to default node.js test runner in when executed with node,
-you can use any code coverage tool you like. When running the tests in
-`qunit`(the browser mode) code coverage support is limited.
-
-```zsh
-$ c8 node --test test/attachments test/user
-```
-
-You can browse [c8 documentation](https://github.com/bcoe/c8) for all
-configuration options.
-
-Implementing code coverage for the browser mode is currently not possible
-because we use esbuild --bundle feature to create a JS bundles for testing in
-the browser, this could be instrumented with `puppeteer-to-istanbul` however
-instrumentation includes transpiled npm imports of `qunitx` and other potential
-npm imports developer includes in the code, this cannot be filtered since
-potential filtering can only occur after the `esbuild` bundling. When chrome
-browser and puppeteer fully supports ES asset maps we can remove esbuild from
-the browser mode, run everything in deno and make instrumentation for code
-coverage possible with the default v8 instrumentation.
-
-Esbuild plugin interface is an ongoing development, we might be able to figure
-out a way to generate this instrumentation with esbuild in the future, which
-could allow code coverage for --browser mode.
+- [QUnit API reference](https://api.qunitjs.com)
+- [qunitx-cli](https://github.com/izelnakri/qunitx-cli) — browser runner / CI reporter
+- [Node.js test runner docs](https://nodejs.org/api/test.html)
+- [Deno testing docs](https://docs.deno.com/runtime/fundamentals/testing/)

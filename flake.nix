@@ -21,6 +21,9 @@
         pkgs.deno
         pkgs.nodejs_24
         pkgs.git-cliff
+        pkgs.vhs
+        pkgs.wf-recorder
+        pkgs.ffmpeg
         # self.packages.default.nativeBuildInputs
         # self.packages.default.buildInputs
       ];

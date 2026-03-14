@@ -1,4 +1,4 @@
-import { it } from "https://deno.land/std@0.192.0/testing/bdd.ts";
+import { it } from "jsr:@std/testing/bdd";
 import TestContext from '../shared/test-context.js';
 import ModuleContext from '../shared/module-context.js';
 
