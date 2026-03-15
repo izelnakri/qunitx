@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   # ── Lint ──────────────────────────────────────────────────────────────────────
-  # Surfaces formatting failures fast, independent of the slower test job.
+  # Surfaces formatting and doc failures fast, independent of the slower test job.
   lint:
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -21,8 +21,13 @@ jobs:
         with:
           node-version: 24
           cache: npm
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
       - run: npm ci
+      - run: npm run format
       - run: npm run lint
+      - run: npm run lint:docs
 
   # ── Test ──────────────────────────────────────────────────────────────────────
   test:
@@ -45,3 +50,31 @@ jobs:
           PUPPETEER_SKIP_DOWNLOAD: true
           CHROME_BIN: ${{ steps.setup-chrome.outputs.chrome-path }}
           FORCE_COLOR: 0
+
+  # ── Coverage ──────────────────────────────────────────────────────────────────
+  # Runs Deno tests with coverage, enforces 85% line gate, and uploads reports.
+  # Parallel with test — no browser or Node setup needed.
+  coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: npm ci
+      - run: npm run coverage
+      - uses: codecov/codecov-action@v5
+        with:
+          files: tmp/coverage/lcov.info
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: tmp/coverage/html/
+          retention-days: 1

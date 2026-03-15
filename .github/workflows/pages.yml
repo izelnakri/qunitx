@@ -1,0 +1,87 @@
+name: Pages
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  # ── Build ─────────────────────────────────────────────────────────────────────
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: npm ci
+
+      - name: Generate API docs
+        run: |
+          mkdir -p _site
+          deno doc --html --name="QUnitX" --output=_site/docs shims/deno/index.js
+
+      - name: Generate coverage report
+        run: |
+          npm ci
+          npm run coverage:report
+          cp -r tmp/coverage/html/. _site/coverage
+
+      - name: Assemble site
+        env:
+          REPO: ${{ github.repository }}
+        run: |
+          touch _site/.nojekyll
+          cat > _site/index.html << HTMLEOF
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>QUnitX</title>
+            <style>
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              html, body { height: 100%; font-family: system-ui, -apple-system, sans-serif; background: #0d1117; color: #e6edf3; }
+              body { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 40px; }
+              h1 { font-size: 2rem; font-weight: 700; }
+              p { color: #8b949e; max-width: 480px; text-align: center; line-height: 1.6; }
+              nav { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+              a { padding: 10px 20px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 500; background: #21262d; color: #e6edf3; border: 1px solid #30363d; }
+              a:hover { background: #30363d; }
+            </style>
+          </head>
+          <body>
+            <h1>QUnitX</h1>
+            <p>Universal test framework — same test file runs in Node.js, Deno, and browser.</p>
+            <nav>
+              <a href="https://github.com/${REPO}">Source</a>
+              <a href="docs/">API Docs</a>
+              <a href="coverage/">Coverage</a>
+              <a href="https://www.npmjs.com/package/qunitx">npm</a>
+            </nav>
+          </body>
+          </html>
+          HTMLEOF
+
+      - uses: actions/configure-pages@v4
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deploy
+        uses: actions/deploy-pages@v4

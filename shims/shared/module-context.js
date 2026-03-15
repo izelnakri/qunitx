@@ -16,7 +16,7 @@ export default class ModuleContext {
   tests = [];
 
   constructor(name) {
-    let parentModule = ModuleContext.currentModuleChain[ModuleContext.currentModuleChain.length - 1];
+    const parentModule = ModuleContext.currentModuleChain[ModuleContext.currentModuleChain.length - 1];
 
     ModuleContext.currentModuleChain.push(this);
 

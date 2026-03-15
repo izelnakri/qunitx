@@ -1,5 +1,10 @@
 {
   "imports": {
     "qunitx": "./shims/deno/index.js"
+  },
+  "lint": {
+    "rules": {
+      "exclude": ["no-import-prefix", "no-unversioned-import"]
+    }
   }
 }

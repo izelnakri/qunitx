@@ -3,6 +3,7 @@
 # QUnitX
 
 [![CI](https://github.com/izelnakri/qunitx/actions/workflows/ci.yml/badge.svg)](https://github.com/izelnakri/qunitx/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/izelnakri/qunitx/branch/main/graph/badge.svg)](https://codecov.io/gh/izelnakri/qunitx)
 [![npm](https://img.shields.io/npm/v/qunitx)](https://www.npmjs.com/package/qunitx)
 [![npm downloads](https://img.shields.io/npm/dm/qunitx)](https://www.npmjs.com/package/qunitx)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)

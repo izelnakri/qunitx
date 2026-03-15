@@ -5,14 +5,41 @@ import ModuleContext from '../shared/module-context.js';
 // NOTE: QUnit expect() logic is buggy in nested modules
 // NOTE: after gets the last direct children test of the module, not last defined context of a module(last defined context is a module)
 
+/**
+ * Defines a test module (suite) for Deno's BDD test runner.
+ *
+ * Wraps `describe()` from `@std/testing/bdd` and sets up the QUnit lifecycle
+ * (before/beforeEach/afterEach/after hooks, assertion counting, steps tracking).
+ *
+ * @param {string} moduleName - Name of the test suite
+ * @param {object} [runtimeOptions] - Optional Deno BDD options forwarded to `describe()`
+ *   (e.g. `{ concurrency: false }`, `{ permissions: { read: true } }`)
+ * @param {function} moduleContent - Callback that defines tests and hooks via `hooks.before`,
+ *   `hooks.beforeEach`, `hooks.afterEach`, `hooks.after`
+ * @returns {void}
+ * @example
+ * ```js ignore
+ * import { module, test } from "qunitx";
+ *
+ * module("Math", (hooks) => {
+ *   hooks.before((assert) => {
+ *     assert.step("before hook ran");
+ *   });
+ *
+ *   test("addition", (assert) => {
+ *     assert.equal(2 + 2, 4);
+ *   });
+ * });
+ * ```
+ */
 export default function module(moduleName, runtimeOptions, moduleContent) {
-  let targetRuntimeOptions = moduleContent ? runtimeOptions : {};
-  let targetModuleContent = moduleContent ? moduleContent : runtimeOptions;
-  let moduleContext = new ModuleContext(moduleName);
+  const targetRuntimeOptions = moduleContent ? runtimeOptions : {};
+  const targetModuleContent = moduleContent ? moduleContent : runtimeOptions;
+  const moduleContext = new ModuleContext(moduleName);
 
-  return describe(moduleName, { concurrency: true, ...targetRuntimeOptions }, function () {
-    let beforeHooks = [];
-    let afterHooks = [];
+  describe(moduleName, { concurrency: true, ...targetRuntimeOptions }, function () {
+    const beforeHooks = [];
+    const afterHooks = [];
 
     beforeAll(async function () {
       Object.assign(moduleContext.context, moduleContext.moduleChain.reduce((result, module) => {
@@ -24,7 +51,7 @@ export default function module(moduleName, runtimeOptions, moduleContent) {
         });
       }, { steps: [], expectedAssertionCount: undefined }));
 
-      for (let hook of beforeHooks) {
+      for (const hook of beforeHooks) {
         await hook.call(moduleContext.context, moduleContext.assert);
       }
 
@@ -41,7 +68,7 @@ export default function module(moduleName, runtimeOptions, moduleContent) {
         await assert.waitForAsyncOps();
       }
 
-      let targetContext = moduleContext.tests[moduleContext.tests.length - 1];
+      const targetContext = moduleContext.tests[moduleContext.tests.length - 1];
       for (let j = afterHooks.length - 1; j >= 0; j--) {
         await afterHooks[j].call(targetContext, targetContext.assert);
       }

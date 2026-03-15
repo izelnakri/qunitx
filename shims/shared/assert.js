@@ -55,13 +55,13 @@ export default class Assert {
   }
   async() {
     let resolveFn;
-    let done = new Promise(resolve => { resolveFn = resolve; });
+    const done = new Promise(resolve => { resolveFn = resolve; });
 
     this.test.asyncOps.push(done);
 
     return () => { resolveFn(); };
   }
-  async waitForAsyncOps() {
+  waitForAsyncOps() {
     return Promise.all(this.test.asyncOps);
   }
   pushResult(resultInfo = {}) {
@@ -147,8 +147,8 @@ export default class Assert {
   }
   propEqual(actual, expected, message) {
     this._incrementAssertionCount();
-    let targetActual = objectValues(actual);
-    let targetExpected = objectValues(expected);
+    const targetActual = objectValues(actual);
+    const targetExpected = objectValues(expected);
     if (!Assert.QUnit.equiv(targetActual, targetExpected)) {
       throw new Assert.AssertionError({
         actual: targetActual,
@@ -160,8 +160,8 @@ export default class Assert {
   }
   notPropEqual(actual, expected, message) {
     this._incrementAssertionCount();
-    let targetActual = objectValues(actual);
-    let targetExpected = objectValues(expected);
+    const targetActual = objectValues(actual);
+    const targetExpected = objectValues(expected);
     if (Assert.QUnit.equiv(targetActual, targetExpected)) {
       throw new Assert.AssertionError({
         actual: targetActual,
@@ -173,8 +173,8 @@ export default class Assert {
   }
   propContains(actual, expected, message) {
     this._incrementAssertionCount();
-    let targetActual = objectValuesSubset(actual, expected);
-    let targetExpected = objectValues(expected, false);
+    const targetActual = objectValuesSubset(actual, expected);
+    const targetExpected = objectValues(expected, false);
     if (!Assert.QUnit.equiv(targetActual, targetExpected)) {
       throw new Assert.AssertionError({
         actual: targetActual,
@@ -186,8 +186,8 @@ export default class Assert {
   }
   notPropContains(actual, expected, message) {
     this._incrementAssertionCount();
-    let targetActual = objectValuesSubset(actual, expected);
-    let targetExpected = objectValues(expected);
+    const targetActual = objectValuesSubset(actual, expected);
+    const targetExpected = objectValues(expected);
     if (Assert.QUnit.equiv(targetActual, targetExpected)) {
       throw new Assert.AssertionError({
         actual: targetActual,
@@ -247,7 +247,7 @@ export default class Assert {
   }
   throws(blockFn, expectedInput, assertionMessage) {
     this?._incrementAssertionCount();
-    let [expected, message] = validateExpectedExceptionArgs(expectedInput, assertionMessage, 'rejects');
+    const [expected, message] = validateExpectedExceptionArgs(expectedInput, assertionMessage, 'rejects');
     if (typeof blockFn !== 'function') {
       throw new Assert.AssertionError({
         actual: blockFn,
@@ -260,7 +260,7 @@ export default class Assert {
     try {
       blockFn();
     } catch (error) {
-      let validation = validateException(error, expected, message);
+      const validation = validateException(error, expected, message);
       if (validation.result === false) {
         throw new Assert.AssertionError({
           actual: validation.result,
@@ -282,8 +282,8 @@ export default class Assert {
   }
   async rejects(promise, expectedInput, assertionMessage) {
     this._incrementAssertionCount();
-    let [expected, message] = validateExpectedExceptionArgs(expectedInput, assertionMessage, 'rejects');
-    let then = promise && promise.then;
+    const [expected, message] = validateExpectedExceptionArgs(expectedInput, assertionMessage, 'rejects');
+    const then = promise && promise.then;
     if (typeof then !== 'function') {
       throw new Assert.AssertionError({
         actual: promise,
@@ -302,7 +302,7 @@ export default class Assert {
         stackStartFn: this.rejects,
       });
     } catch (error) {
-      let validation = validateException(error, expected, message);
+      const validation = validateException(error, expected, message);
       if (validation.result === false) {
         throw new Assert.AssertionError({
           actual: validation.result,

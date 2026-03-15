@@ -1,14 +1,8 @@
 const hasOwn = Object.prototype.hasOwnProperty
 
-function _typeof(obj) {
-  "@babel/helpers - typeof";
-
-  return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) {
-    return typeof obj;
-  } : function (obj) {
-    return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-  }, _typeof(obj);
-}
+const _typeof = typeof Symbol === 'function' && typeof Symbol.iterator === 'symbol'
+  ? (obj) => typeof obj
+  : (obj) => obj && typeof Symbol === 'function' && obj.constructor === Symbol && obj !== Symbol.prototype ? 'symbol' : typeof obj;
 
 export function objectType(obj) {
   if (typeof obj === 'undefined') {
@@ -19,8 +13,8 @@ export function objectType(obj) {
   if (obj === null) {
     return 'null';
   }
-  var match = toString.call(obj).match(/^\[object\s(.*)\]$/);
-  var type = match && match[1];
+  const match = toString.call(obj).match(/^\[object\s(.*)\]$/);
+  const type = match && match[1];
   switch (type) {
     case 'Number':
       if (isNaN(obj)) {
@@ -47,12 +41,12 @@ function is(type, obj) {
 }
 
 export function objectValues(obj) {
-  let allowArray = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
-  let vals = allowArray && is('array', obj) ? [] : {};
+  const allowArray = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+  const vals = allowArray && is('array', obj) ? [] : {};
 
-  for (var key in obj) {
+  for (const key in obj) {
     if (hasOwn.call(obj, key)) {
-      let val = obj[key];
+      const val = obj[key];
       vals[key] = val === Object(val) ? objectValues(val, allowArray) : val;
     }
   }
@@ -80,8 +74,8 @@ export function objectValuesSubset(obj, model) {
 
   // Unlike objectValues(), subset arrays to a plain objects as well.
   // This enables subsetting [20, 30] with {1: 30}.
-  var subset = {};
-  for (var key in model) {
+  const subset = {};
+  for (const key in model) {
     if (hasOwn.call(model, key) && hasOwn.call(obj, key)) {
       subset[key] = objectValuesSubset(obj[key], model[key]);
     }
@@ -90,7 +84,7 @@ export function objectValuesSubset(obj, model) {
 }
 
 export function validateExpectedExceptionArgs(expected, message, assertionMethod) {
-  var expectedType = objectType(expected);
+  const expectedType = objectType(expected);
 
   // 'expected' is optional unless doing string comparison
   if (expectedType === 'string') {
@@ -102,7 +96,7 @@ export function validateExpectedExceptionArgs(expected, message, assertionMethod
       throw new Error('assert.' + assertionMethod + ' does not accept a string value for the expected argument.\n' + 'Use a non-string object value (e.g. RegExp or validator function) ' + 'instead if necessary.');
     }
   }
-  var valid = !expected ||
+  const valid = !expected ||
   // TODO: be more explicit here
   expectedType === 'regexp' || expectedType === 'function' || expectedType === 'object';
   if (!valid) {
@@ -112,8 +106,8 @@ export function validateExpectedExceptionArgs(expected, message, assertionMethod
 }
 
 export function validateException(actual, expected, message) {
-  var result = false;
-  var expectedType = objectType(expected);
+  let result = false;
+  const expectedType = objectType(expected);
 
   // These branches should be exhaustive, based on validation done in validateExpectedException
 
@@ -157,7 +151,7 @@ export function validateException(actual, expected, message) {
 
 function errorString(error) {
   // Use String() instead of toString() to handle non-object values like undefined or null.
-  var resultErrorString = String(error);
+  const resultErrorString = String(error);
 
   // If the error wasn't a subclass of Error but something like
   // an object literal with name and message properties...

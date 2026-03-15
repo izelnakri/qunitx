@@ -1,15 +1,33 @@
-.PHONY: check test lint build demo release
+.PHONY: check fix test lint lint-docs format build demo coverage coverage-report docs release
 
-check: lint test
+check: format lint lint-docs test
+
+fix:
+	npm run format:fix
+
+format:
+	npm run format
 
 lint:
 	npm run lint
+
+lint-docs:
+	npm run lint:docs
 
 test:
 	npm test
 
 build:
 	npm run build
+
+coverage:
+	npm run coverage
+
+coverage-report:
+	npm run coverage:report
+
+docs:
+	npm run docs
 
 demo:
 	bash docs/make-demo-gif.sh
@@ -21,7 +39,7 @@ demo:
 LEVEL ?= patch
 release:
 	@npm whoami 2>/dev/null || npm login
-	npm run lint
+	$(MAKE) check
 	npm version $(LEVEL) --no-git-tag-version
 	npm run changelog:update
 	git add package.json package-lock.json CHANGELOG.md

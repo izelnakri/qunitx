@@ -6,13 +6,13 @@ import ModuleContext from '../shared/module-context.js';
 // NOTE: after gets the last direct children test of the module, not last defined context of a module(last defined context is a module)
 
 export default function module(moduleName, runtimeOptions, moduleContent) {
-  let targetRuntimeOptions = moduleContent ? runtimeOptions : {};
-  let targetModuleContent = moduleContent ? moduleContent : runtimeOptions;
-  let moduleContext = new ModuleContext(moduleName);
+  const targetRuntimeOptions = moduleContent ? runtimeOptions : {};
+  const targetModuleContent = moduleContent ? moduleContent : runtimeOptions;
+  const moduleContext = new ModuleContext(moduleName);
 
-  return describe(moduleName, { concurrency: true, ...targetRuntimeOptions }, async function () {
-    let beforeHooks = [];
-    let afterHooks = [];
+  return describe(moduleName, { concurrency: true, ...targetRuntimeOptions }, function () {
+    const beforeHooks = [];
+    const afterHooks = [];
 
     beforeAll(async function () {
       Object.assign(moduleContext.context, moduleContext.moduleChain.reduce((result, module) => {
@@ -24,7 +24,7 @@ export default function module(moduleName, runtimeOptions, moduleContent) {
         });
       }, { steps: [], expectedAssertionCount: undefined }));
 
-      for (let hook of beforeHooks) {
+      for (const hook of beforeHooks) {
         await hook.call(moduleContext.context, moduleContext.assert);
       }
 
@@ -41,7 +41,7 @@ export default function module(moduleName, runtimeOptions, moduleContent) {
         await assert.waitForAsyncOps();
       }
 
-      let targetContext = moduleContext.tests[moduleContext.tests.length - 1];
+      const targetContext = moduleContext.tests[moduleContext.tests.length - 1];
       for (let j = afterHooks.length - 1; j >= 0; j--) {
         await afterHooks[j].call(targetContext, targetContext.assert);
       }

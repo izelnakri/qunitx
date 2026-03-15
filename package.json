@@ -63,8 +63,10 @@
     "url": "git+https://github.com/izelnakri/qunitx.git"
   },
   "scripts": {
-    "lint": "prettier --check \"test/**/*.js\" \"*.js\" \"package.json\"",
-    "lint:fix": "prettier --write \"test/**/*.js\" \"*.js\" \"package.json\"",
+    "format": "prettier --check \"test/**/*.js\" \"*.js\" \"package.json\"",
+    "format:fix": "prettier --write \"test/**/*.js\" \"*.js\" \"package.json\"",
+    "lint": "deno lint shims/",
+    "lint:docs": "deno doc --lint shims/deno/module.js shims/deno/test.js",
     "build": "node build.js",
     "run:all": "npm run run:node && npm run run:deno",
     "run:node": "node --test test/helpers/passing-tests.js && node --test test/helpers/failing-tests.js",
@@ -77,7 +79,11 @@
     "test:dev": "npm run test | tee test-output.log",
     "test:browser": "qunitx test/index.js --debug",
     "test:deno": "deno test --allow-read --allow-env --allow-run test/index.js",
-    "test:node": "node --test test/index.js"
+    "test:doctests": "deno test --doc --allow-env --allow-read shims/deno/module.js shims/deno/test.js",
+    "test:node": "node --test test/index.js",
+    "coverage": "deno test --coverage=tmp/coverage --allow-read --allow-env --allow-run test/index.js && deno coverage --lcov --output=tmp/coverage/lcov.info --include='shims/' tmp/coverage && node scripts/check-coverage.js",
+    "coverage:report": "npm run coverage && deno coverage --html --include='shims/' tmp/coverage",
+    "docs": "deno doc --html --name=\"QUnitX\" --output=docs/src shims/deno/index.js"
   },
   "devDependencies": {
     "prettier": "^3.8.1",
