@@ -41,7 +41,7 @@ release:
 	@npm whoami 2>/dev/null || npm login
 	$(MAKE) check
 	npm version $(LEVEL) --no-git-tag-version
-	npm run changelog:update
+	git-cliff --tag "v$$(node -p 'require("./package.json").version')" --output CHANGELOG.md
 	git add package.json package-lock.json CHANGELOG.md
 	git commit -m "Release $$(node -p 'require("./package.json").version')"
 	git tag "v$$(node -p 'require("./package.json").version')"
