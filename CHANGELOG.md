@@ -1,6 +1,8 @@
 # Changelog
 
-## [unreleased]
+## [0.12.3] - 2026-03-15
+[`v0.12.2...v0.12.3`](https://github.com/izelnakri/qunitx-cli/compare/v0.12.2...v0.12.3)
+
 ### Documentation
 - Improve demo — 2026-03-14 by Izel Nakri ([`4033b7b`](https://github.com/izelnakri/qunitx-cli/commit/4033b7b20f3ade5a4ed817abb0d64e2f2e096180))
 
