@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.1] - 2026-03-17
+[`v1.0.0...v1.0.1`](https://github.com/izelnakri/qunitx-cli/compare/v1.0.0...v1.0.1)
+
+### Bug Fixes
+- All the LLM found bugfixes! — 2026-03-17 by Izel Nakri ([`97430f3`](https://github.com/izelnakri/qunitx-cli/commit/97430f3421f529dc8d2f9bcfb88c2a5404cc1cb4))
+
 ## [0.12.5] - 2026-03-15
 [`v0.12.4...v0.12.5`](https://github.com/izelnakri/qunitx-cli/compare/v0.12.4...v0.12.5)
 
