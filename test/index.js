@@ -1,4 +1,5 @@
 import './assert-failures-test.js';
+import './async-test.js';
 import './deepEqual-test.js';
 import './equal-test.js';
 import './execution-order-test.js';

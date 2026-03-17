@@ -95,11 +95,27 @@ if (typeof document === 'undefined') {
       assert.throws(() => assert.expect('5'), /assert\.expect\(\) expects a positive integer/);
     });
 
+    test('expect(0) is a valid call - zero is a non-negative integer', function (assert) {
+      // expect(0) should not throw during the call itself
+      assert.doesNotThrow = function (fn) {
+        fn();
+        assert.ok(true, 'did not throw');
+      };
+      assert.doesNotThrow(() => assert.expect(0));
+      // reset so finish() does not see a mismatch (we ran 1 assertion, not 0)
+      assert.test.expectedAssertionCount = undefined;
+    });
+
     test('pushResult with result:false throws AssertionError', function (assert) {
       assert.throws(
         () => assert.pushResult({ result: false, message: 'custom fail message' }),
         /custom fail message/,
       );
+    });
+
+    test('pushResult with result:true returns the assert instance', function (assert) {
+      const returnValue = assert.pushResult({ result: true, message: 'custom pass' });
+      assert.strictEqual(returnValue, assert, 'pushResult returns `this` on success');
     });
   });
 
@@ -112,17 +128,18 @@ if (typeof document === 'undefined') {
   });
 
   module('Assertion: throws with validator function that throws internally', function () {
-    test('throws passes and covers validateException catch branch', function (assert) {
-      // The validator function itself throws - validateException catches it.
-      // Due to array return from validateException, result is not checked strictly,
-      // so the assertion passes, but the catch branch in validateException is covered.
-      assert.throws(
-        function () {
-          throw new Error('actual error');
-        },
-        function () {
-          throw new TypeError('validator threw');
-        },
+    test('throws fails when validator function itself throws', function (assert) {
+      // When the validator throws, validateException catches it and sets result=false.
+      // So assert.throws should fail — the outer throws catches that failure.
+      assert.throws(() =>
+        assert.throws(
+          function () {
+            throw new Error('actual error');
+          },
+          function () {
+            throw new TypeError('validator threw');
+          },
+        ),
       );
     });
   });

@@ -574,7 +574,7 @@ export default class Assert {
    */
   throws(blockFn, expectedInput, assertionMessage) {
     this?._incrementAssertionCount();
-    const [expected, message] = validateExpectedExceptionArgs(expectedInput, assertionMessage, 'rejects');
+    const [expected, message] = validateExpectedExceptionArgs(expectedInput, assertionMessage, 'throws');
     if (typeof blockFn !== 'function') {
       throw new Assert.AssertionError({
         actual: blockFn,
@@ -587,12 +587,12 @@ export default class Assert {
     try {
       blockFn();
     } catch (error) {
-      const validation = validateException(error, expected, message);
-      if (validation.result === false) {
+      const [result, validatedExpected, validatedMessage] = validateException(error, expected, message);
+      if (result === false) {
         throw new Assert.AssertionError({
-          actual: validation.result,
-          expected: validation.expected,
-          message: validation.message,
+          actual: result,
+          expected: validatedExpected,
+          message: validatedMessage,
           stackStartFn: this.throws,
         });
       }
@@ -636,24 +636,32 @@ export default class Assert {
       });
     }
 
+    let didReject = false;
+    let rejectionError;
     try {
       await promise;
+    } catch (error) {
+      didReject = true;
+      rejectionError = error;
+    }
+
+    if (!didReject) {
       throw new Assert.AssertionError({
         actual: promise,
         expected: expected,
         message: 'The promise returned by the `assert.rejects` callback did not reject!',
         stackStartFn: this.rejects,
       });
-    } catch (error) {
-      const validation = validateException(error, expected, message);
-      if (validation.result === false) {
-        throw new Assert.AssertionError({
-          actual: validation.result,
-          expected: validation.expected,
-          message: validation.message,
-          stackStartFn: this.rejects,
-        });
-      }
+    }
+
+    const [result, validatedExpected, validatedMessage] = validateException(rejectionError, expected, message);
+    if (result === false) {
+      throw new Assert.AssertionError({
+        actual: result,
+        expected: validatedExpected,
+        message: validatedMessage,
+        stackStartFn: this.rejects,
+      });
     }
   }
 };

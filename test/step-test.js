@@ -71,6 +71,21 @@ module('assert.step', function () {
 
   // NOTE: running test() should make the module change(?)
   module('assert.verifySteps', function () {
+    // assert.throws only works where assertions throw on failure (Node/Deno shim).
+    // Browser QUnit records failures instead of throwing, so skip there.
+    if (typeof document === 'undefined') {
+      test('verifySteps fails when steps do not match', function (assert) {
+        assert.step('actual');
+        // This should fail because steps=['actual'] but we expect ['expected']
+        assert.throws(
+          () => assert.verifySteps(['expected']),
+          'verifySteps throws when steps do not match',
+        );
+        // verifySteps threw before clearing steps; verify what remains to clean up
+        assert.verifySteps(['actual']);
+      });
+    }
+
     test('verifies the order and value of steps', function (assert) {
       assert.step('One step');
       assert.step('Two step');
@@ -84,16 +99,7 @@ module('assert.step', function () {
       assert.step('Red step');
       assert.step('Blue step');
 
-      var original = assert.pushResult;
-      var pushed = null;
-      assert.pushResult = function (resultInfo) {
-        pushed = resultInfo;
-      };
-
       assert.verifySteps(['One step', 'Two step', 'Red step', 'Blue step']);
-      assert.pushResult = original;
-
-      // assert.false(pushed.result);
     });
 
     test('verifies the order and value of failed steps', function (assert) {

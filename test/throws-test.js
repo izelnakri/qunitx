@@ -240,7 +240,7 @@ module('Assertion: Throws - passing assertions', function () {
     );
   });
 
-  test('rejects', function (assert) {
+  test('rejects', async function (assert) {
     function CustomError(message) {
       this.message = message;
     }
@@ -343,63 +343,17 @@ module('Assertion: Throws - passing assertions', function () {
 
     assert.rejects(buildMockPromise(undefined), 'reject with undefined against no matcher');
 
-    // the following are nested assertions, validating that it
-    // initially throws due to an invalid expected value
-
-    // assert.throws(
-    //   async function () {
-    //     await assert.rejects(
-    //       undefined, // irrelevant
-    //       2
-    //     );
-    //   },
-    //   /^Error: Invalid expected value type \(number\) provided to assert\.rejects\.$/,
-    //   'rejects errors when provided a number'
-    // );
-
     // note that "falsey" values are actually ok
-    assert.rejects(buildMockPromise(undefined), 0, 'rejects passes when expected is falsey (0)');
-
-    // assert.throws(
-    //   function () {
-    //     assert.rejects(
-    //       undefined, // irrelevant
-    //       true
-    //     );
-    //   },
-    //   /^Error: Invalid expected value type \(boolean\) provided to assert\.rejects\.$/,
-    //   'rejects errors when provided a boolean'
-    // );
-
-    // note that "falsey" values are actually ok
-    // assert.rejects(
-    //   buildMockPromise(undefined),
-    //   false,
-    //   'rejects passes when expected is falsey (false)'
-    // );
-
-    // assert.throws(
-    //   function () {
-    //     assert.rejects(
-    //       undefined, // irrelevant
-    //       []
-    //     );
-    //   },
-    //   /^Error: Invalid expected value type \(array\) provided to assert\.rejects\.$/,
-    //   'rejects errors when provided an array'
-    // );
-
-    // assert.throws(
-    //   function () {
-    //     assert.rejects(
-    //       undefined, // irrelevant
-    //       'expected is a string',
-    //       'message is non-null'
-    //     );
-    //   },
-    //   /^Error: assert\.rejects does not accept a string value for the expected argument/,
-    //   'rejects errors when provided a string'
-    // );
+    await assert.rejects(
+      buildMockPromise(undefined),
+      0,
+      'rejects passes when expected is falsey (0)',
+    );
+    await assert.rejects(
+      buildMockPromise(undefined),
+      false,
+      'rejects passes when expected is falsey (false)',
+    );
 
     // should return a thenable
     var returnValue = assert.rejects(buildMockPromise(undefined));
@@ -421,23 +375,27 @@ module('Assertion: Throws - failing assertions', function (hooks) {
   test('throws', function (assert) {
     assert.throws(() => assert.throws(function () {}, 'throws fails without a thrown error'));
 
-    // assert.throws(() => assert.throws(
-    //   function () {
-    //     throw 'foo';
-    //   },
-    //   /bar/,
-    //   "throws fail when regexp doesn't match the error message"
-    // ));
+    assert.throws(() =>
+      assert.throws(
+        function () {
+          throw 'foo';
+        },
+        /bar/,
+        "throws fail when regexp doesn't match the error message",
+      ),
+    );
 
-    // assert.throws(() => assert.throws(
-    //   function () {
-    //     throw 'foo';
-    //   },
-    //   function () {
-    //     return false;
-    //   },
-    //   'throws fail when expected function returns false'
-    // ));
+    assert.throws(() =>
+      assert.throws(
+        function () {
+          throw 'foo';
+        },
+        function () {
+          return false;
+        },
+        'throws fail when expected function returns false',
+      ),
+    );
 
     // non-function actual values
     assert.throws(() => assert.throws(undefined, 'throws fails when actual value is undefined'));
@@ -453,41 +411,71 @@ module('Assertion: Throws - failing assertions', function (hooks) {
     assert.throws(() => assert.throws({}, 'throws fails when actual value is an object'));
   });
 
-  // test('rejects', function (assert) {
-  //   // assert.throws(() => assert.rejects(
-  //   //   buildMockPromise('some random value', [> shouldResolve <] true),
-  //   //   'fails when the provided promise fulfills'
-  //   // ));
+  test('rejects - failing assertions', async function (assert) {
+    function SomeConstructor() {}
+    function OtherRandomConstructor() {}
 
-  //   // assert.throws(() => assert.rejects(
-  //   //   buildMockPromise('foo'),
-  //   //   /bar/,
-  //   //   'rejects fails when regexp does not match'
-  //   // ));
+    await assert.rejects(
+      assert.rejects(Promise.resolve('some random value')),
+      /did not reject/,
+      'rejects fails when the provided promise fulfills',
+    );
 
-  //   // assert.throws(() => assert.rejects(
-  //   //   buildMockPromise(new Error('foo')),
-  //   //   function RandomConstructor () { },
-  //   //   'rejects fails when rejected value is not an instance of the provided constructor'
-  //   // ));
+    await assert.rejects(
+      assert.rejects(buildMockPromise('foo'), /bar/),
+      'rejects fails when regexp does not match',
+    );
 
-  //   function SomeConstructor () { }
+    await assert.rejects(
+      assert.rejects(buildMockPromise(new Error('foo')), OtherRandomConstructor),
+      'rejects fails when rejected value is not an instance of the provided constructor',
+    );
 
-  //   // assert.throws(() => assert.rejects(
-  //   //   buildMockPromise(new SomeConstructor()),
-  //   //   function OtherRandomConstructor () { },
-  //   //   'rejects fails when rejected value is not an instance of the provided constructor'
-  //   // ));
+    await assert.rejects(
+      assert.rejects(buildMockPromise(new SomeConstructor()), OtherRandomConstructor),
+      'rejects fails when rejected value is not an instance of another constructor',
+    );
 
-  //   // assert.throws(() => assert.rejects(
-  //   //   buildMockPromise('some value'),
-  //   //   function () { return false; },
-  //   //   'rejects fails when the expected function returns false'
-  //   // ));
-
-  //   // assert.throws(() => assert.rejects(null));
-  // });
+    await assert.rejects(
+      assert.rejects(buildMockPromise('some value'), function () {
+        return false;
+      }),
+      'rejects fails when the expected function returns false',
+    );
+  });
 });
+
+// These tests use nested assert.rejects(assert.rejects(...)) which relies on
+// assertions throwing on failure. Browser QUnit records failures instead, so skip there.
+if (typeof document === 'undefined') {
+  module('Assertion: rejects - invalid expected argument types', function () {
+    test('rejects errors on invalid expected types', async function (assert) {
+      await assert.rejects(
+        assert.rejects(undefined, 2),
+        /^Error: Invalid expected value type \(number\) provided to assert\.rejects\.$/,
+        'rejects errors when provided a number',
+      );
+
+      await assert.rejects(
+        assert.rejects(undefined, true),
+        /^Error: Invalid expected value type \(boolean\) provided to assert\.rejects\.$/,
+        'rejects errors when provided a boolean',
+      );
+
+      await assert.rejects(
+        assert.rejects(undefined, []),
+        /^Error: Invalid expected value type \(array\) provided to assert\.rejects\.$/,
+        'rejects errors when provided an array',
+      );
+
+      await assert.rejects(
+        assert.rejects(undefined, 'expected is a string', 'message is non-null'),
+        /^Error: assert\.rejects does not accept a string value for the expected argument/,
+        'rejects errors when provided a string',
+      );
+    });
+  });
+}
 
 function buildMockPromise(settledValue, shouldFulfill) {
   return new Promise((resolve, reject) => {

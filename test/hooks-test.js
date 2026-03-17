@@ -71,6 +71,25 @@ module('module', function () {
     });
   });
 
+  module('before runs only once across multiple tests', function (hooks) {
+    let callCount = 0;
+    hooks.before(function () {
+      callCount++;
+    });
+
+    test('first test: before ran once', function (assert) {
+      assert.equal(callCount, 1, 'before ran exactly once before first test');
+    });
+
+    test('second test: before still ran only once', function (assert) {
+      assert.equal(callCount, 1, 'before did not run again for second test');
+    });
+
+    test('third test: before still ran only once', function (assert) {
+      assert.equal(callCount, 1, 'before did not run again for third test');
+    });
+  });
+
   module('Test context object', function (hooks) {
     hooks.beforeEach(function (assert) {
       this.helper = 'Test context object';
