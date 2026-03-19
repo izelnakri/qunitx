@@ -3,6 +3,7 @@
 .github
 .gitignore
 build.js
+benches
 CHANGELOG.md
 cliff.toml
 deno.json
@@ -14,6 +15,7 @@ flake.lock
 flake.nix
 README.md
 result
+scripts
 test
 tmp
 TODO

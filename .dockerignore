@@ -2,3 +2,4 @@ node_modules
 result
 tmp
 docs
+benches/results.json

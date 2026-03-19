@@ -6,8 +6,6 @@ Test left: custom assertions(?)[pushResult], timeout
 
 Add .match() for pattern match
 
-interested in node.js doctool(?)
-
 function innerFail(obj) {
   if (obj.message instanceof Error) throw obj.message;
 

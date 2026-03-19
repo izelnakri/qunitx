@@ -64,8 +64,8 @@ export default function module(moduleName, runtimeOptions, moduleContent) {
       }
     });
     afterAll(async () => {
-      for (const assert of moduleContext.tests.map(testContext => testContext.assert)) {
-        await assert.waitForAsyncOps();
+      for (const testContext of moduleContext.tests) {
+        await testContext.assert.waitForAsyncOps();
       }
 
       const targetContext = moduleContext.tests[moduleContext.tests.length - 1];
