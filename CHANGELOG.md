@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.2] - 2026-03-19
+[`v1.0.1...v1.0.2`](https://github.com/izelnakri/qunitx-cli/compare/v1.0.1...v1.0.2)
+
+### Performance
+- Add benchmark system and optimizations — 2026-03-19 by Izel Nakri ([`a1e5831`](https://github.com/izelnakri/qunitx-cli/commit/a1e583139368ea9011861563389b201e61b6a5a5))
+
 ## [1.0.1] - 2026-03-17
 [`v1.0.0...v1.0.1`](https://github.com/izelnakri/qunitx-cli/compare/v1.0.0...v1.0.1)
 
