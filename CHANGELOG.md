@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.3] - 2026-03-19
+[`v1.0.2...v1.0.3`](https://github.com/izelnakri/qunitx-cli/compare/v1.0.2...v1.0.3)
+
+### Performance
+- Improve deno performance & ignore bench code when necessary — 2026-03-19 by Izel Nakri ([`343dc2e`](https://github.com/izelnakri/qunitx-cli/commit/343dc2e89b7ca7fa5339e97fb2b43b60b45acab2))
+
 ## [1.0.2] - 2026-03-19
 [`v1.0.1...v1.0.2`](https://github.com/izelnakri/qunitx-cli/compare/v1.0.1...v1.0.2)
 
