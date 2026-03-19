@@ -3,6 +3,7 @@
   "specifiers": {
     "jsr:@std/assert@*": "1.0.19",
     "jsr:@std/assert@^1.0.17": "1.0.19",
+    "jsr:@std/fmt@*": "1.0.9",
     "jsr:@std/internal@^1.0.12": "1.0.12",
     "jsr:@std/testing@*": "1.0.17",
     "npm:@types/node@*": "18.16.19"
@@ -13,6 +14,9 @@
       "dependencies": [
         "jsr:@std/internal"
       ]
+    },
+    "@std/fmt@1.0.9": {
+      "integrity": "2487343e8899fb2be5d0e3d35013e54477ada198854e52dd05ed0422eddcabe0"
     },
     "@std/internal@1.0.12": {
       "integrity": "972a634fd5bc34b242024402972cd5143eac68d8dffaca5eaa4dba30ce17b027"

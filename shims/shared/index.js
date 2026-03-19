@@ -1,9 +1,5 @@
 const hasOwn = Object.prototype.hasOwnProperty
 
-const _typeof = typeof Symbol === 'function' && typeof Symbol.iterator === 'symbol'
-  ? (obj) => typeof obj
-  : (obj) => obj && typeof Symbol === 'function' && obj.constructor === Symbol && obj !== Symbol.prototype ? 'symbol' : typeof obj;
-
 export function objectType(obj) {
   if (typeof obj === 'undefined') {
     return 'undefined';
@@ -13,8 +9,8 @@ export function objectType(obj) {
   if (obj === null) {
     return 'null';
   }
-  const match = toString.call(obj).match(/^\[object\s(.*)\]$/);
-  const type = match && match[1];
+  // slice(8, -1) extracts the type name from "[object Foo]" without a regex
+  const type = toString.call(obj).slice(8, -1);
   switch (type) {
     case 'Number':
       if (isNaN(obj)) {
@@ -32,7 +28,7 @@ export function objectType(obj) {
     case 'Symbol':
       return type.toLowerCase();
     default:
-      return _typeof(obj);
+      return typeof obj;
   }
 }
 
@@ -40,8 +36,7 @@ function is(type, obj) {
   return objectType(obj) === type;
 }
 
-export function objectValues(obj) {
-  const allowArray = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+export function objectValues(obj, allowArray = true) {
   const vals = allowArray && is('array', obj) ? [] : {};
 
   for (const key in obj) {

@@ -51,6 +51,20 @@ jobs:
           CHROME_BIN: ${{ steps.setup-chrome.outputs.chrome-path }}
           FORCE_COLOR: 0
 
+  # ── Bench ─────────────────────────────────────────────────────────────────────
+  # Runs microbenchmarks (assertions, context lifecycle, utility functions) on
+  # every push and PR. Results are informational — the regression gate lives in
+  # `make release` (bench-check) which runs locally against the saved baseline.
+  bench:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: deno bench --allow-read --allow-env benches/assert.bench.js benches/context.bench.js benches/utils.bench.js
+
   # ── Coverage ──────────────────────────────────────────────────────────────────
   # Runs Deno tests with coverage, enforces 85% line gate, and uploads reports.
   # Parallel with test — no browser or Node setup needed.

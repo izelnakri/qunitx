@@ -2,6 +2,11 @@
   "imports": {
     "qunitx": "./shims/deno/index.js"
   },
+  "tasks": {
+    "bench": "deno bench --allow-read --allow-env benches/assert.bench.js benches/context.bench.js benches/utils.bench.js",
+    "bench:check": "deno bench --allow-read --allow-env --json benches/assert.bench.js benches/context.bench.js benches/utils.bench.js | deno run --allow-read --allow-write --allow-env scripts/check-benchmarks.js",
+    "bench:update": "deno bench --allow-read --allow-env --json benches/assert.bench.js benches/context.bench.js benches/utils.bench.js | deno run --allow-read --allow-write --allow-env scripts/check-benchmarks.js --save"
+  },
   "lint": {
     "rules": {
       "exclude": ["no-import-prefix", "no-unversioned-import"]

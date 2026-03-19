@@ -83,6 +83,9 @@
     "test:node": "node --test test/index.js",
     "coverage": "deno test --coverage=tmp/coverage --allow-read --allow-env --allow-run test/index.js && deno coverage --lcov --output=tmp/coverage/lcov.info --include='shims/' tmp/coverage && node scripts/check-coverage.js",
     "coverage:report": "npm run coverage && deno coverage --html --include='shims/' tmp/coverage",
+    "bench": "deno task bench",
+    "bench:check": "deno task bench:check",
+    "bench:update": "deno task bench:update",
     "docs": "deno doc --html --name=\"QUnitX\" --output=docs/src shims/deno/index.js"
   },
   "devDependencies": {
