@@ -2,10 +2,6 @@ import '../../vendor/qunit.js';
 import { objectValues, objectValuesSubset, validateExpectedExceptionArgs, validateException } from '../shared/index.js';
 import util from 'node:util';
 
-// More: contexts needed for timeout
-// NOTE: Another approach for a global report Make this._assertions.set(this.currentTest, (this._assertions.get(this.currentTest) || 0) + 1); for pushResult
-// NOTE: This should *always* be a singleton(?), passed around as an argument for hooks. Seems difficult with concurrency. Singleton needs to be a concurrent data structure.
-
 /**
  * The assertion object passed to every test callback and lifecycle hook.
  *

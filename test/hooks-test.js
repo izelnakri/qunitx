@@ -281,12 +281,12 @@ module('module', function () {
     });
 
     test('`this` is shared from modules to the tests', function (assert) {
-      assert.equal(this.outer, 2); // NOTE: this should be 2 but it gets 4
+      assert.equal(this.outer, 2);
       this.outer = 42;
     });
 
     test("sibling tests don't share environments", function (assert) {
-      assert.equal(this.outer, 2); // NOTE: this should be 2 but it gets 4
+      assert.equal(this.outer, 2);
       this.outer = 42;
     });
 
@@ -328,7 +328,7 @@ module('module', function () {
     });
 
     test('should run before', function (assert) {
-      // assert.expect(3);
+      assert.expect(3);
       assert.strictEqual(this.lastHook, 'before');
       this.lastHook = 'outer-after';
     });
@@ -353,12 +353,12 @@ module('module', function () {
         });
 
         test('should run outer-before and inner-before', function (assert) {
-          // assert.expect(4); // THIS HAS TO BE 2 or 4
+          assert.expect(2);
           assert.strictEqual(this.lastHook, 'inner-before');
         });
 
         test('should run inner-after', function (assert) {
-          // assert.expect(2); // THIS HAS TO BE 2 or 3, not 1 like QUnit
+          assert.expect(2);
           this.lastHook = 'inner-test';
         });
       });

@@ -93,7 +93,6 @@ module('contained suite arguments', function (hooks) {
 
       test('inner.test', function (assert) {
         debug('inner.test', assert);
-        // assert.expect(4);
       });
     });
 
@@ -117,57 +116,10 @@ module('contained suite arguments', function (hooks) {
 
       test('2nd inner.test', function (assert) {
         debug('2nd inner.test', assert);
-        // assert.expect(4);
       });
     });
   });
 });
 
-// Target order(order can be different but all hooks should be called):
-// - module.before
-// - module.beforeEach
-// - module.test
-// - module.afterEach
-// - outer.before
-// - inner.before
-// - module.beforeEach
-// - outer.beforeEach
-// - inner.beforeEach
-// - inner.test
-// - inner.afterEach
-// - outer.afterEach
-// - module.afterEach
-// - inner.after
-// - module.beforeEach
-// - outer.beforeEach
-// - outer.test
-// - outer.afterEach
-// - module.afterEach
-// - 2nd inner.before
-// - module.beforeEach
-// - outer.beforeEach
-// - 2nd inner.beforeEach
-// - 2nd inner.test
-// - 2nd inner.afterEach
-// - outer.afterEach
-// - module.afterEach
-// - 2nd inner.after
-// - outer.after
-// - module.after
-
-// Current wrong order:
-// Things dont get called: outer.beforeEach, outer.test, outer.afterEach, inner.beforeEach, inner.afterEach, inner.test, outer.afterEach,
-// module.afterEach(3x) module.beforeEach(3x), outer.beforeEach(2x), outer.afterEach(2x)
-// [
-//   'module.before',
-//   'outer.before',
-//   'module.beforeEach',
-//   'inner.before',
-//   '2nd inner.before',
-//   'module.test',
-//   'module.afterEach',
-//   'inner.after',
-//   '2nd inner.after',
-//   'outer.after',
-//   'module.after'
-// ]
+// All 30 hooks must be called. The exact order varies because tests run concurrently
+// (concurrency: true), so only the total count is asserted — not the order.
