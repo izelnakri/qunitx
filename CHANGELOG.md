@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.4] - 2026-03-26
+[`v1.0.3...v1.0.4`](https://github.com/izelnakri/qunitx-cli/compare/v1.0.3...v1.0.4)
+
+### Features
+- Module hooks 1-1 compatible browser,node,deno! — 2026-03-26 by Izel Nakri ([`5a00250`](https://github.com/izelnakri/qunitx-cli/commit/5a002501ee671a73a59e31f6259fdcabaa3b8e4c))
+
 ## [1.0.3] - 2026-03-19
 [`v1.0.2...v1.0.3`](https://github.com/izelnakri/qunitx-cli/compare/v1.0.2...v1.0.3)
 
