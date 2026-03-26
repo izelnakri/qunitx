@@ -41,21 +41,27 @@ export default function test(testName, runtimeOptions, testContent) {
   const targetTestContent = testContent ? testContent : runtimeOptions;
   const context = new TestContext(testName, moduleContext);
 
-  it(testName, { concurrency: true, ...targetRuntimeOptions }, async function () {
+  // Each test gets a fresh plain object inheriting from the module's user context.
+  // This matches QUnit's prototype-chain model: before() sets props on the module context,
+  // tests inherit them, and each test's own writes don't pollute sibling tests.
+  const userContext = Object.create(moduleContext.userContext);
+  context.userContext = userContext;
+
+  it(testName, { ...targetRuntimeOptions }, async function () {
     for (const module of context.module.moduleChain) {
       for (const hook of module.beforeEachHooks) {
-        await hook.call(context, context.assert);
+        await hook.call(userContext, context.assert);
       }
     }
 
-    const result = await targetTestContent.call(context, context.assert, { testName, options: runtimeOptions });
+    const result = await targetTestContent.call(userContext, context.assert, { testName, options: runtimeOptions });
 
     await context.assert.waitForAsyncOps();
 
     for (let i = context.module.moduleChain.length - 1; i >= 0; i--) {
       const module = context.module.moduleChain[i];
       for (let j = module.afterEachHooks.length - 1; j >= 0; j--) {
-        await module.afterEachHooks[j].call(context, context.assert);
+        await module.afterEachHooks[j].call(userContext, context.assert);
       }
     }
 

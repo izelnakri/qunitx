@@ -253,32 +253,34 @@ module('Assertion: Throws - passing assertions', function () {
 
     assert.equal(typeof rejectsReturnValue.then, 'function', 'rejects returns a thennable');
 
-    assert.rejects(
+    await rejectsReturnValue;
+
+    await assert.rejects(
       buildMockPromise('my error'),
       "simple string rejection, no 'expected' value given",
     );
 
     // This test is for IE 7 and prior which does not properly
     // implement Error.prototype.toString
-    assert.rejects(
+    await assert.rejects(
       buildMockPromise(new Error('error message')),
       /error message/,
       'use regexp against instance of Error',
     );
 
-    assert.rejects(
+    await assert.rejects(
       buildMockPromise(new TypeError()),
       Error,
       'thrown TypeError without a message is an instance of Error',
     );
 
-    assert.rejects(
+    await assert.rejects(
       buildMockPromise(new TypeError()),
       TypeError,
       'thrown TypeError without a message is an instance of TypeError',
     );
 
-    assert.rejects(
+    await assert.rejects(
       buildMockPromise(new TypeError('error message')),
       Error,
       'thrown TypeError with a message is an instance of Error',
@@ -288,37 +290,37 @@ module('Assertion: Throws - passing assertions', function () {
     // by considering that the native Error constructors, such TypeError,
     // are also instances of the Error constructor. As such, the assertion
     // sometimes went down the wrong path.
-    assert.rejects(
+    await assert.rejects(
       buildMockPromise(new TypeError('error message')),
       TypeError,
       'thrown TypeError with a message is an instance of TypeError',
     );
 
-    assert.rejects(
+    await assert.rejects(
       buildMockPromise(new CustomError('some error description')),
       CustomError,
       'thrown error is an instance of CustomError',
     );
 
-    assert.rejects(
+    await assert.rejects(
       buildMockPromise(new Error('some error description')),
       /description/,
       'use a regex to match against the stringified error',
     );
 
-    assert.rejects(
+    await assert.rejects(
       buildMockPromise(new Error('foo')),
       new Error('foo'),
       'thrown error object is similar to the expected Error object',
     );
 
-    assert.rejects(
+    await assert.rejects(
       buildMockPromise(new CustomError('some error description')),
       new CustomError('some error description'),
       'thrown error object is similar to the expected CustomError object',
     );
 
-    assert.rejects(
+    await assert.rejects(
       buildMockPromise({
         name: 'SomeName',
         message: 'some message',
@@ -327,7 +329,7 @@ module('Assertion: Throws - passing assertions', function () {
       'thrown object is similar to the expected plain object',
     );
 
-    assert.rejects(
+    await assert.rejects(
       buildMockPromise(new CustomError('some error description')),
       function (err) {
         return err instanceof CustomError && /description/.test(err);
@@ -335,13 +337,13 @@ module('Assertion: Throws - passing assertions', function () {
       'custom validation function',
     );
 
-    assert.rejects(
+    await assert.rejects(
       buildMockPromise(new CustomError('some error description')),
       /description/,
       "throw error from property of 'this' context",
     );
 
-    assert.rejects(buildMockPromise(undefined), 'reject with undefined against no matcher');
+    await assert.rejects(buildMockPromise(undefined), 'reject with undefined against no matcher');
 
     // note that "falsey" values are actually ok
     await assert.rejects(
@@ -359,6 +361,7 @@ module('Assertion: Throws - passing assertions', function () {
     var returnValue = assert.rejects(buildMockPromise(undefined));
     assert.strictEqual(typeof returnValue, 'object');
     assert.strictEqual(typeof returnValue.then, 'function');
+    await returnValue;
   });
 });
 

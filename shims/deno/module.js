@@ -1,10 +1,6 @@
 import { describe, beforeAll, afterAll } from "jsr:@std/testing/bdd";
 import ModuleContext from '../shared/module-context.js';
 
-// NOTE: node.js beforeEach & afterEach is buggy because the TestContext it has is NOT correct reference when called, it gets the last context
-// NOTE: QUnit expect() logic is buggy in nested modules
-// NOTE: after gets the last direct children test of the module, not last defined context of a module(last defined context is a module)
-
 /**
  * Defines a test module (suite) for Deno's BDD test runner.
  *
@@ -37,40 +33,31 @@ export default function module(moduleName, runtimeOptions, moduleContent) {
   const targetModuleContent = moduleContent ? moduleContent : runtimeOptions;
   const moduleContext = new ModuleContext(moduleName);
 
-  describe(moduleName, { concurrency: true, ...targetRuntimeOptions }, function () {
+  describe(moduleName, { ...targetRuntimeOptions }, function () {
     const beforeHooks = [];
     const afterHooks = [];
 
     beforeAll(async function () {
-      Object.assign(moduleContext.context, moduleContext.moduleChain.reduce((result, module) => {
-        return Object.assign(result, module.context, {
-          steps: result.steps.concat(module.context.steps),
-          expectedAssertionCount: module.context.expectedAssertionCount
-            ? module.context.expectedAssertionCount
-            : result.expectedAssertionCount
-        });
-      }, { steps: [], expectedAssertionCount: undefined }));
+      // before() assertions are attributed to the first direct test only (matching QUnit's model).
+      // Tests inherit parent context via prototype chain, so no Object.assign needed.
+      const firstTest = moduleContext.tests[0];
+      const beforeAssert = firstTest ? firstTest.assert : moduleContext.assert;
 
       for (const hook of beforeHooks) {
-        await hook.call(moduleContext.context, moduleContext.assert);
-      }
-
-      for (let i = 0, len = moduleContext.tests.length; i < len; i++) {
-        Object.assign(moduleContext.tests[i], moduleContext.context, {
-          steps: moduleContext.context.steps,
-          totalExecutedAssertions: moduleContext.context.totalExecutedAssertions,
-          expectedAssertionCount: moduleContext.context.expectedAssertionCount,
-        });
+        await hook.call(moduleContext.userContext, beforeAssert);
       }
     });
+
     afterAll(async () => {
       for (const testContext of moduleContext.tests) {
         await testContext.assert.waitForAsyncOps();
       }
 
-      const targetContext = moduleContext.tests[moduleContext.tests.length - 1];
-      for (let j = afterHooks.length - 1; j >= 0; j--) {
-        await afterHooks[j].call(targetContext, targetContext.assert);
+      const lastTest = moduleContext.tests[moduleContext.tests.length - 1];
+      if (lastTest) {
+        for (let j = afterHooks.length - 1; j >= 0; j--) {
+          await afterHooks[j].call(lastTest.userContext, lastTest.assert);
+        }
       }
 
       for (let i = 0, len = moduleContext.tests.length; i < len; i++) {
@@ -78,7 +65,7 @@ export default function module(moduleName, runtimeOptions, moduleContent) {
       }
     });
 
-    targetModuleContent.call(moduleContext.context, {
+    targetModuleContent.call(moduleContext.userContext, {
       before(beforeFn) {
         beforeHooks[beforeHooks.length] = beforeFn;
       },

@@ -170,16 +170,29 @@ import { module, test } from 'qunitx';
 
 ---
 
-## Concurrency options
+## QUnit compatibility
 
-`module()` and `test()` accept an optional options object forwarded directly to the underlying
-Node / Deno test runner:
+qunitx follows the same test-environment model as QUnit:
+
+- **Fresh context per test** — each test gets its own `this` object. Writes in one test never bleed into a sibling.
+- **Prototype-chain inheritance** — a parent module's `before()` hook sets properties on the module context. Each test inherits those properties, so reads work naturally (`this.x`) while writes stay local to the test.
+- **`before()` assertions** — attributed to the first test in the module (matching QUnit's attribution model).
+- **`after()` assertions** — attributed to the last test in the module.
+- **Hook ordering** — `before`/`beforeEach` run FIFO; `afterEach`/`after` run LIFO, exactly as in QUnit.
+
+> **Known difference:** In QUnit's browser runner, `before()` hook assertions are attributed to the first test in the *entire subtree* (including nested modules). In the Node/Deno adapters, they are attributed to the first *direct* test of the module. In the common case where direct tests appear before nested modules, the behavior is identical.
+
+---
+
+## Concurrency
+
+Tests run **sequentially by default** — matching QUnit's browser behavior where tests run one at a time. You can enable concurrency by passing options to the underlying Node / Deno runner:
 
 ```js
 import { module, test } from 'qunitx';
 
-// Run tests in this module serially
-module('Serial suite', { concurrency: false }, (hooks) => {
+// Enable parallel execution for this module (Node/Deno only)
+module('Parallel suite', { concurrency: true }, (hooks) => {
   test('first', (assert) => { assert.ok(true); });
   test('second', (assert) => { assert.ok(true); });
 });

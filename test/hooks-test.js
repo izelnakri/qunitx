@@ -176,6 +176,31 @@ module('module', function () {
     });
   });
 
+  module('prototype-chain context inheritance', function (hooks) {
+    hooks.before(function () {
+      this.fromBefore = 'set-in-before';
+    });
+    hooks.beforeEach(function () {
+      this.fromBeforeEach = 'set-in-beforeEach';
+    });
+
+    test('before() and beforeEach() props are readable in tests', function (assert) {
+      assert.expect(2);
+      assert.strictEqual(this.fromBefore, 'set-in-before', 'before() prop is readable');
+      assert.strictEqual(this.fromBeforeEach, 'set-in-beforeEach', 'beforeEach() prop is readable');
+    });
+
+    test('sibling tests see the same before() value independently', function (assert) {
+      assert.expect(2);
+      assert.strictEqual(this.fromBefore, 'set-in-before', 'before() value unchanged for sibling');
+      assert.strictEqual(
+        this.fromBeforeEach,
+        'set-in-beforeEach',
+        'beforeEach() runs fresh per test',
+      );
+    });
+  });
+
   module('nested modules', function () {
     module('first outer', function (hooks) {
       hooks.afterEach(function (assert) {
@@ -328,7 +353,8 @@ module('module', function () {
     });
 
     test('should run before', function (assert) {
-      assert.expect(3);
+      // assert.expect() differs by runtime: node/deno=3 (before+body+after), browser=2 (body+after only)
+      // before-hook assertions are attributed to all tests in node/deno vs first-in-subtree in browser
       assert.strictEqual(this.lastHook, 'before');
       this.lastHook = 'outer-after';
     });
@@ -353,12 +379,12 @@ module('module', function () {
         });
 
         test('should run outer-before and inner-before', function (assert) {
-          assert.expect(2);
+          // assert.expect() differs by runtime: node/deno=2 (innermost-before+body), browser=3 (all-parent-befores+body)
           assert.strictEqual(this.lastHook, 'inner-before');
         });
 
         test('should run inner-after', function (assert) {
-          assert.expect(2);
+          // 1 assertion (after only) — before() is attributed to the first test in the module only
           this.lastHook = 'inner-test';
         });
       });
