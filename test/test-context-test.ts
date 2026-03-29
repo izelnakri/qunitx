@@ -10,13 +10,13 @@ import { module, test } from 'qunitx';
 // We use the beforeEach invert trick so that when finish() calls
 // pushResult({result: false}), the invert turns it into a passing result.
 
-if (typeof document === 'undefined') {
+if (typeof (globalThis as Record<string, unknown>)['document'] === 'undefined') {
   module('TestContext.finish - zero assertions branch', function (hooks) {
     hooks.beforeEach(function (assert) {
       const originalPushResult = assert.pushResult;
       assert.pushResult = function (resultInfo) {
         resultInfo.result = !resultInfo.result;
-        originalPushResult.call(this, resultInfo);
+        return originalPushResult.call(this, resultInfo);
       };
     });
 
@@ -32,7 +32,7 @@ if (typeof document === 'undefined') {
       const originalPushResult = assert.pushResult;
       assert.pushResult = function (resultInfo) {
         resultInfo.result = !resultInfo.result;
-        originalPushResult.call(this, resultInfo);
+        return originalPushResult.call(this, resultInfo);
       };
     });
 
@@ -52,7 +52,7 @@ if (typeof document === 'undefined') {
       const originalPushResult = assert.pushResult;
       assert.pushResult = function (resultInfo) {
         resultInfo.result = !resultInfo.result;
-        originalPushResult.call(this, resultInfo);
+        return originalPushResult.call(this, resultInfo);
       };
     });
 

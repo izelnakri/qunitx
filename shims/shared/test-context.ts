@@ -1,7 +1,10 @@
-export default class TestContext {
-  static Assert;
+import type Assert from './assert.ts';
+import type ModuleContext from './module-context.ts';
 
-  #name;
+export default class TestContext {
+  static Assert: typeof Assert;
+
+  #name: string | undefined;
   get name() {
     return this.#name;
   }
@@ -9,7 +12,7 @@ export default class TestContext {
     this.#name = value;
   }
 
-  #module;
+  #module: ModuleContext | undefined;
   get module() {
     return this.#module;
   }
@@ -17,7 +20,7 @@ export default class TestContext {
     this.#module = value;
   }
 
-  #asyncOps = [];
+  #asyncOps: Promise<void>[] = [];
   get asyncOps() {
     return this.#asyncOps;
   }
@@ -25,7 +28,7 @@ export default class TestContext {
     this.#asyncOps = value;
   }
 
-  #assert;
+  #assert: Assert | undefined;
   get assert() {
     return this.#assert;
   }
@@ -33,7 +36,7 @@ export default class TestContext {
     this.#assert = value;
   }
 
-  #timeout;
+  #timeout: number | undefined;
   get timeout() {
     return this.#timeout;
   }
@@ -41,7 +44,7 @@ export default class TestContext {
     this.#timeout = value;
   }
 
-  #steps = [];
+  #steps: string[] = [];
   get steps() {
     return this.#steps;
   }
@@ -49,7 +52,7 @@ export default class TestContext {
     this.#steps = value;
   }
 
-  #expectedAssertionCount;
+  #expectedAssertionCount: number | undefined;
   get expectedAssertionCount() {
     return this.#expectedAssertionCount;
   }
@@ -65,7 +68,9 @@ export default class TestContext {
     this.#totalExecutedAssertions = value;
   }
 
-  constructor(name, moduleContext) {
+  userContext: object = {};
+
+  constructor(name?: string, moduleContext?: ModuleContext) {
     if (moduleContext) {
       this.name = `${moduleContext.name} | ${name}`;
       this.module = moduleContext;
@@ -76,21 +81,21 @@ export default class TestContext {
 
   finish() {
     if (this.totalExecutedAssertions === 0) {
-      this.assert.pushResult({
+      this.assert!.pushResult({
         result: false,
         actual: this.totalExecutedAssertions,
         expected: '> 0',
         message: `Expected at least one assertion to be run for test: ${this.name}`,
       });
     } else if (this.steps.length > 0) {
-      this.assert.pushResult({
+      this.assert!.pushResult({
         result: false,
         actual: this.steps,
         expected: [],
         message: `Expected assert.verifySteps() to be called before end of test after using assert.step(). Unverified steps: ${this.steps.join(', ')}`,
       });
     } else if (this.expectedAssertionCount && this.expectedAssertionCount !== this.totalExecutedAssertions) {
-      this.assert.pushResult({
+      this.assert!.pushResult({
         result: false,
         actual: this.totalExecutedAssertions,
         expected: this.expectedAssertionCount,

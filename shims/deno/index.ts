@@ -25,12 +25,13 @@
  * @module
  */
 import { AssertionError as DenoAssertionError } from "jsr:@std/assert";
+import type { AssertionErrorOptions } from "../types.ts";
 import '../../vendor/qunit.js';
-import Assert from '../shared/assert.js';
-import ModuleContext from '../shared/module-context.js';
-import TestContext from '../shared/test-context.js';
-import Module from './module.js';
-import Test from './test.js';
+import Assert from '../shared/assert.ts';
+import ModuleContext from '../shared/module-context.ts';
+import TestContext from '../shared/test-context.ts';
+import Module from './module.ts';
+import Test from './test.ts';
 
 /**
  * Thrown when an assertion fails. Extends Deno's built-in `AssertionError`
@@ -51,13 +52,14 @@ import Test from './test.js';
  * ```
  */
 export class AssertionError extends DenoAssertionError {
-  constructor(object) {
-    super(object.message);
+  constructor(object: AssertionErrorOptions) {
+    super(object.message ?? 'Assertion failed');
   }
 }
 
-Assert.QUnit = globalThis.QUnit;
+Assert.QUnit = (globalThis as typeof globalThis & { QUnit: typeof Assert.QUnit }).QUnit;
 Assert.AssertionError = AssertionError;
+Assert.inspect = Deno.inspect;
 ModuleContext.Assert = Assert;
 TestContext.Assert = Assert;
 

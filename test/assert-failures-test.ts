@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { module, test } from 'qunitx';
 
 // Tests that work across all runtimes (node, deno, browser/QUnit)
@@ -81,7 +82,7 @@ module('Assertion: propEqual with objectType edge cases', function () {
 // and do not apply to the QUnit browser shim where failures are recorded instead.
 // Use `document` (not `window`) as the browser guard — Deno exposes `window` in
 // some versions for web-compat but never exposes `document`.
-if (typeof document === 'undefined') {
+if (typeof (globalThis as Record<string, unknown>)['document'] === 'undefined') {
   module('Assertion: timeout and expect - invalid inputs', function () {
     test('timeout throws for non-integer or negative values', function (assert) {
       assert.throws(() => assert.timeout(-1), /assert\.timeout\(\) expects a positive integer/);

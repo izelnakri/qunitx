@@ -1,3 +1,4 @@
+// @ts-nocheck
 // NOTE: primitive class extensions are not correct
 // NOTE: consequetive arguments(2+) on deepEqual behavior removed, not a good feature and creates problems on interop
 import { module, test } from 'qunitx';

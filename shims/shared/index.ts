@@ -1,6 +1,6 @@
 const hasOwn = Object.prototype.hasOwnProperty
 
-export function objectType(obj) {
+export function objectType(obj: unknown): string {
   if (typeof obj === 'undefined') {
     return 'undefined';
   }
@@ -10,10 +10,10 @@ export function objectType(obj) {
     return 'null';
   }
   // slice(8, -1) extracts the type name from "[object Foo]" without a regex
-  const type = toString.call(obj).slice(8, -1);
+  const type = Object.prototype.toString.call(obj).slice(8, -1);
   switch (type) {
     case 'Number':
-      if (isNaN(obj)) {
+      if (isNaN(obj as number)) {
         return 'nan';
       }
       return 'number';
@@ -32,17 +32,17 @@ export function objectType(obj) {
   }
 }
 
-function is(type, obj) {
+function is(type: string, obj: unknown): boolean {
   return objectType(obj) === type;
 }
 
-export function objectValues(obj, allowArray = true) {
-  const vals = allowArray && is('array', obj) ? [] : {};
+export function objectValues(obj: unknown, allowArray = true): unknown {
+  const vals: Record<string, unknown> | unknown[] = allowArray && is('array', obj) ? [] : {};
 
-  for (const key in obj) {
+  for (const key in obj as object) {
     if (hasOwn.call(obj, key)) {
-      const val = obj[key];
-      vals[key] = val === Object(val) ? objectValues(val, allowArray) : val;
+      const val = (obj as Record<string, unknown>)[key];
+      (vals as Record<string, unknown>)[key] = val === Object(val) ? objectValues(val, allowArray) : val;
     }
   }
 
@@ -58,7 +58,7 @@ export function objectValues(obj, allowArray = true) {
  * @param {any} model
  * @return {Object}
  */
-export function objectValuesSubset(obj, model) {
+export function objectValuesSubset(obj: unknown, model: unknown): unknown {
   // Return primitive values unchanged to avoid false positives or confusing
   // results from assert.propContains().
   // E.g. an actual null or false wrongly equaling an empty object,
@@ -69,22 +69,29 @@ export function objectValuesSubset(obj, model) {
 
   // Unlike objectValues(), subset arrays to a plain objects as well.
   // This enables subsetting [20, 30] with {1: 30}.
-  const subset = {};
-  for (const key in model) {
+  const subset: Record<string, unknown> = {};
+  for (const key in model as object) {
     if (hasOwn.call(model, key) && hasOwn.call(obj, key)) {
-      subset[key] = objectValuesSubset(obj[key], model[key]);
+      subset[key] = objectValuesSubset(
+        (obj as Record<string, unknown>)[key],
+        (model as Record<string, unknown>)[key],
+      );
     }
   }
   return subset;
 }
 
-export function validateExpectedExceptionArgs(expected, message, assertionMethod) {
+export function validateExpectedExceptionArgs(
+  expected: unknown,
+  message: string | undefined,
+  assertionMethod: string,
+): [unknown, string | undefined] {
   const expectedType = objectType(expected);
 
   // 'expected' is optional unless doing string comparison
   if (expectedType === 'string') {
     if (message === undefined) {
-      message = expected;
+      message = expected as string;
       expected = undefined;
       return [expected, message];
     } else {
@@ -100,7 +107,11 @@ export function validateExpectedExceptionArgs(expected, message, assertionMethod
   return [expected, message];
 }
 
-export function validateException(actual, expected, message) {
+export function validateException(
+  actual: unknown,
+  expected: unknown,
+  message: string | undefined,
+): [boolean, unknown, string | undefined] {
   let result = false;
   const expectedType = objectType(expected);
 
@@ -112,7 +123,7 @@ export function validateException(actual, expected, message) {
 
     // Expected is a regexp
   } else if (expectedType === 'regexp') {
-    result = expected.test(errorString(actual));
+    result = (expected as RegExp).test(errorString(actual));
 
     // Log the string form of the regexp
     expected = String(expected);
@@ -120,12 +131,19 @@ export function validateException(actual, expected, message) {
     // Expected is a constructor, maybe an Error constructor.
     // Note the extra check on its prototype - this is an implicit
     // requirement of "instanceof", else it will throw a TypeError.
-  } else if (expectedType === 'function' && expected.prototype !== undefined && actual instanceof expected) {
+  } else if (
+    expectedType === 'function' &&
+    (expected as { prototype: unknown }).prototype !== undefined &&
+    actual instanceof (expected as new (...args: unknown[]) => unknown)
+  ) {
     result = true;
 
     // Expected is an Error object
   } else if (expectedType === 'object') {
-    result = actual instanceof expected.constructor && actual.name === expected.name && actual.message === expected.message;
+    result =
+      actual instanceof (expected as { constructor: new (...args: unknown[]) => unknown }).constructor &&
+      (actual as Error).name === (expected as Error).name &&
+      (actual as Error).message === (expected as Error).message;
 
     // Log the string form of the Error object
     expected = errorString(expected);
@@ -134,7 +152,7 @@ export function validateException(actual, expected, message) {
   } else if (expectedType === 'function') {
     // protect against accidental semantics which could hard error in the test
     try {
-      result = expected.call({}, actual) === true;
+      result = (expected as (e: unknown) => boolean).call({}, actual) === true;
       expected = null;
     } catch (e) {
       // assign the "expected" to a nice error string to communicate the local failure to the user
@@ -144,7 +162,7 @@ export function validateException(actual, expected, message) {
   return [result, expected, message];
 }
 
-function errorString(error) {
+function errorString(error: unknown): string {
   // Use String() instead of toString() to handle non-object values like undefined or null.
   const resultErrorString = String(error);
 
@@ -152,7 +170,12 @@ function errorString(error) {
   // an object literal with name and message properties...
   if (resultErrorString.slice(0, 7) === '[object') {
     // Based on https://es5.github.io/#x15.11.4.4
-    return (error.name || 'Error') + (error.message ? ": ".concat(error.message) : '');
+    return (
+      ((error as { name?: string }).name || 'Error') +
+      ((error as { message?: string }).message
+        ? ': '.concat((error as { message: string }).message)
+        : '')
+    );
   } else {
     return resultErrorString;
   }

@@ -1,15 +1,21 @@
 {
   "imports": {
-    "qunitx": "./shims/deno/index.js"
+    "qunitx": "./shims/deno/index.ts"
   },
   "tasks": {
-    "bench": "deno bench --allow-read --allow-env benches/assert.bench.js benches/context.bench.js benches/utils.bench.js",
-    "bench:check": "deno bench --allow-read --allow-env --json benches/assert.bench.js benches/context.bench.js benches/utils.bench.js | deno run --allow-read --allow-write --allow-env scripts/check-benchmarks.js",
-    "bench:update": "deno bench --allow-read --allow-env --json benches/assert.bench.js benches/context.bench.js benches/utils.bench.js | deno run --allow-read --allow-write --allow-env scripts/check-benchmarks.js --save"
+    "bench": "deno bench --allow-read --allow-env benches/assert.bench.ts benches/context.bench.ts benches/utils.bench.ts",
+    "bench:check": "deno bench --allow-read --allow-env --json benches/assert.bench.ts benches/context.bench.ts benches/utils.bench.ts | deno run --allow-read --allow-write --allow-env scripts/check-benchmarks.ts",
+    "bench:update": "deno bench --allow-read --allow-env --json benches/assert.bench.ts benches/context.bench.ts benches/utils.bench.ts | deno run --allow-read --allow-write --allow-env scripts/check-benchmarks.ts --save"
   },
   "lint": {
     "rules": {
-      "exclude": ["no-import-prefix", "no-unversioned-import"]
+      "exclude": [
+        "no-import-prefix",
+        "no-unversioned-import"
+      ]
     }
+  },
+  "compilerOptions": {
+    "strict": false
   }
 }

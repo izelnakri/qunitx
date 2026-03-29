@@ -1,13 +1,16 @@
+/// <reference types="node" />
 import { AssertionError } from 'node:assert';
+import { inspect } from 'node:util';
 import QUnit from '../../vendor/qunit.js';
-import Assert from '../shared/assert.js';
-import ModuleContext from '../shared/module-context.js';
-import TestContext from '../shared/test-context.js';
-import Module from './module.js';
-import Test from './test.js';
+import Assert from '../shared/assert.ts';
+import ModuleContext from '../shared/module-context.ts';
+import TestContext from '../shared/test-context.ts';
+import Module from './module.ts';
+import Test from './test.ts';
 
 Assert.QUnit = QUnit;
 Assert.AssertionError = AssertionError;
+Assert.inspect = inspect;
 
 ModuleContext.Assert = Assert;
 TestContext.Assert = Assert;

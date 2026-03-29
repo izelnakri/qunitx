@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { module, test } from 'qunitx';
 
 module('Assertion: Property Equality - passing assertions', function () {

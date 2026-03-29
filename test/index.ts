@@ -1,0 +1,13 @@
+import './assert-failures-test.ts';
+import './async-test.ts';
+import './deepEqual-test.ts';
+import './equal-test.ts';
+import './execution-order-test.ts';
+import './expect-test.ts';
+import './hooks-test.ts';
+import './propEqual-test.ts';
+import './step-test.ts';
+import './strictEqual-test.ts';
+import './test-context-test.ts';
+import './throws-test.ts';
+import './truthy-test.ts';
