@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.0] - 2026-03-29
+[`v1.0.4...v1.1.0`](https://github.com/izelnakri/qunitx-cli/compare/v1.0.4...v1.1.0)
+
+### Bug Fixes
+- Make release bench type warnings — 2026-03-29 by Izel Nakri ([`31716d9`](https://github.com/izelnakri/qunitx-cli/commit/31716d94be46cfb656f20f3e3cb8ad1117fcc3a7))
+
+### Features
+- Moved the project to TypeScript — 2026-03-29 by Izel Nakri ([`8dd0ef9`](https://github.com/izelnakri/qunitx-cli/commit/8dd0ef9daccc7c6737716434ff04edc8b854fab2))
+
 ## [1.0.4] - 2026-03-26
 [`v1.0.3...v1.0.4`](https://github.com/izelnakri/qunitx-cli/compare/v1.0.3...v1.0.4)
 
