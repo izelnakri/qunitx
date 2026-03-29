@@ -43,7 +43,7 @@ Deno.bench('TestContext - creation', () => {
 // finish() runs after every test to validate assertion counts & steps.
 // Three paths: at-least-one assertion (fast path), zero assertions (fail), expect mismatch.
 
-function makeFinishableTest(expectedCount) {
+function makeFinishableTest(expectedCount?: number) {
   const ctx = new TestContext('test', parentModule);
   parentModule.tests.pop();
   ctx.totalExecutedAssertions = 1;
