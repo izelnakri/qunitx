@@ -8,7 +8,7 @@ import {
   objectValues,
   objectValuesSubset,
   validateException,
-} from '../shims/shared/index.js';
+} from '../shims/shared/index.ts';
 
 // --- objectType ---
 // Called in validateExpectedExceptionArgs and validateException on every

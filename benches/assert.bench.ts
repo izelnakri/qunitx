@@ -4,8 +4,8 @@
 // Run: deno bench --allow-read benches/assert.bench.js
 
 import '../vendor/qunit.js';
-import Assert from '../shims/shared/assert.js';
-import TestContext from '../shims/shared/test-context.js';
+import Assert from '../shims/shared/assert.ts';
+import TestContext from '../shims/shared/test-context.ts';
 
 class QXAssertionError extends Error {
   constructor(obj) {

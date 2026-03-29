@@ -1,6 +1,6 @@
 import '../../vendor/qunit.js';
-import { objectValues, objectValuesSubset, validateExpectedExceptionArgs, validateException } from '../shared/index.js';
-import util from 'node:util';
+import { objectValues, objectValuesSubset, validateExpectedExceptionArgs, validateException } from './index.ts';
+import type { QUnitObject, AssertionErrorConstructor, InspectFn, TestState, ModuleState, PushResultInfo } from '../types.ts';
 
 /**
  * The assertion object passed to every test callback and lifecycle hook.
@@ -22,13 +22,22 @@ import util from 'node:util';
  * ```
  */
 export default class Assert {
-  static QUnit;
-  static AssertionError;
+  /** @internal Set by each runtime shim before tests run. */
+  static QUnit: QUnitObject;
+  /** @internal Set by each runtime shim before tests run. */
+  static AssertionError: AssertionErrorConstructor;
+  /** @internal Set by each runtime shim before tests run. */
+  static inspect: InspectFn;
 
-  constructor(module, test) {
-    this.test = test || module.context;
+  /** @internal Mutable test state written during the test run. */
+  test: TestState;
+
+  /** @internal */
+  constructor(module: ModuleState | null, test?: TestState) {
+    this.test = test || (module as ModuleState).context;
   }
 
+  /** @internal */
   _incrementAssertionCount() {
     this.test.totalExecutedAssertions++;
   }
@@ -46,7 +55,7 @@ export default class Assert {
    * });
    * ```
    */
-  timeout(number) {
+  timeout(number: number): void {
     if (!Number.isInteger(number) || number < 0) {
       throw new Error('assert.timeout() expects a positive integer.');
     }
@@ -69,7 +78,7 @@ export default class Assert {
    * });
    * ```
    */
-  step(message) {
+  step(message: string): void {
     let assertionMessage = message;
     let result = !!message;
 
@@ -103,7 +112,7 @@ export default class Assert {
    * });
    * ```
    */
-  verifySteps(steps, message = 'Verify steps failed!') {
+  verifySteps(steps: string[], message = 'Verify steps failed!') {
     this.deepEqual(this.test.steps, steps, message);
     this.test.steps.length = 0;
   }
@@ -122,7 +131,7 @@ export default class Assert {
    * });
    * ```
    */
-  expect(number) {
+  expect(number: number): void {
     if (!Number.isInteger(number) || number < 0) {
       throw new Error('assert.expect() expects a positive integer.');
     }
@@ -148,16 +157,17 @@ export default class Assert {
    * });
    * ```
    */
-  async() {
-    let resolveFn;
-    const done = new Promise(resolve => { resolveFn = resolve; });
+  async(): () => void {
+    let resolveFn!: () => void;
+    const done = new Promise<void>(resolve => { resolveFn = resolve; });
 
     this.test.asyncOps.push(done);
 
     return () => { resolveFn(); };
   }
 
-  waitForAsyncOps() {
+  /** @internal Used by the test runner to wait for all async operations to complete. */
+  waitForAsyncOps(): Promise<void[]> {
     return Promise.all(this.test.asyncOps);
   }
 
@@ -180,7 +190,7 @@ export default class Assert {
    * });
    * ```
    */
-  pushResult(resultInfo = {}) {
+  pushResult(resultInfo: PushResultInfo = {}): this {
     this._incrementAssertionCount();
     if (!resultInfo.result) {
       throw new Assert.AssertionError({
@@ -206,7 +216,7 @@ export default class Assert {
    * assert.ok("hello");
    * ```
    */
-  ok(state, message) {
+  ok(state: unknown, message?: string): void {
     this._incrementAssertionCount();
     if (!state) {
       throw new Assert.AssertionError({
@@ -230,7 +240,7 @@ export default class Assert {
    * assert.notOk(null);
    * ```
    */
-  notOk(state, message) {
+  notOk(state: unknown, message?: string): void {
     this._incrementAssertionCount();
     if (state) {
       throw new Assert.AssertionError({
@@ -253,7 +263,7 @@ export default class Assert {
    * assert.true(Array.isArray([]), "arrays are arrays");
    * ```
    */
-  true(state, message) {
+  true(state: unknown, message?: string): void {
     this._incrementAssertionCount();
     if (state !== true) {
       throw new Assert.AssertionError({
@@ -276,7 +286,7 @@ export default class Assert {
    * assert.false(Number.isNaN(42), "42 is not NaN");
    * ```
    */
-  false(state, message) {
+  false(state: unknown, message?: string): void {
     this._incrementAssertionCount();
     if (state !== false) {
       throw new Assert.AssertionError({
@@ -303,7 +313,7 @@ export default class Assert {
    * assert.equal("1", 1, "loose equality allows coercion");
    * ```
    */
-  equal(actual, expected, message) {
+  equal(actual: unknown, expected: unknown, message?: string): void {
     this._incrementAssertionCount();
     if (actual != expected) {
       throw new Assert.AssertionError({
@@ -328,7 +338,7 @@ export default class Assert {
    * assert.notEqual("hello", "world");
    * ```
    */
-  notEqual(actual, expected, message) {
+  notEqual(actual: unknown, expected: unknown, message?: string): void {
     this._incrementAssertionCount();
     if (actual == expected) {
       throw new Assert.AssertionError({
@@ -357,7 +367,7 @@ export default class Assert {
    * assert.propEqual(new Point(1, 2), { x: 1, y: 2 });
    * ```
    */
-  propEqual(actual, expected, message) {
+  propEqual(actual: unknown, expected: unknown, message?: string): void {
     this._incrementAssertionCount();
     const targetActual = objectValues(actual);
     const targetExpected = objectValues(expected);
@@ -384,7 +394,7 @@ export default class Assert {
    * assert.notPropEqual({ a: 1, b: 2 }, { a: 1 }); // extra key makes them unequal
    * ```
    */
-  notPropEqual(actual, expected, message) {
+  notPropEqual(actual: unknown, expected: unknown, message?: string): void {
     this._incrementAssertionCount();
     const targetActual = objectValues(actual);
     const targetExpected = objectValues(expected);
@@ -411,7 +421,7 @@ export default class Assert {
    * assert.propContains(user, { role: "admin" });
    * ```
    */
-  propContains(actual, expected, message) {
+  propContains(actual: unknown, expected: unknown, message?: string): void {
     this._incrementAssertionCount();
     const targetActual = objectValuesSubset(actual, expected);
     const targetExpected = objectValues(expected, false);
@@ -438,7 +448,7 @@ export default class Assert {
    * assert.notPropContains(user, { role: "banned" });
    * ```
    */
-  notPropContains(actual, expected, message) {
+  notPropContains(actual: unknown, expected: unknown, message?: string): void {
     this._incrementAssertionCount();
     const targetActual = objectValuesSubset(actual, expected);
     const targetExpected = objectValues(expected);
@@ -465,7 +475,7 @@ export default class Assert {
    * assert.deepEqual(new Date("2024-01-01"), new Date("2024-01-01"));
    * ```
    */
-  deepEqual(actual, expected, message) {
+  deepEqual(actual: unknown, expected: unknown, message?: string): void {
     this._incrementAssertionCount();
     if (!Assert.QUnit.equiv(actual, expected)) {
       throw new Assert.AssertionError({
@@ -490,7 +500,7 @@ export default class Assert {
    * assert.notDeepEqual({ a: 1 }, { a: 2 });
    * ```
    */
-  notDeepEqual(actual, expected, message) {
+  notDeepEqual(actual: unknown, expected: unknown, message?: string): void {
     this._incrementAssertionCount();
     if (Assert.QUnit.equiv(actual, expected)) {
       throw new Assert.AssertionError({
@@ -515,7 +525,7 @@ export default class Assert {
    * assert.strictEqual(typeof "hello", "string");
    * ```
    */
-  strictEqual(actual, expected, message) {
+  strictEqual(actual: unknown, expected: unknown, message?: string): void {
     this._incrementAssertionCount();
     if (actual !== expected) {
       throw new Assert.AssertionError({
@@ -540,7 +550,7 @@ export default class Assert {
    * assert.notStrictEqual({}, {}, "different object references");
    * ```
    */
-  notStrictEqual(actual, expected, message) {
+  notStrictEqual(actual: unknown, expected: unknown, message?: string): void {
     this._incrementAssertionCount();
     if (actual === expected) {
       throw new Assert.AssertionError({
@@ -568,7 +578,7 @@ export default class Assert {
    * assert.throws(() => { throw new Error("bad input"); }, /bad input/);
    * ```
    */
-  throws(blockFn, expectedInput, assertionMessage) {
+  throws(blockFn: unknown, expectedInput?: unknown, assertionMessage?: string): void {
     this?._incrementAssertionCount();
     const [expected, message] = validateExpectedExceptionArgs(expectedInput, assertionMessage, 'throws');
     if (typeof blockFn !== 'function') {
@@ -619,10 +629,10 @@ export default class Assert {
    * await assert.rejects(Promise.reject(new Error("timeout")), /timeout/);
    * ```
    */
-  async rejects(promise, expectedInput, assertionMessage) {
+  async rejects(promise: unknown, expectedInput?: unknown, assertionMessage?: string): Promise<void> {
     this._incrementAssertionCount();
     const [expected, message] = validateExpectedExceptionArgs(expectedInput, assertionMessage, 'rejects');
-    const then = promise && promise.then;
+    const then = promise && (promise as PromiseLike<unknown>).then;
     if (typeof then !== 'function') {
       throw new Assert.AssertionError({
         actual: promise,
@@ -662,7 +672,7 @@ export default class Assert {
   }
 };
 
-function defaultMessage(actual, description, expected) {
+function defaultMessage(actual: unknown, description: string, expected: unknown): string {
   return `
 
 ${inspect(actual)}
@@ -672,6 +682,6 @@ ${description}
 ${inspect(expected)}`
 }
 
-function inspect(value) {
-  return util.inspect(value, { depth: 10, colors: true, compact: false });
+function inspect(value: unknown): string {
+  return Assert.inspect(value, { depth: 10, colors: true, compact: false });
 }

@@ -1,5 +1,9 @@
 import { describe, beforeAll, afterAll } from "jsr:@std/testing/bdd";
-import ModuleContext from '../shared/module-context.js';
+import type Assert from '../shared/assert.ts';
+import type { HooksObject } from '../types.ts';
+import ModuleContext from '../shared/module-context.ts';
+export type { Assert };
+export type { HookFn, HooksObject, PushResultInfo } from '../types.ts';
 
 /**
  * Defines a test module (suite) for Deno's BDD test runner.
@@ -28,20 +32,24 @@ import ModuleContext from '../shared/module-context.js';
  * });
  * ```
  */
-export default function module(moduleName, runtimeOptions, moduleContent) {
-  const targetRuntimeOptions = moduleContent ? runtimeOptions : {};
-  const targetModuleContent = moduleContent ? moduleContent : runtimeOptions;
+export default function module(
+  moduleName: string,
+  runtimeOptions: object | ((hooks: HooksObject<Assert>) => void),
+  moduleContent?: (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown }) => void,
+): void {
+  const targetRuntimeOptions = moduleContent ? runtimeOptions as object : {};
+  const targetModuleContent = (moduleContent ? moduleContent : runtimeOptions) as (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown }) => void;
   const moduleContext = new ModuleContext(moduleName);
 
   describe(moduleName, { ...targetRuntimeOptions }, function () {
-    const beforeHooks = [];
-    const afterHooks = [];
+    const beforeHooks: ((assert: Assert) => void | Promise<void>)[] = [];
+    const afterHooks: ((assert: Assert) => void | Promise<void>)[] = [];
 
     beforeAll(async function () {
       // before() assertions are attributed to the first direct test only (matching QUnit's model).
       // Tests inherit parent context via prototype chain, so no Object.assign needed.
       const firstTest = moduleContext.tests[0];
-      const beforeAssert = firstTest ? firstTest.assert : moduleContext.assert;
+      const beforeAssert = firstTest ? firstTest.assert! : moduleContext.assert!;
 
       for (const hook of beforeHooks) {
         await hook.call(moduleContext.userContext, beforeAssert);
@@ -50,13 +58,13 @@ export default function module(moduleName, runtimeOptions, moduleContent) {
 
     afterAll(async () => {
       for (const testContext of moduleContext.tests) {
-        await testContext.assert.waitForAsyncOps();
+        await testContext.assert!.waitForAsyncOps();
       }
 
       const lastTest = moduleContext.tests[moduleContext.tests.length - 1];
       if (lastTest) {
         for (let j = afterHooks.length - 1; j >= 0; j--) {
-          await afterHooks[j].call(lastTest.userContext, lastTest.assert);
+          await afterHooks[j]!.call(lastTest.userContext, lastTest.assert!);
         }
       }
 
@@ -67,16 +75,16 @@ export default function module(moduleName, runtimeOptions, moduleContent) {
 
     targetModuleContent.call(moduleContext.userContext, {
       before(beforeFn) {
-        beforeHooks[beforeHooks.length] = beforeFn;
+        beforeHooks.push(beforeFn);
       },
       beforeEach(beforeEachFn) {
-        moduleContext.beforeEachHooks[moduleContext.beforeEachHooks.length] = beforeEachFn;
+        moduleContext.beforeEachHooks.push(beforeEachFn);
       },
       afterEach(afterEachFn) {
-        moduleContext.afterEachHooks[moduleContext.afterEachHooks.length] = afterEachFn;
+        moduleContext.afterEachHooks.push(afterEachFn);
       },
       after(afterFn) {
-        afterHooks[afterHooks.length] = afterFn;
+        afterHooks.push(afterFn);
       }
     }, { moduleName, options: runtimeOptions });
 

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { module, test } from 'qunitx';
 
 module('assert.step', function () {
@@ -73,7 +74,7 @@ module('assert.step', function () {
   module('assert.verifySteps', function () {
     // assert.throws only works where assertions throw on failure (Node/Deno shim).
     // Browser QUnit records failures instead of throwing, so skip there.
-    if (typeof document === 'undefined') {
+    if (typeof (globalThis as Record<string, unknown>)['document'] === 'undefined') {
       test('verifySteps fails when steps do not match', function (assert) {
         assert.step('actual');
         // This should fail because steps=['actual'] but we expect ['expected']

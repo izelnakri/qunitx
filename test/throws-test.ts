@@ -172,7 +172,7 @@ module('Assertion: Throws - passing assertions', function () {
         throw new CustomError('some error description');
       },
       function (err) {
-        return err instanceof CustomError && /description/.test(err);
+        return err instanceof CustomError && /description/.test(String(err));
       },
       'custom validation function',
     );
@@ -332,7 +332,7 @@ module('Assertion: Throws - passing assertions', function () {
     await assert.rejects(
       buildMockPromise(new CustomError('some error description')),
       function (err) {
-        return err instanceof CustomError && /description/.test(err);
+        return err instanceof CustomError && /description/.test(String(err));
       },
       'custom validation function',
     );
@@ -371,7 +371,7 @@ module('Assertion: Throws - failing assertions', function (hooks) {
     assert.pushResult = function (resultInfo) {
       // Inverts the result so we can test failing assertions
       resultInfo.result = !resultInfo.result;
-      originalPushResult.call(this, resultInfo);
+      return originalPushResult.call(this, resultInfo);
     };
   });
 
@@ -450,7 +450,7 @@ module('Assertion: Throws - failing assertions', function (hooks) {
 
 // These tests use nested assert.rejects(assert.rejects(...)) which relies on
 // assertions throwing on failure. Browser QUnit records failures instead, so skip there.
-if (typeof document === 'undefined') {
+if (typeof (globalThis as Record<string, unknown>)['document'] === 'undefined') {
   module('Assertion: rejects - invalid expected argument types', function () {
     test('rejects errors on invalid expected types', async function (assert) {
       await assert.rejects(
@@ -480,7 +480,7 @@ if (typeof document === 'undefined') {
   });
 }
 
-function buildMockPromise(settledValue, shouldFulfill) {
+function buildMockPromise(settledValue: unknown, shouldFulfill?: boolean) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       return shouldFulfill ? resolve(settledValue) : reject(settledValue);

@@ -950,7 +950,8 @@
         "npm:prettier@^3.8.1",
         "npm:qunit@^2.25.0",
         "npm:qunitx-cli@~0.5.3",
-        "npm:qunitx@^1.0.3"
+        "npm:qunitx@^1.0.3",
+        "npm:typescript@^6.0.2"
       ]
     }
   }

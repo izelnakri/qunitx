@@ -48,51 +48,62 @@
   },
   "imports": {
     "qunitx": {
-      "node": "./shims/node/index.js",
-      "deno": "./shims/deno/index.js",
-      "default": "./shims/browser/index.js"
+      "types": "./dist/node/index.d.ts",
+      "node": "./dist/node/index.js",
+      "deno": "./shims/deno/index.ts",
+      "default": "./dist/browser/index.js"
     }
   },
   "exports": {
-    "node": "./shims/node/index.js",
-    "deno": "./shims/deno/index.js",
-    "default": "./shims/browser/index.js"
+    "types": "./dist/node/index.d.ts",
+    "node": "./dist/node/index.js",
+    "deno": "./shims/deno/index.ts",
+    "default": "./dist/browser/index.js"
   },
+  "files": [
+    "dist/",
+    "shims/deno/",
+    "shims/shared/",
+    "shims/types.ts",
+    "vendor/"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/izelnakri/qunitx.git"
   },
   "scripts": {
-    "format": "prettier --check \"test/**/*.js\" \"*.js\" \"package.json\"",
-    "format:fix": "prettier --write \"test/**/*.js\" \"*.js\" \"package.json\"",
+    "format": "prettier --check \"test/**/*.ts\" \"*.ts\" \"package.json\"",
+    "format:fix": "prettier --write \"test/**/*.ts\" \"*.ts\" \"package.json\"",
     "lint": "deno lint shims/",
-    "lint:docs": "deno doc --lint shims/deno/module.js shims/deno/test.js",
-    "build": "node build.js",
+    "lint:docs": "deno doc --lint shims/deno/module.ts shims/deno/test.ts",
+    "build": "node --experimental-strip-types build.ts",
+    "pretest": "node --experimental-strip-types build.ts",
     "run:all": "npm run run:node && npm run run:deno",
-    "run:node": "node --test test/helpers/passing-tests.js && node --test test/helpers/failing-tests.js",
-    "run:deno": "deno test test/helpers/passing-tests.js && deno test test/helpers/failing-tests.js",
+    "run:node": "node --experimental-strip-types --test test/helpers/passing-tests.ts && node --experimental-strip-types --test test/helpers/failing-tests.ts",
+    "run:deno": "deno test test/helpers/passing-tests.ts && deno test test/helpers/failing-tests.ts",
     "changelog:unreleased": "git-cliff --unreleased --strip all",
     "changelog:preview": "git-cliff",
     "changelog:update": "git-cliff --output CHANGELOG.md",
-    "prepack": "npm run build",
+    "prepare": "npm run build",
     "test": "npm run test:browser && npm run test:node && npm run test:deno",
     "test:dev": "npm run test | tee test-output.log",
-    "test:browser": "qunitx test/index.js --debug",
-    "test:deno": "deno test --allow-read --allow-env --allow-run test/index.js",
-    "test:doctests": "deno test --doc --allow-env --allow-read shims/deno/module.js shims/deno/test.js",
-    "test:node": "node --test test/index.js",
-    "coverage": "deno test --coverage=tmp/coverage --allow-read --allow-env --allow-run test/index.js && deno coverage --lcov --output=tmp/coverage/lcov.info --include='shims/' tmp/coverage && node scripts/check-coverage.js",
+    "test:browser": "qunitx test/index.ts --debug",
+    "test:deno": "deno test --allow-read --allow-env --allow-run test/index.ts",
+    "test:doctests": "deno test --doc --allow-env --allow-read shims/deno/module.ts shims/deno/test.ts",
+    "test:node": "node --experimental-strip-types --test test/index.ts",
+    "coverage": "deno test --coverage=tmp/coverage --allow-read --allow-env --allow-run test/index.ts && deno coverage --lcov --output=tmp/coverage/lcov.info --include='shims/' tmp/coverage && node --experimental-strip-types scripts/check-coverage.ts",
     "coverage:report": "npm run coverage && deno coverage --html --include='shims/' tmp/coverage",
     "bench": "deno task bench",
     "bench:check": "deno task bench:check",
     "bench:update": "deno task bench:update",
-    "docs": "deno doc --html --name=\"QUnitX\" --output=docs/src shims/deno/index.js"
+    "docs": "deno doc --html --name=\"QUnitX\" --output=docs/src shims/deno/index.ts"
   },
   "devDependencies": {
     "prettier": "^3.8.1",
     "qunit": "^2.25.0",
     "qunitx": "^1.0.3",
-    "qunitx-cli": "^0.5.3"
+    "qunitx-cli": "^0.5.3",
+    "typescript": "^6.0.2"
   },
   "volta": {
     "node": "24.14.0"

@@ -46,7 +46,7 @@ module('Assertion: Truthy - failing assertions', function (hooks) {
     assert.pushResult = function (resultInfo) {
       // Inverts the result so we can test failing assertions
       resultInfo.result = !resultInfo.result;
-      originalPushResult.call(this, resultInfo);
+      return originalPushResult.call(this, resultInfo);
     };
   });
 

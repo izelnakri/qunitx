@@ -63,7 +63,7 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
-      - run: deno bench --allow-read --allow-env benches/assert.bench.js benches/context.bench.js benches/utils.bench.js
+      - run: deno bench --no-check --allow-read --allow-env benches/assert.bench.ts benches/context.bench.ts benches/utils.bench.ts
 
   # ── Coverage ──────────────────────────────────────────────────────────────────
   # Runs Deno tests with coverage, enforces 85% line gate, and uploads reports.

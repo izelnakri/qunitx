@@ -20,7 +20,7 @@ Enter
 Show
 
 # --- Show the test file with syntax highlighting ---
-Type "bat --paging=never docs/demo-math-test.js"
+Type "bat --paging=never docs/demo-math-test.ts"
 Enter
 Sleep 3500ms
 
@@ -28,7 +28,7 @@ Sleep 3500ms
 Type "# Node.js — zero config, built-in test runner"
 Enter
 Sleep 400ms
-Type "node --test docs/demo-math-test.js"
+Type "node --experimental-strip-types --test docs/demo-math-test.ts"
 Enter
 Sleep 4500ms
 
@@ -36,7 +36,7 @@ Sleep 4500ms
 Type "# Watch mode: reruns on every file save"
 Enter
 Sleep 300ms
-Type "node --test --test-reporter=tap --watch docs/demo-math-test.js"
+Type "node --experimental-strip-types --test --test-reporter=tap --watch docs/demo-math-test.ts"
 Enter
 Sleep 3500ms
 Ctrl+C
@@ -46,7 +46,7 @@ Sleep 600ms
 Type "# Deno — same file, same results"
 Enter
 Sleep 400ms
-Type "deno test --allow-read --allow-env docs/demo-math-test.js"
+Type "deno test --allow-read --allow-env docs/demo-math-test.ts"
 Enter
 Sleep 4500ms
 

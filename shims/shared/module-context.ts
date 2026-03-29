@@ -1,22 +1,28 @@
-import TestContext from './test-context.js';
+import type Assert from './assert.ts';
+import type { HookFn } from '../types.ts';
+import TestContext from './test-context.ts';
 
 export default class ModuleContext {
-  static Assert;
-  static currentModuleChain = [];
+  static Assert: typeof Assert;
+  static currentModuleChain: ModuleContext[] = [];
 
   static get lastModule() {
     return this.currentModuleChain[this.currentModuleChain.length - 1];
   }
 
+  name!: string;
+  assert!: Assert;
+  userContext!: object;
+
   // Internal fallback assert for modules with no direct tests
   context = new TestContext();
 
-  moduleChain = [];
-  beforeEachHooks = [];
-  afterEachHooks = [];
-  tests = [];
+  moduleChain: ModuleContext[] = [];
+  beforeEachHooks: HookFn<Assert>[] = [];
+  afterEachHooks: HookFn<Assert>[] = [];
+  tests: TestContext[] = [];
 
-  constructor(name) {
+  constructor(name: string) {
     const parentModule = ModuleContext.currentModuleChain[ModuleContext.currentModuleChain.length - 1];
 
     ModuleContext.currentModuleChain.push(this);
