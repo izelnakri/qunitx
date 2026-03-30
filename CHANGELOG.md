@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.1] - 2026-03-30
+[`v1.1.0...v1.1.1`](https://github.com/izelnakri/qunitx-cli/compare/v1.1.0...v1.1.1)
+
+### Bug Fixes
+- Fix ./dist ts/js import references for build.ts — 2026-03-30 by Izel Nakri ([`4e8e479`](https://github.com/izelnakri/qunitx-cli/commit/4e8e479907d839bd0e4c8870ef6eb49101db4871))
+
 ## [1.1.0] - 2026-03-29
 [`v1.0.4...v1.1.0`](https://github.com/izelnakri/qunitx-cli/compare/v1.0.4...v1.1.0)
 
