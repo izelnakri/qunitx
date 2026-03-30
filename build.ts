@@ -110,6 +110,36 @@ await new Promise<void>((resolve, reject) => {
   );
 });
 
+// ---------------------------------------------------------------------------
+// 3. Fix .d.ts files: rewrite relative `.ts` import extensions → `.js`.
+//    TypeScript's rewriteRelativeImportExtensions only affects .js output,
+//    not declaration files — so consumers would otherwise see broken .ts paths.
+// ---------------------------------------------------------------------------
+
+async function findDeclarationFiles(dir: string): Promise<string[]> {
+  const entries = await fs.readdir(dir, { withFileTypes: true });
+  const results = await Promise.all(
+    entries.map((entry) => {
+      const full = `${dir}/${entry.name}`;
+      if (entry.isDirectory()) return findDeclarationFiles(full);
+      return entry.name.endsWith('.d.ts') ? [full] : [];
+    }),
+  );
+  return results.flat();
+}
+
+await Promise.all(
+  (await findDeclarationFiles('./dist')).map(async (dtsPath) => {
+    const original = await fs.readFile(dtsPath, 'utf8');
+    const fixed = original
+      // from './foo.ts'  →  from './foo.js'
+      .replace(/(from\s+['"])(\.\.?\/[^'"]*?)\.ts(['"])/g, '$1$2.js$3')
+      // import("../foo.ts")  →  import("../foo.js")
+      .replace(/(import\(['"])(\.\.?\/[^'"]*?)\.ts(['"]\))/g, '$1$2.js$3');
+    if (fixed !== original) await fs.writeFile(dtsPath, fixed);
+  }),
+);
+
 async function createPackageJSONIfNotExists() {
   try {
     await fs.stat('./vendor/package.json');
