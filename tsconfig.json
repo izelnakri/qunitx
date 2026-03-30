@@ -9,7 +9,9 @@
     "rewriteRelativeImportExtensions": true,
     "verbatimModuleSyntax": true,
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "incremental": true,
+    "tsBuildInfoFile": "./dist/.tsbuildinfo"
   },
   "include": [
     "shims/node/**/*.ts",

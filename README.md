@@ -122,9 +122,14 @@ npx c8 node --test math-test.js
 
 ### Deno
 
+Deno cannot use `npm:qunitx` directly — qunitx's Deno shim imports `jsr:@std/testing/bdd`
+internally, and when loaded through `npm:`, Deno delegates to Node's ESM loader which does not
+support `jsr:` URLs. Use [esm.sh](https://esm.sh) instead, which rewrites those imports at
+serve time:
+
 ```sh
-# One-time: create a deno.json import map
-echo '{"imports": {"qunitx": "https://esm.sh/qunitx/shims/deno/index.js"}}' > deno.json
+# One-time: create (or update) deno.json with an import map
+echo '{"imports": {"qunitx": "https://esm.sh/qunitx@latest"}}' > deno.json
 
 # Run
 deno test math-test.js

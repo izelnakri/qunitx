@@ -44,6 +44,11 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
+      - uses: actions/cache@v4
+        with:
+          path: dist
+          key: dist-${{ hashFiles('shims/**', 'tsconfig.json', 'deno.lock', 'package-lock.json', 'build.ts') }}
+          restore-keys: dist-
       - run: npm ci
       - run: npm test
         env:
@@ -80,6 +85,11 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
+      - uses: actions/cache@v4
+        with:
+          path: dist
+          key: dist-${{ hashFiles('shims/**', 'tsconfig.json', 'deno.lock', 'package-lock.json', 'build.ts') }}
+          restore-keys: dist-
       - run: npm ci
       - run: npm run coverage
       - uses: codecov/codecov-action@v6

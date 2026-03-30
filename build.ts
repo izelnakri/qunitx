@@ -1,6 +1,36 @@
 import fs from 'fs/promises';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
+
+// ---------------------------------------------------------------------------
+// Up-to-date check: skip the full build when no inputs have changed.
+// Inputs: shims/**/*.ts (excl. vendor-types/), tsconfig.json, qunit source,
+//         deno.lock (JSR versions), and build.ts itself.
+// The hash is stored in dist/.build-hash after a successful build.
+//
+// On cold runs (no hash file) we skip the eager hash computation — it would
+// only add ~100ms of latency before a build that has to happen regardless.
+// The hash is computed and written at the end of a successful build instead.
+// ---------------------------------------------------------------------------
+
+// Try to read the stored hash cheaply before committing to computing ours.
+let storedHash: string | null = null;
+try {
+  storedHash = (await fs.readFile('./dist/.build-hash', 'utf8')).trim();
+} catch {
+  /* cold run */
+}
+
+let inputHash: string;
+if (storedHash !== null) {
+  // Warm run: compute hash to decide whether to skip.
+  inputHash = await computeInputHash();
+  if (await isBuildUpToDate(inputHash, storedHash)) process.exit(0);
+} else {
+  // Cold run: defer hash computation to after the build.
+  inputHash = '';
+}
 
 // ---------------------------------------------------------------------------
 // 1. Patch and copy vendor/qunit.js + vendor/qunit.css
@@ -113,43 +143,45 @@ declare global {
 }
 `;
 
+// ---------------------------------------------------------------------------
+// 3. Compile + vendor writes all in parallel.
+//    qunit.d.ts (static template) is written first so tsc can start without
+//    waiting for the qunit.js patch (which needs the 280KB source read).
+//    generateDenoVendorTypes, esbuild, and tsc all run concurrently.
+// ---------------------------------------------------------------------------
+
+// Write the static type declarations synchronously before spawning tsc,
+// so tsc never reads a missing or partially-written vendor/qunit.d.ts.
+await fs.writeFile('./vendor/qunit.d.ts', qunitDts);
+
 await Promise.all([
-  fs.writeFile('./vendor/qunit.js', newQUnit),
-  fs.writeFile('./vendor/qunit.css', qunitCSS),
-  fs.writeFile('./vendor/qunit.d.ts', qunitDts),
-  createPackageJSONIfNotExists(),
+  // Vendor file writes (qunit.js patch + css + package.json + deno vendor types)
+  Promise.all([
+    fs.writeFile('./vendor/qunit.js', newQUnit),
+    fs.writeFile('./vendor/qunit.css', qunitCSS),
+    createPackageJSONIfNotExists(),
+    generateDenoVendorTypes(),
+  ]),
+  // Full type-checking + declaration emit.  Starts immediately — qunit.d.ts
+  // is already written above; generateDenoVendorTypes regenerates vendor-types
+  // concurrently, but on any git checkout those files are already up to date.
+  spawnInherit('./node_modules/.bin/tsc', ['--emitDeclarationOnly']),
+  // Fast JS emission — runs as soon as we have the source file list.
+  (async () => {
+    const shimSources = (await findShimSourceFiles()).filter((f) => !f.endsWith('.d.ts'));
+    await spawnInherit('./node_modules/.bin/esbuild', [
+      ...shimSources,
+      '--bundle=false',
+      '--format=esm',
+      '--outbase=shims',
+      '--outdir=dist',
+    ]);
+  })(),
 ]);
 
-await new Promise<void>((resolve, reject) => {
-  const tsc = spawn('./node_modules/.bin/tsc', [], { stdio: 'inherit' });
-  tsc.on('close', (code) =>
-    code === 0 ? resolve() : reject(new Error(`tsc exited with code ${code}`)),
-  );
-});
-
 // ---------------------------------------------------------------------------
-// 3. Strip `/// <reference types="node" />` from dist/node JS output files.
-//    tsc emits this when source imports node:* modules, but it causes Deno
-//    consumers to require @types/node even when using the deno export condition.
-//    Node.js consumers already have @types/node via their own devDependencies.
-// ---------------------------------------------------------------------------
-
-const nodeDistFiles = await fs.readdir('./dist/node');
-await Promise.all(
-  nodeDistFiles
-    .filter((f) => f.endsWith('.js'))
-    .map(async (f) => {
-      const path = `./dist/node/${f}`;
-      const src = await fs.readFile(path, 'utf8');
-      const stripped = src.replace('/// <reference types="node" />\n', '');
-      if (stripped !== src) await fs.writeFile(path, stripped);
-    }),
-);
-
-// ---------------------------------------------------------------------------
-// 4. Fix .d.ts files: rewrite relative `.ts` import extensions → `.js`.
-//    TypeScript's rewriteRelativeImportExtensions only affects .js output,
-//    not declaration files — so consumers would otherwise see broken .ts paths.
+// 4. Post-process: run JS-fix and .d.ts-fix in parallel (they touch
+//    disjoint file sets and share no state).
 // ---------------------------------------------------------------------------
 
 async function findDeclarationFiles(dir: string): Promise<string[]> {
@@ -164,34 +196,63 @@ async function findDeclarationFiles(dir: string): Promise<string[]> {
   return results.flat();
 }
 
-const [distDts, vendorDts] = await Promise.all([
-  findDeclarationFiles('./dist'),
-  findDeclarationFiles('./vendor'),
-]);
-const dtsSet = new Set([...distDts, ...vendorDts].map((f) => path.resolve(f)));
-
-await Promise.all(
-  distDts.map(async (dtsPath) => {
-    const dir = path.dirname(dtsPath);
-    const original = await fs.readFile(dtsPath, 'utf8');
-    const fixed = original
-      // from './foo.ts'  →  from './foo.js'
-      .replace(/(from\s+['"])(\.\.?\/[^'"]*?)\.ts(['"])/g, '$1$2.js$3')
-      // import("../foo.ts")  →  import("../foo.js")
-      .replace(/(import\(['"])(\.\.?\/[^'"]*?)\.ts(['"]\))/g, '$1$2.js$3')
-      // from './foo.js'  →  from './foo.d.ts'  (only when a sibling .d.ts exists)
-      // import('./foo.js')  →  import('./foo.d.ts')  (same, for type import expressions)
-      // Deno resolves .js imports in .d.ts files to the actual JS rather than
-      // following TypeScript's implicit .js→.d.ts mapping, pulling in node:*
-      // imports and requiring @types/node from consumer projects.
-      .replace(
-        /(from\s+['"]|import\(['"])(\.\.?\/[^'"]*?)\.js(['"]\)|['"])/g,
-        (match, pre, p, post) =>
-          dtsSet.has(path.resolve(dir, p + '.d.ts')) ? `${pre}${p}.d.ts${post}` : match,
+await Promise.all([
+  // 4a. Rewrite .ts → .js in relative imports inside esbuild's JS output.
+  (async () => {
+    async function findJsFiles(dir: string): Promise<string[]> {
+      const entries = await fs.readdir(dir, { withFileTypes: true });
+      const results = await Promise.all(
+        entries.map((e) => {
+          const full = `${dir}/${e.name}`;
+          if (e.isDirectory()) return findJsFiles(full);
+          return e.name.endsWith('.js') && !e.name.endsWith('.d.ts') ? [full] : [];
+        }),
       );
-    if (fixed !== original) await fs.writeFile(dtsPath, fixed);
-  }),
-);
+      return results.flat();
+    }
+    const jsFiles = await findJsFiles('./dist');
+    await Promise.all(
+      jsFiles.map(async (f) => {
+        const src = await fs.readFile(f, 'utf8');
+        const fixed = src.replace(/(from\s+['"])(\.\.?\/[^'"]*?)\.ts(['"])/g, '$1$2.js$3');
+        if (fixed !== src) await fs.writeFile(f, fixed);
+      }),
+    );
+  })(),
+
+  // 4b. Fix .d.ts files: rewrite relative `.ts` import extensions → `.js`.
+  //     TypeScript's rewriteRelativeImportExtensions only affects .js output,
+  //     not declaration files — so consumers would otherwise see broken .ts paths.
+  (async () => {
+    const [distDts, vendorDts] = await Promise.all([
+      findDeclarationFiles('./dist'),
+      findDeclarationFiles('./vendor'),
+    ]);
+    const dtsSet = new Set([...distDts, ...vendorDts].map((f) => path.resolve(f)));
+    await Promise.all(
+      distDts.map(async (dtsPath) => {
+        const dir = path.dirname(dtsPath);
+        const original = await fs.readFile(dtsPath, 'utf8');
+        const fixed = original
+          // from './foo.ts'  →  from './foo.js'
+          .replace(/(from\s+['"])(\.\.?\/[^'"]*?)\.ts(['"])/g, '$1$2.js$3')
+          // import("../foo.ts")  →  import("../foo.js")
+          .replace(/(import\(['"])(\.\.?\/[^'"]*?)\.ts(['"]\))/g, '$1$2.js$3')
+          // from './foo.js'  →  from './foo.d.ts'  (only when a sibling .d.ts exists)
+          // import('./foo.js')  →  import('./foo.d.ts')  (same, for type import expressions)
+          // Deno resolves .js imports in .d.ts files to the actual JS rather than
+          // following TypeScript's implicit .js→.d.ts mapping, pulling in node:*
+          // imports and requiring @types/node from consumer projects.
+          .replace(
+            /(from\s+['"]|import\(['"])(\.\.?\/[^'"]*?)\.js(['"]\)|['"])/g,
+            (match, pre, p, post) =>
+              dtsSet.has(path.resolve(dir, p + '.d.ts')) ? `${pre}${p}.d.ts${post}` : match,
+          );
+        if (fixed !== original) await fs.writeFile(dtsPath, fixed);
+      }),
+    );
+  })(),
+]);
 
 async function createPackageJSONIfNotExists() {
   try {
@@ -205,5 +266,280 @@ async function createPackageJSONIfNotExists() {
         version: '0.0.1',
       }),
     );
+  }
+}
+
+// Write the hash only after all steps succeed so a failed build forces a retry.
+// On cold runs inputHash is '' — compute it now (cheap at this point).
+if (!inputHash) inputHash = await computeInputHash();
+await fs.writeFile('./dist/.build-hash', inputHash + '\n');
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function spawnCapture(cmd: string, args: string[]): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const proc = spawn(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    let stdout = '';
+    let stderr = '';
+    proc.stdout.on('data', (d: Buffer) => (stdout += d));
+    proc.stderr.on('data', (d: Buffer) => (stderr += d));
+    proc.on('close', (code: number | null) => {
+      if (code === 0) resolve(stdout);
+      else reject(new Error(`${cmd} ${args.join(' ')} exited ${code}:\n${stderr}`));
+    });
+  });
+}
+
+function spawnInherit(cmd: string, args: string[]): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const proc = spawn(cmd, args, { stdio: 'inherit' });
+    proc.on('close', (code: number | null) =>
+      code === 0 ? resolve() : reject(new Error(`${cmd} exited with code ${code}`)),
+    );
+  });
+}
+
+// deno doc --json (v2) output types
+type Obj = Record<string, unknown>;
+
+function renderType(t: unknown): string {
+  if (!t || typeof t !== 'object') return 'unknown';
+  const node = t as Obj;
+  const val = node.value;
+
+  // Always reconstruct from structure so generic params are never lost.
+  // `repr` is kept only as a last-resort fallback for unhandled kinds.
+  switch (node.kind) {
+    case 'keyword':
+      return (val as string) ?? (node.repr as string) ?? 'unknown';
+    case 'typeRef': {
+      const ref = val as Obj;
+      const params = (ref.typeParams as unknown[]) ?? [];
+      const suffix = params.length ? `<${params.map(renderType).join(', ')}>` : '';
+      return `${ref.typeName}${suffix}`;
+    }
+    case 'union':
+      return (val as unknown[]).map(renderType).join(' | ');
+    case 'intersection':
+      return (val as unknown[]).map(renderType).join(' & ');
+    case 'tuple':
+      return `[${(val as unknown[]).map(renderType).join(', ')}]`;
+    case 'array':
+      return `${renderType(val)}[]`;
+    case 'fnOrConstructor': {
+      const fn = val as Obj;
+      const params = ((fn.params as unknown[]) ?? [])
+        .filter((p: unknown) => (p as Obj).name !== 'this')
+        .map((p) => renderParam(p as Obj))
+        .join(', ');
+      const ret = fn.tsType ? renderType(fn.tsType) : 'void';
+      return `(${params}) => ${ret}`;
+    }
+    case 'literal': {
+      const lit = val as Obj;
+      if (lit.kind === 'string') return JSON.stringify(lit.string);
+      if (lit.kind === 'number') return String(lit.number);
+      if (lit.kind === 'boolean') return String(lit.boolean);
+      return 'unknown';
+    }
+    case 'parenthesized':
+      return `(${renderType(val)})`;
+    case 'optional':
+      return `${renderType(val)} | undefined`;
+    default:
+      return (node.repr as string) || 'unknown';
+  }
+}
+
+function renderParam(p: Obj): string {
+  switch (p.kind) {
+    case 'rest': {
+      const arg = p.arg as Obj | undefined;
+      return `...${arg?.name ?? 'args'}${p.tsType ? `: ${renderType(p.tsType)}` : ''}`;
+    }
+    case 'identifier':
+      return `${p.name}${p.optional ? '?' : ''}${p.tsType ? `: ${renderType(p.tsType)}` : ''}`;
+    default:
+      return `_${p.tsType ? `: ${renderType(p.tsType)}` : ''}`;
+  }
+}
+
+function renderTypeParams(typeParams: unknown[]): string {
+  if (!typeParams?.length) return '';
+  return `<${typeParams
+    .map((t: unknown) => {
+      const tp = t as Obj;
+      return tp.name + (tp.constraint ? ` extends ${renderType(tp.constraint)}` : '');
+    })
+    .join(', ')}>`;
+}
+
+function renderFunctionSig(name: string, def: Obj): string {
+  const tparams = renderTypeParams((def.typeParams as unknown[]) ?? []);
+  const params = ((def.params as unknown[]) ?? []).map((p) => renderParam(p as Obj)).join(', ');
+  const ret = def.returnType ? renderType(def.returnType) : 'void';
+  return `  function ${name}${tparams}(${params}): ${ret};`;
+}
+
+// `deno doc --json` v2 groups exports as symbols with a `declarations` array.
+// Each declaration carries `kind` and `def` for the actual type shape.
+function symbolsToModuleDts(specifier: string, symbols: Obj[]): string {
+  const lines: string[] = [
+    `// Auto-generated by build.ts from ${specifier}. Do not edit manually.`,
+    `declare module '${specifier}' {`,
+  ];
+  const exported = new Set<string>();
+
+  for (const symbol of symbols) {
+    const name = symbol.name as string;
+    const declarations = (symbol.declarations as Obj[]) ?? [];
+
+    // Build a map of declaration kind → declarations for this symbol.
+    // When a symbol has both 'function' and 'interface'/'namespace' (e.g. describe, it),
+    // we prefer the function declaration(s) so the symbol is callable.
+    const byKind = new Map<string, Obj[]>();
+    for (const decl of declarations) {
+      if (decl.declarationKind !== 'export' && decl.declarationKind !== 'declare') continue;
+      const k = decl.kind as string;
+      if (!byKind.has(k)) byKind.set(k, []);
+      byKind.get(k)!.push(decl);
+    }
+
+    if (byKind.has('function')) {
+      for (const decl of byKind.get('function')!) {
+        lines.push(renderFunctionSig(name, (decl.def ?? {}) as Obj));
+      }
+      exported.add(name);
+    } else if (byKind.has('class')) {
+      const def = (byKind.get('class')![0].def ?? {}) as Obj;
+      const superClass = def.extends ? ` extends ${def.extends}` : '';
+      const tparams = renderTypeParams((def.typeParams as unknown[]) ?? []);
+      lines.push(`  class ${name}${tparams}${superClass} {`);
+      for (const ctor of (def.constructors as unknown[]) ?? []) {
+        const c = ctor as Obj;
+        const params = ((c.params as unknown[]) ?? []).map((p) => renderParam(p as Obj)).join(', ');
+        lines.push(`    constructor(${params});`);
+      }
+      for (const method of (def.methods as unknown[]) ?? []) {
+        const m = method as Obj;
+        if (m.accessibility === 'private') continue;
+        const params = ((m.params as unknown[]) ?? []).map((p) => renderParam(p as Obj)).join(', ');
+        const ret = m.returnType ? renderType(m.returnType) : 'void';
+        lines.push(`    ${m.isStatic ? 'static ' : ''}${m.name}(${params}): ${ret};`);
+      }
+      for (const prop of (def.properties as unknown[]) ?? []) {
+        const pr = prop as Obj;
+        if (pr.accessibility === 'private') continue;
+        const type = pr.tsType ? renderType(pr.tsType) : 'unknown';
+        lines.push(
+          `    ${pr.isStatic ? 'static ' : ''}${pr.name}${pr.optional ? '?' : ''}: ${type};`,
+        );
+      }
+      lines.push(`  }`);
+      exported.add(name);
+    } else if (byKind.has('interface')) {
+      const def = (byKind.get('interface')![0].def ?? {}) as Obj;
+      const tparams = renderTypeParams((def.typeParams as unknown[]) ?? []);
+      lines.push(`  interface ${name}${tparams} {`);
+      for (const prop of (def.properties as unknown[]) ?? []) {
+        const pr = prop as Obj;
+        const type = pr.tsType ? renderType(pr.tsType) : 'unknown';
+        lines.push(`    ${pr.name}${pr.optional ? '?' : ''}: ${type};`);
+      }
+      for (const method of (def.methods as unknown[]) ?? []) {
+        const m = method as Obj;
+        const params = ((m.params as unknown[]) ?? []).map((p) => renderParam(p as Obj)).join(', ');
+        const ret = m.returnType ? renderType(m.returnType) : 'void';
+        lines.push(`    ${m.name}(${params}): ${ret};`);
+      }
+      lines.push(`  }`);
+      exported.add(name);
+    } else if (byKind.has('typeAlias')) {
+      const def = (byKind.get('typeAlias')![0].def ?? {}) as Obj;
+      const type = def.tsType ? renderType(def.tsType) : 'unknown';
+      const tparams = renderTypeParams((def.typeParams as unknown[]) ?? []);
+      lines.push(`  type ${name}${tparams} = ${type};`);
+      exported.add(name);
+    } else if (byKind.has('variable')) {
+      const def = (byKind.get('variable')![0].def ?? {}) as Obj;
+      const type = def.tsType ? renderType(def.tsType) : 'unknown';
+      lines.push(`  const ${name}: ${type};`);
+      exported.add(name);
+    }
+  }
+
+  if (exported.size > 0) lines.push(`  export { ${[...exported].join(', ')} };`);
+  lines.push(`}`, ``);
+  const content = lines.join('\n');
+  // Only suppress no-explicit-any when the generated content actually uses `any`.
+  if (/\bany\b/.test(content)) {
+    return content.replace(
+      `// Auto-generated by build.ts from ${specifier}. Do not edit manually.\n`,
+      `// Auto-generated by build.ts from ${specifier}. Do not edit manually.\n// deno-lint-ignore-file no-explicit-any\n`,
+    );
+  }
+  return content;
+}
+
+async function generateDenoVendorTypes() {
+  const modules: [string, string][] = [
+    ['jsr:@std/testing/bdd', './shims/deno/vendor-types/jsr-std-testing-bdd.d.ts'],
+    ['jsr:@std/assert', './shims/deno/vendor-types/jsr-std-assert.d.ts'],
+  ];
+  // Run both deno doc calls in parallel — they are independent.
+  await Promise.all(
+    modules.map(async ([specifier, outFile]) => {
+      const json = await spawnCapture('deno', ['doc', '--json', specifier]);
+      const data = JSON.parse(json) as { nodes: Record<string, { symbols: Obj[] }> };
+      const symbols = data.nodes[specifier]?.symbols ?? [];
+      await fs.writeFile(outFile, symbolsToModuleDts(specifier, symbols));
+    }),
+  );
+}
+
+async function findShimSourceFiles(): Promise<string[]> {
+  async function walk(dir: string): Promise<string[]> {
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+    const results = await Promise.all(
+      entries.map((e) => {
+        const full = `${dir}/${e.name}`;
+        // vendor-types are generated outputs — exclude them from the hash input
+        if (e.isDirectory()) return e.name === 'vendor-types' ? [] : walk(full);
+        return e.name.endsWith('.ts') ? [full] : [];
+      }),
+    );
+    return results.flat();
+  }
+  return walk('./shims');
+}
+
+async function computeInputHash(): Promise<string> {
+  const h = createHash('sha1');
+  const [shimFiles, tsconfig, qunitSrc, denoLock, buildSelf] = await Promise.all([
+    findShimSourceFiles(),
+    fs.readFile('./tsconfig.json').catch(() => Buffer.from('')),
+    fs.readFile('./node_modules/qunit/qunit/qunit.js').catch(() => Buffer.from('')),
+    fs.readFile('./deno.lock').catch(() => Buffer.from('')),
+    fs.readFile('./build.ts').catch(() => Buffer.from('')),
+  ]);
+  h.update(tsconfig as Buffer);
+  h.update(qunitSrc as Buffer);
+  h.update(denoLock as Buffer);
+  h.update(buildSelf as Buffer);
+  for (const f of (shimFiles as string[]).sort()) {
+    h.update(f);
+    h.update(await fs.readFile(f));
+  }
+  return h.digest('hex');
+}
+
+async function isBuildUpToDate(currentHash: string, storedHash: string): Promise<boolean> {
+  try {
+    await Promise.all([fs.stat('./dist/node/index.js'), fs.stat('./dist/deno/index.js')]);
+    return storedHash === currentHash;
+  } catch {
+    return false;
   }
 }
