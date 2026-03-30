@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.5] - 2026-03-30
+[`v1.1.4...v1.1.5`](https://github.com/izelnakri/qunitx-cli/compare/v1.1.4...v1.1.5)
+
+### Bug Fixes
+- Deno release type imports from npm — 2026-03-30 by Izel Nakri ([`70c02c5`](https://github.com/izelnakri/qunitx-cli/commit/70c02c5b9ca89c6eca53e4885bdbf70b99c7a9a3))
+
 ## [1.1.3] - 2026-03-30
 [`v1.1.2...v1.1.3`](https://github.com/izelnakri/qunitx-cli/compare/v1.1.2...v1.1.3)
 
