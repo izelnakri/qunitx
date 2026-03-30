@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.2] - 2026-03-30
+[`v1.1.1...v1.1.2`](https://github.com/izelnakri/qunitx-cli/compare/v1.1.1...v1.1.2)
+
+### Bug Fixes
+- Export "qunitx/assert" in the package — 2026-03-30 by Izel Nakri ([`e2f6a3f`](https://github.com/izelnakri/qunitx-cli/commit/e2f6a3f85ac60ba79a901e4532ee9ddd4f1df080))
+
 ## [1.1.1] - 2026-03-30
 [`v1.1.0...v1.1.1`](https://github.com/izelnakri/qunitx-cli/compare/v1.1.0...v1.1.1)
 
