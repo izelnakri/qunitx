@@ -21,5 +21,6 @@ Object.freeze(TestContext);
 
 export const module = Module;
 export const test = Test;
+export { Assert };
 
 export default { AssertionError: Assert.AssertionError, module, test, config: {} };

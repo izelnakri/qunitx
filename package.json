@@ -55,10 +55,17 @@
     }
   },
   "exports": {
-    "types": "./dist/node/index.d.ts",
-    "node": "./dist/node/index.js",
-    "deno": "./shims/deno/index.ts",
-    "default": "./dist/browser/index.js"
+    ".": {
+      "types": "./dist/node/index.d.ts",
+      "node": "./dist/node/index.js",
+      "deno": "./shims/deno/index.ts",
+      "default": "./dist/browser/index.js"
+    },
+    "./assert": {
+      "types": "./dist/shared/assert.d.ts",
+      "deno": "./shims/shared/assert.ts",
+      "default": "./dist/shared/assert.js"
+    }
   },
   "files": [
     "dist/",
