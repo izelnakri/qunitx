@@ -15,6 +15,7 @@
     "shims/node/**/*.ts",
     "shims/browser/**/*.ts",
     "shims/shared/**/*.ts",
+    "shims/deno/**/*.ts",
     "shims/types.ts"
   ]
 }
