@@ -1,4 +1,5 @@
 import fs from 'fs/promises';
+import path from 'node:path';
 import { spawn } from 'node:child_process';
 
 // ---------------------------------------------------------------------------
@@ -11,9 +12,25 @@ let [qunitJS, qunitCSS, _] = await Promise.all([
   fs.mkdir('./vendor', { recursive: true }),
 ]);
 
-let newQUnit = qunitJS.toString().replace(
-  'start: function start(count) {',
-  `reset: function() {
+// Prepend a guard that replaces process.env with a safe empty object when running
+// in Deno without --allow-env. Deno's process.env is a Proxy that throws NotCapable
+// on any key access if the permission is not granted. This single patch covers all
+// process.env reads inside qunit.js regardless of where they appear, so it stays
+// correct across qunit version upgrades without needing to match specific code patterns.
+const denoEnvGuard = `\
+;(function () {
+  if (typeof process === 'undefined') return;
+  try { process.env['']; } catch (_) {
+    try { Object.defineProperty(process, 'env', { value: {}, writable: true, configurable: true }); } catch (_) {}
+  }
+})();
+`;
+
+let newQUnit =
+  denoEnvGuard +
+  qunitJS.toString().replace(
+    'start: function start(count) {',
+    `reset: function() {
 		ProcessingQueue.finished = false;
 		globalStartCalled = false;
 		runStarted = false;
@@ -38,7 +55,7 @@ let newQUnit = qunitJS.toString().replace(
 		config.modules.push( config.currentModule );
   },
   start: function start(count) {`,
-);
+  );
 
 // ---------------------------------------------------------------------------
 // 2. Auto-generate vendor/qunit.d.ts from the patched QUnit API.
@@ -111,7 +128,26 @@ await new Promise<void>((resolve, reject) => {
 });
 
 // ---------------------------------------------------------------------------
-// 3. Fix .d.ts files: rewrite relative `.ts` import extensions → `.js`.
+// 3. Strip `/// <reference types="node" />` from dist/node JS output files.
+//    tsc emits this when source imports node:* modules, but it causes Deno
+//    consumers to require @types/node even when using the deno export condition.
+//    Node.js consumers already have @types/node via their own devDependencies.
+// ---------------------------------------------------------------------------
+
+const nodeDistFiles = await fs.readdir('./dist/node');
+await Promise.all(
+  nodeDistFiles
+    .filter((f) => f.endsWith('.js'))
+    .map(async (f) => {
+      const path = `./dist/node/${f}`;
+      const src = await fs.readFile(path, 'utf8');
+      const stripped = src.replace('/// <reference types="node" />\n', '');
+      if (stripped !== src) await fs.writeFile(path, stripped);
+    }),
+);
+
+// ---------------------------------------------------------------------------
+// 4. Fix .d.ts files: rewrite relative `.ts` import extensions → `.js`.
 //    TypeScript's rewriteRelativeImportExtensions only affects .js output,
 //    not declaration files — so consumers would otherwise see broken .ts paths.
 // ---------------------------------------------------------------------------
@@ -128,14 +164,31 @@ async function findDeclarationFiles(dir: string): Promise<string[]> {
   return results.flat();
 }
 
+const [distDts, vendorDts] = await Promise.all([
+  findDeclarationFiles('./dist'),
+  findDeclarationFiles('./vendor'),
+]);
+const dtsSet = new Set([...distDts, ...vendorDts].map((f) => path.resolve(f)));
+
 await Promise.all(
-  (await findDeclarationFiles('./dist')).map(async (dtsPath) => {
+  distDts.map(async (dtsPath) => {
+    const dir = path.dirname(dtsPath);
     const original = await fs.readFile(dtsPath, 'utf8');
     const fixed = original
       // from './foo.ts'  →  from './foo.js'
       .replace(/(from\s+['"])(\.\.?\/[^'"]*?)\.ts(['"])/g, '$1$2.js$3')
       // import("../foo.ts")  →  import("../foo.js")
-      .replace(/(import\(['"])(\.\.?\/[^'"]*?)\.ts(['"]\))/g, '$1$2.js$3');
+      .replace(/(import\(['"])(\.\.?\/[^'"]*?)\.ts(['"]\))/g, '$1$2.js$3')
+      // from './foo.js'  →  from './foo.d.ts'  (only when a sibling .d.ts exists)
+      // import('./foo.js')  →  import('./foo.d.ts')  (same, for type import expressions)
+      // Deno resolves .js imports in .d.ts files to the actual JS rather than
+      // following TypeScript's implicit .js→.d.ts mapping, pulling in node:*
+      // imports and requiring @types/node from consumer projects.
+      .replace(
+        /(from\s+['"]|import\(['"])(\.\.?\/[^'"]*?)\.js(['"]\)|['"])/g,
+        (match, pre, p, post) =>
+          dtsSet.has(path.resolve(dir, p + '.d.ts')) ? `${pre}${p}.d.ts${post}` : match,
+      );
     if (fixed !== original) await fs.writeFile(dtsPath, fixed);
   }),
 );

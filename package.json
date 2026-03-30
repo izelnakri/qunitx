@@ -49,16 +49,16 @@
   "imports": {
     "qunitx": {
       "types": "./dist/node/index.d.ts",
-      "node": "./dist/node/index.js",
       "deno": "./shims/deno/index.ts",
+      "node": "./dist/node/index.js",
       "default": "./dist/browser/index.js"
     }
   },
   "exports": {
     ".": {
       "types": "./dist/node/index.d.ts",
-      "node": "./dist/node/index.js",
       "deno": "./shims/deno/index.ts",
+      "node": "./dist/node/index.js",
       "default": "./dist/browser/index.js"
     },
     "./assert": {
@@ -95,8 +95,8 @@
     "test": "npm run test:browser && npm run test:node && npm run test:deno",
     "test:dev": "npm run test | tee test-output.log",
     "test:browser": "qunitx test/index.ts --debug",
-    "test:deno": "deno test --allow-read --allow-env --allow-run test/index.ts",
-    "test:doctests": "deno test --doc --allow-env --allow-read shims/deno/module.ts shims/deno/test.ts",
+    "test:deno": "deno test --allow-read --allow-run test/index.ts",
+    "test:doctests": "deno test --doc --allow-read shims/deno/module.ts shims/deno/test.ts",
     "test:node": "node --experimental-strip-types --test test/index.ts",
     "coverage": "deno test --coverage=tmp/coverage --allow-read --allow-env --allow-run test/index.ts && deno coverage --lcov --output=tmp/coverage/lcov.info --include='shims/' tmp/coverage && node --experimental-strip-types scripts/check-coverage.ts",
     "coverage:report": "npm run coverage && deno coverage --html --include='shims/' tmp/coverage",

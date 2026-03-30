@@ -1,3 +1,9 @@
+;(function () {
+  if (typeof process === 'undefined') return;
+  try { process.env['']; } catch (_) {
+    try { Object.defineProperty(process, 'env', { value: {}, writable: true, configurable: true }); } catch (_) {}
+  }
+})();
 /*!
  * QUnit 2.25.0
  * https://qunitjs.com/
