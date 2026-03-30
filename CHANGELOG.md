@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.3] - 2026-03-30
+[`v1.1.2...v1.1.3`](https://github.com/izelnakri/qunitx-cli/compare/v1.1.2...v1.1.3)
+
+### Bug Fixes
+- More reliable JS/TS dist imports for deno/node/browser — 2026-03-30 by Izel Nakri ([`695e2ce`](https://github.com/izelnakri/qunitx-cli/commit/695e2ce2aa5b9221f1e83aa751245d5b5dc514cd))
+
 ## [1.1.2] - 2026-03-30
 [`v1.1.1...v1.1.2`](https://github.com/izelnakri/qunitx-cli/compare/v1.1.1...v1.1.2)
 
