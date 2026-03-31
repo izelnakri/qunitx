@@ -44,7 +44,7 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: dist
           key: dist-${{ hashFiles('shims/**', 'tsconfig.json', 'deno.lock', 'package-lock.json', 'build.ts') }}
@@ -85,7 +85,7 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: dist
           key: dist-${{ hashFiles('shims/**', 'tsconfig.json', 'deno.lock', 'package-lock.json', 'build.ts') }}
