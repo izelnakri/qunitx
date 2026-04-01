@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.6] - 2026-04-01
+[`v1.1.5...v1.1.6`](https://github.com/izelnakri/qunitx-cli/compare/v1.1.5...v1.1.6)
+
+### Features
+- Now release/packed package is tested properly as user! — 2026-04-01 by Izel Nakri ([`d49e380`](https://github.com/izelnakri/qunitx-cli/commit/d49e380a5be16a8a08bac06539b71fff56c5c0da))
+
 ## [1.1.5] - 2026-03-30
 [`v1.1.4...v1.1.5`](https://github.com/izelnakri/qunitx-cli/compare/v1.1.4...v1.1.5)
 
