@@ -93,6 +93,7 @@
     "changelog:update": "git-cliff --output CHANGELOG.md",
     "prepare": "npm run build",
     "test": "npm run test:browser && npm run test:node && npm run test:deno",
+    "test:release": "bash scripts/test-release.sh",
     "test:dev": "npm run test | tee test-output.log",
     "test:browser": "qunitx test/index.ts --debug",
     "test:deno": "deno test --allow-read --allow-run test/index.ts",

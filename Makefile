@@ -57,6 +57,7 @@ release:
 	@npm whoami 2>/dev/null || npm login
 	$(MAKE) check
 	$(MAKE) bench-check
+	npm run test:release
 	npm version $(LEVEL) --no-git-tag-version
 	git-cliff --tag "v$$(node -p 'require("./package.json").version')" --output CHANGELOG.md
 	git add package.json package-lock.json CHANGELOG.md

@@ -19,8 +19,8 @@ Object.freeze(Assert);
 Object.freeze(ModuleContext);
 Object.freeze(TestContext);
 
-export const module = Module;
-export const test = Test;
+export { default as module } from './module.ts';
+export { default as test } from './test.ts';
 export { Assert };
 
-export default { AssertionError: Assert.AssertionError, module, test, config: {} };
+export default { AssertionError: Assert.AssertionError, module: Module, test: Test, config: {} };

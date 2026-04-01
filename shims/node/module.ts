@@ -3,6 +3,8 @@ import type Assert from '../shared/assert.ts';
 import type { HooksObject } from '../types.ts';
 import ModuleContext from '../shared/module-context.ts';
 
+export default function module(moduleName: string, moduleContent: (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown }) => void): void;
+export default function module(moduleName: string, runtimeOptions: object, moduleContent: (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown }) => void): void;
 export default function module(
   moduleName: string,
   runtimeOptions: object | ((hooks: HooksObject<Assert>) => void),

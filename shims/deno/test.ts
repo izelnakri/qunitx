@@ -34,6 +34,9 @@ export type { PushResultInfo } from '../types.ts';
  * });
  * ```
  */
+export default function test(testName: string, testContent: (assert: Assert, meta: { testName: string; options: unknown }) => void | Promise<void>): void;
+/** Defines an individual test with optional Deno BDD runtime options forwarded to `it()`. */
+export default function test(testName: string, runtimeOptions: object, testContent: (assert: Assert, meta: { testName: string; options: unknown }) => void | Promise<void>): void;
 export default function test(
   testName: string,
   runtimeOptions: object | ((assert: Assert, meta: { testName: string; options: unknown }) => void | Promise<void>),

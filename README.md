@@ -113,8 +113,7 @@ node --test --watch math-test.js
 # Glob pattern
 node --test --watch 'test/**/*.js'
 
-# TypeScript (tsconfig.json with moduleResolution: NodeNext required)
-node --import=tsx/esm --test math-test.ts
+node --test math-test.ts
 
 # Code coverage
 npx c8 node --test math-test.js

@@ -32,6 +32,9 @@ export type { HookFn, HooksObject, PushResultInfo } from '../types.ts';
  * });
  * ```
  */
+export default function module(moduleName: string, moduleContent: (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown }) => void): void;
+/** Defines a test module (suite) with optional Deno BDD runtime options forwarded to `describe()`. */
+export default function module(moduleName: string, runtimeOptions: object, moduleContent: (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown }) => void): void;
 export default function module(
   moduleName: string,
   runtimeOptions: object | ((hooks: HooksObject<Assert>) => void),

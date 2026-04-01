@@ -27,9 +27,31 @@ jobs:
           CHROME_BIN: ${{ steps.setup-chrome.outputs.chrome-path }}
           FORCE_COLOR: 0
 
+  # ── Release consumer test ──────────────────────────────────────────────────────
+  # Packs the built artefact and runs release-consumer-test.ts against the tarball
+  # on every supported runtime, catching issues (e.g. broken dist/ exports, missing
+  # jsr: bundling) that only surface when a downstream developer installs the package.
+  release-consumer-test:
+    needs: [test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: npm ci
+      - run: bash scripts/test-release.sh
+        env:
+          FORCE_COLOR: 0
+
   # ── GitHub release ─────────────────────────────────────────────────────────────
   github-release:
-    needs: [test]
+    needs: [test, release-consumer-test]
     runs-on: ubuntu-latest
     permissions:
       contents: write

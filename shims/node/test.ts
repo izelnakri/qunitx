@@ -3,6 +3,8 @@ import type Assert from '../shared/assert.ts';
 import TestContext from '../shared/test-context.ts';
 import ModuleContext from '../shared/module-context.ts';
 
+export default function test(testName: string, testContent: (assert: Assert, meta: { testName: string; options: unknown }) => void | Promise<void>): void;
+export default function test(testName: string, runtimeOptions: object, testContent: (assert: Assert, meta: { testName: string; options: unknown }) => void | Promise<void>): void;
 export default function test(
   testName: string,
   runtimeOptions: object | ((assert: Assert, meta: { testName: string; options: unknown }) => void | Promise<void>),

@@ -167,6 +167,8 @@ await Promise.all([
   // concurrently, but on any git checkout those files are already up to date.
   spawnInherit('./node_modules/.bin/tsc', ['--emitDeclarationOnly']),
   // Fast JS emission — runs as soon as we have the source file list.
+  // After esbuild, overwrite dist/deno/index.js with a fully self-contained
+  // bundle (no jsr: imports) so npm:qunitx works in Deno.
   (async () => {
     const shimSources = (await findShimSourceFiles()).filter((f) => !f.endsWith('.d.ts'));
     await spawnInherit('./node_modules/.bin/esbuild', [
@@ -176,6 +178,7 @@ await Promise.all([
       '--outbase=shims',
       '--outdir=dist',
     ]);
+    await bundleDenoShim();
   })(),
 ]);
 
@@ -238,6 +241,17 @@ await Promise.all([
           .replace(/(from\s+['"])(\.\.?\/[^'"]*?)\.ts(['"])/g, '$1$2.js$3')
           // import("../foo.ts")  →  import("../foo.js")
           .replace(/(import\(['"])(\.\.?\/[^'"]*?)\.ts(['"]\))/g, '$1$2.js$3')
+          // from '../foo.d.js'  →  from '../foo.d.ts'  (only when a sibling .d.ts exists)
+          // TypeScript 5 Bundler resolution emits `.d.js` in declaration files for imports
+          // of other declaration files (e.g. `assert.d.js` for `assert.ts`).  Deno does not
+          // follow TypeScript's implicit `.d.js`→`.d.ts` mapping so we rewrite it explicitly.
+          // Must run before the general .js→.d.ts pass because `p` in that pass captures
+          // `foo.d` (with the stray `.d`), producing a wrong `foo.d.d.ts` lookup.
+          .replace(
+            /(from\s+['"]|import\(['"])(\.\.?\/[^'"]*?)\.d\.js(['"]\)|['"])/g,
+            (match, pre, p, post) =>
+              dtsSet.has(path.resolve(dir, p + '.d.ts')) ? `${pre}${p}.d.ts${post}` : match,
+          )
           // from './foo.js'  →  from './foo.d.ts'  (only when a sibling .d.ts exists)
           // import('./foo.js')  →  import('./foo.d.ts')  (same, for type import expressions)
           // Deno resolves .js imports in .d.ts files to the actual JS rather than
@@ -269,6 +283,23 @@ async function createPackageJSONIfNotExists() {
   }
 }
 
+// ---------------------------------------------------------------------------
+// 5. Fix dist/deno/index.d.ts: strip the jsr:@std/assert import so consumers
+//    can type-check without having jsr:@std/assert pre-cached.  The runtime
+//    bundle (dist/deno/index.js) already has all jsr: code inlined.  In the
+//    declaration file we only need AssertionError to be "some Error subclass"
+//    — declaring it as `extends Error` is accurate (DenoAssertionError itself
+//    extends Error) and removes the external dependency entirely.
+// ---------------------------------------------------------------------------
+{
+  const dtsPath = './dist/deno/index.d.ts';
+  const src = await fs.readFile(dtsPath, 'utf8');
+  const fixed = src
+    .replace('import { AssertionError as DenoAssertionError } from "jsr:@std/assert";\n', '')
+    .replace('extends DenoAssertionError', 'extends Error');
+  if (fixed !== src) await fs.writeFile(dtsPath, fixed);
+}
+
 // Write the hash only after all steps succeed so a failed build forces a retry.
 // On cold runs inputHash is '' — compute it now (cheap at this point).
 if (!inputHash) inputHash = await computeInputHash();
@@ -277,6 +308,137 @@ await fs.writeFile('./dist/.build-hash', inputHash + '\n');
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// bundleDenoShim: produces dist/deno/index.js with all jsr: imports inlined.
+//
+// When Deno loads npm:qunitx it uses Node's ESM loader, which cannot resolve
+// jsr: URL schemes.  We use esbuild's JS API (available as a transitive dep
+// in node_modules) with a custom plugin that fetches jsr: packages from
+// https://jsr.io and inlines them, producing a single self-contained module.
+// ---------------------------------------------------------------------------
+
+async function bundleDenoShim(): Promise<void> {
+  // Parse deno.lock to map each jsr package name → resolved version.
+  const lockText = await fs.readFile('./deno.lock', 'utf8');
+  const lock = JSON.parse(lockText) as { specifiers?: Record<string, string> };
+  const jsrVersions = new Map<string, string>();
+  for (const [spec, version] of Object.entries(lock.specifiers ?? {})) {
+    const m = spec.match(/^jsr:(@[^@]+)@/);
+    // Keep first match per package (entries are ordered, first is sufficient).
+    if (m && !jsrVersions.has(m[1]!)) jsrVersions.set(m[1]!, version);
+  }
+
+  const fetchTextCache = new Map<string, string>();
+  async function fetchText(url: string): Promise<string> {
+    if (fetchTextCache.has(url)) return fetchTextCache.get(url)!;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`fetch ${url} → ${resp.status} ${resp.statusText}`);
+    const text = await resp.text();
+    fetchTextCache.set(url, text);
+    return text;
+  }
+
+  // Fetch a package's deno.json exports map and cache it.
+  // jsr:@std/internal@^1.0.12/assertion-state → look up "./assertion-state" in exports
+  const exportsCache = new Map<string, Record<string, string>>();
+  async function getExports(pkg: string, version: string): Promise<Record<string, string>> {
+    const key = `${pkg}@${version}`;
+    if (exportsCache.has(key)) return exportsCache.get(key)!;
+    const url = `https://jsr.io/${pkg}/${version}/deno.json`;
+    const resp = await fetch(url);
+    const exports = resp.ok
+      ? (((await resp.json()) as { exports?: Record<string, string> }).exports ?? {})
+      : {};
+    exportsCache.set(key, exports);
+    return exports;
+  }
+
+  // Convert a jsr: specifier to a concrete https://jsr.io URL.
+  // Root:    "jsr:@std/assert"                          → .../mod.ts  (via exports["."])
+  // Subpath: "jsr:@std/testing/bdd"                     → via exports["./bdd"]
+  // Pinned:  "jsr:@std/internal@^1.0.12/assertion-state"→ via exports["./assertion-state"]
+  async function jsrToUrl(specifier: string): Promise<string> {
+    // Capture: @scope/name, optional @version-constraint, optional /subpath
+    const m = specifier.match(/^jsr:(@[^/@]+\/[^/@]+)(?:@[^/]+)?(\/.*)?$/);
+    if (!m) throw new Error(`Unparseable jsr: specifier: ${specifier}`);
+    const pkg = m[1]!;
+    const sub = m[2] ?? '';
+    const version = jsrVersions.get(pkg);
+    if (!version) throw new Error(`${pkg} not found in deno.lock`);
+    const exports = await getExports(pkg, version);
+    const exportKey = sub ? `.${sub}` : '.';
+    const file = exports[exportKey];
+    if (!file)
+      throw new Error(
+        `No export "${exportKey}" in ${pkg}@${version} (keys: ${Object.keys(exports).join(', ')})`,
+      );
+    // file is like "./mod.ts" or "./_assertion_state.ts" — strip leading "."
+    return `https://jsr.io/${pkg}/${version}${file.slice(1)}`;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const jsrPlugin: any = {
+    name: 'jsr',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setup(build: any) {
+      // jsr: imports from local TypeScript files → resolve to https://jsr.io
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      build.onResolve({ filter: /^jsr:/ }, async (args: any) => ({
+        path: await jsrToUrl(args.path),
+        namespace: 'jsr',
+      }));
+      // relative imports inside fetched jsr modules → resolve relative to their importer URL
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      build.onResolve({ filter: /^\./, namespace: 'jsr' }, (args: any) => ({
+        path: new URL(args.path, args.importer).toString(),
+        namespace: 'jsr',
+      }));
+      // load any jsr-namespaced path by fetching its TypeScript source
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      build.onLoad({ filter: /.*/, namespace: 'jsr' }, async (args: any) => ({
+        contents: await fetchText(args.path),
+        loader: 'ts',
+      }));
+
+      // vendor/qunit.js is a UMD module.  When esbuild bundles it as CJS the UMD
+      // code takes the `module.exports = QUnit` branch (exportedModule=true), so
+      // the `globalThis.QUnit = QUnit` fallback never runs.  The shim reads
+      // `Assert.QUnit` from `globalThis.QUnit` — fix by appending an explicit setter
+      // to the source before esbuild wraps it, so it runs inside the CJS closure
+      // where `exports` is defined and equals the QUnit object.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      build.onLoad({ filter: /[/\\]vendor[/\\]qunit\.js$/ }, async (args: any) => {
+        const src = await fs.readFile(args.path, 'utf8');
+        return {
+          contents:
+            src +
+            '\nif (typeof exports !== "undefined" && exports.QUnit && typeof globalThis !== "undefined") { globalThis.QUnit = exports.QUnit; }',
+          loader: 'js',
+        };
+      });
+    },
+  };
+
+  const esbuild = await import('esbuild');
+  try {
+    await esbuild.build({
+      plugins: [jsrPlugin],
+      entryPoints: ['./shims/deno/index.ts'],
+      outfile: './dist/deno/index.js',
+      bundle: true,
+      format: 'esm',
+      platform: 'neutral',
+      // Tell Deno where to find the type declarations for this bundle.
+      // Without this, Deno treats the file as untyped JavaScript when imported
+      // via an import-map entry that points directly into node_modules, because
+      // it does not check for a co-located .d.ts in that case.
+      banner: { js: '// @ts-types="./index.d.ts"' },
+    });
+  } finally {
+    await esbuild.stop();
+  }
+}
 
 function spawnCapture(cmd: string, args: string[]): Promise<string> {
   return new Promise((resolve, reject) => {

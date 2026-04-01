@@ -109,7 +109,7 @@ export { Assert };
  * });
  * ```
  */
-export const module = Module;
+export { default as module } from './module.ts';
 
 /**
  * Defines an individual test. Wraps Deno's `it()` and handles the full QUnit
@@ -139,7 +139,7 @@ export const module = Module;
  * });
  * ```
  */
-export const test = Test;
+export { default as test } from './test.ts';
 
 /**
  * The default export provides the full QUnitX API as a single object.
@@ -166,4 +166,4 @@ export const test = Test;
  * @property {object} config - Runtime configuration object (currently unused; reserved
  *   for future QUnit config compatibility).
  */
-export default { AssertionError: Assert.AssertionError, module, test, config: {} };
+export default { AssertionError: Assert.AssertionError, module: Module, test: Test, config: {} };
