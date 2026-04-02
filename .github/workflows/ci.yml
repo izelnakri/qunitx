@@ -41,15 +41,24 @@ jobs:
           cache: npm
       - uses: browser-actions/setup-chrome@v2
         id: setup-chrome
-      - uses: denoland/setup-deno@v2
-        with:
-          deno-version: v2.x
       - uses: actions/cache@v5
         with:
           path: dist
           key: dist-${{ hashFiles('shims/**', 'tsconfig.json', 'deno.lock', 'package-lock.json', 'build.ts') }}
           restore-keys: dist-
+      # npm ci runs qunitx-cli's postinstall: "deno install --allow-scripts=npm:playwright-core || true"
+      # If deno is in PATH, it rewrites node_modules/ layout via .deno/ store and the
+      # NixOS-built SEA binaries end up there. Run npm ci before setup-deno so the
+      # postinstall silently skips (deno not found) and npm owns node_modules/.
       - run: npm ci
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      # The qunitx-cli-* SEA binaries are built on NixOS with Nix store paths
+      # hardcoded as their ELF interpreter — they cannot run on standard Linux.
+      # bin/qunitx.js checks X_OK before spawning, so removing execute permission
+      # forces it to fall back to the portable JS CLI (dist/cli.js).
+      - run: find node_modules -name "qunitx-cli-linux-x64" -o -name "qunitx-cli-linux-arm64" -o -name "qunitx-cli-darwin-x64" -o -name "qunitx-cli-darwin-arm64" -o -name "qunitx-cli-windows-x64" | xargs -I{} chmod -x {}/bin/qunitx 2>/dev/null || true
       - run: npm test
         env:
           PUPPETEER_SKIP_DOWNLOAD: true

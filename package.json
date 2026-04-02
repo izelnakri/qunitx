@@ -85,7 +85,7 @@
     "lint:docs": "deno doc --lint shims/deno/module.ts shims/deno/test.ts",
     "build": "node --experimental-strip-types build.ts",
     "build:cold": "rm -rf dist && node --experimental-strip-types build.ts",
-    "pretest": "node --experimental-strip-types build.ts",
+    "pretest": "node --experimental-strip-types build.ts && node --input-type=module -e \"import{symlinkSync}from'fs';try{symlinkSync('..','node_modules/qunitx','junction')}catch(_){}\"",
     "run:all": "npm run run:node && npm run run:deno",
     "run:node": "node --experimental-strip-types --test test/helpers/passing-tests.ts && node --experimental-strip-types --test test/helpers/failing-tests.ts",
     "run:deno": "deno test test/helpers/passing-tests.ts && deno test test/helpers/failing-tests.ts",

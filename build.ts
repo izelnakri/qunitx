@@ -14,7 +14,10 @@ await fs.writeFile('./dist/.build-hash', inputHash + '\n');
 // Skip the full build when no inputs have changed. Inputs: shims/**/*.ts
 // (excl. vendor-types/), tsconfig.json, qunit source, deno.lock, and build.ts.
 async function checkUpToDate(): Promise<string> {
-  const storedHash = await fs.readFile('./dist/.build-hash', 'utf8').then(s => s.trim()).catch(() => null);
+  const storedHash = await fs
+    .readFile('./dist/.build-hash', 'utf8')
+    .then((s) => s.trim())
+    .catch(() => null);
   if (storedHash !== null) {
     const hash = await computeInputHash();
     if (await isBuildUpToDate(hash, storedHash)) process.exit(0);
@@ -137,16 +140,13 @@ declare global {
     fs.writeFile('./vendor/qunit.js', newQUnit),
     fs.writeFile('./vendor/qunit.css', qunitCSS),
     createPackageJSONIfNotExists(),
-    generateDenoVendorTypes(),
-    // Full type-checking + declaration emit. generateDenoVendorTypes regenerates
-    // vendor-types concurrently, but on any git checkout those files are already up to date.
     spawnInherit('./node_modules/.bin/tsc', ['--emitDeclarationOnly']),
     // Fast JS emission. After esbuild, overwrite dist/deno/index.js with a fully
     // self-contained bundle (no jsr: imports) so npm:qunitx works in Deno.
     (async () => {
-      const shimSources = (await findFiles('./shims', (n) => n.endsWith('.ts'), 'vendor-types')).filter(
-        (f) => !f.endsWith('.d.ts'),
-      );
+      const shimSources = (
+        await findFiles('./shims', (n) => n.endsWith('.ts'), 'vendor-types')
+      ).filter((f) => !f.endsWith('.d.ts'));
       await spawnInherit('./node_modules/.bin/esbuild', [
         ...shimSources,
         '--bundle=false',
@@ -364,20 +364,6 @@ async function bundleDenoShim(): Promise<void> {
   }
 }
 
-function spawnCapture(cmd: string, args: string[]): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const proc = spawn(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'] });
-    let stdout = '';
-    let stderr = '';
-    proc.stdout.on('data', (d: Buffer) => (stdout += d));
-    proc.stderr.on('data', (d: Buffer) => (stderr += d));
-    proc.on('close', (code) => {
-      if (code === 0) resolve(stdout);
-      else reject(new Error(`${cmd} ${args.join(' ')} exited ${code}:\n${stderr}`));
-    });
-  });
-}
-
 function spawnInherit(cmd: string, args: string[]): Promise<void> {
   return new Promise((resolve, reject) => {
     const proc = spawn(cmd, args, { stdio: 'inherit' });
@@ -385,204 +371,6 @@ function spawnInherit(cmd: string, args: string[]): Promise<void> {
       code === 0 ? resolve() : reject(new Error(`${cmd} exited with code ${code}`)),
     );
   });
-}
-
-async function generateDenoVendorTypes() {
-  const modules: [string, string][] = [
-    ['jsr:@std/testing/bdd', './shims/deno/vendor-types/jsr-std-testing-bdd.d.ts'],
-    ['jsr:@std/assert', './shims/deno/vendor-types/jsr-std-assert.d.ts'],
-  ];
-  // Run both deno doc calls in parallel — they are independent.
-  await Promise.all(
-    modules.map(async ([specifier, outFile]) => {
-      const json = await spawnCapture('deno', ['doc', '--json', specifier]);
-      const data = JSON.parse(json) as { nodes: Record<string, { symbols: Obj[] }> };
-      const symbols = data.nodes[specifier]?.symbols ?? [];
-      await fs.writeFile(outFile, symbolsToModuleDts(specifier, symbols));
-    }),
-  );
-}
-
-// deno doc --json (v2) output types
-type Obj = Record<string, unknown>;
-
-function renderType(t: unknown): string {
-  if (!t || typeof t !== 'object') return 'unknown';
-  const node = t as Obj;
-  const val = node.value;
-
-  // Always reconstruct from structure so generic params are never lost.
-  // `repr` is kept only as a last-resort fallback for unhandled kinds.
-  switch (node.kind) {
-    case 'keyword':
-      return (val as string) ?? (node.repr as string) ?? 'unknown';
-    case 'typeRef': {
-      const ref = val as Obj;
-      const params = (ref.typeParams as unknown[]) ?? [];
-      const suffix = params.length ? `<${params.map(renderType).join(', ')}>` : '';
-      return `${ref.typeName}${suffix}`;
-    }
-    case 'union':
-      return (val as unknown[]).map(renderType).join(' | ');
-    case 'intersection':
-      return (val as unknown[]).map(renderType).join(' & ');
-    case 'tuple':
-      return `[${(val as unknown[]).map(renderType).join(', ')}]`;
-    case 'array':
-      return `${renderType(val)}[]`;
-    case 'fnOrConstructor': {
-      const fn = val as Obj;
-      const params = ((fn.params as unknown[]) ?? [])
-        .filter((p: unknown) => (p as Obj).name !== 'this')
-        .map((p) => renderParam(p as Obj))
-        .join(', ');
-      const ret = fn.tsType ? renderType(fn.tsType) : 'void';
-      return `(${params}) => ${ret}`;
-    }
-    case 'literal': {
-      const lit = val as Obj;
-      if (lit.kind === 'string') return JSON.stringify(lit.string);
-      if (lit.kind === 'number') return String(lit.number);
-      if (lit.kind === 'boolean') return String(lit.boolean);
-      return 'unknown';
-    }
-    case 'parenthesized':
-      return `(${renderType(val)})`;
-    case 'optional':
-      return `${renderType(val)} | undefined`;
-    default:
-      return (node.repr as string) || 'unknown';
-  }
-}
-
-function renderParam(p: Obj): string {
-  switch (p.kind) {
-    case 'rest': {
-      const arg = p.arg as Obj | undefined;
-      return `...${arg?.name ?? 'args'}${p.tsType ? `: ${renderType(p.tsType)}` : ''}`;
-    }
-    case 'identifier':
-      return `${p.name}${p.optional ? '?' : ''}${p.tsType ? `: ${renderType(p.tsType)}` : ''}`;
-    default:
-      return `_${p.tsType ? `: ${renderType(p.tsType)}` : ''}`;
-  }
-}
-
-function renderTypeParams(typeParams: unknown[]): string {
-  if (!typeParams?.length) return '';
-  return `<${typeParams
-    .map((t: unknown) => {
-      const tp = t as Obj;
-      return tp.name + (tp.constraint ? ` extends ${renderType(tp.constraint)}` : '');
-    })
-    .join(', ')}>`;
-}
-
-function renderFunctionSig(name: string, def: Obj): string {
-  const tparams = renderTypeParams((def.typeParams as unknown[]) ?? []);
-  const params = ((def.params as unknown[]) ?? []).map((p) => renderParam(p as Obj)).join(', ');
-  const ret = def.returnType ? renderType(def.returnType) : 'void';
-  return `  function ${name}${tparams}(${params}): ${ret};`;
-}
-
-// `deno doc --json` v2 groups exports as symbols with a `declarations` array.
-// Each declaration carries `kind` and `def` for the actual type shape.
-function symbolsToModuleDts(specifier: string, symbols: Obj[]): string {
-  const lines: string[] = [
-    `// Auto-generated by build.ts from ${specifier}. Do not edit manually.`,
-    `declare module '${specifier}' {`,
-  ];
-  const exported = new Set<string>();
-
-  for (const symbol of symbols) {
-    const name = symbol.name as string;
-    const declarations = (symbol.declarations as Obj[]) ?? [];
-
-    // Build a map of declaration kind → declarations for this symbol.
-    // When a symbol has both 'function' and 'interface'/'namespace' (e.g. describe, it),
-    // we prefer the function declaration(s) so the symbol is callable.
-    const byKind = new Map<string, Obj[]>();
-    for (const decl of declarations) {
-      if (decl.declarationKind !== 'export' && decl.declarationKind !== 'declare') continue;
-      const k = decl.kind as string;
-      if (!byKind.has(k)) byKind.set(k, []);
-      byKind.get(k)!.push(decl);
-    }
-
-    if (byKind.has('function')) {
-      for (const decl of byKind.get('function')!) {
-        lines.push(renderFunctionSig(name, (decl.def ?? {}) as Obj));
-      }
-      exported.add(name);
-    } else if (byKind.has('class')) {
-      const def = (byKind.get('class')![0].def ?? {}) as Obj;
-      const superClass = def.extends ? ` extends ${def.extends}` : '';
-      const tparams = renderTypeParams((def.typeParams as unknown[]) ?? []);
-      lines.push(`  class ${name}${tparams}${superClass} {`);
-      for (const ctor of (def.constructors as unknown[]) ?? []) {
-        const c = ctor as Obj;
-        const params = ((c.params as unknown[]) ?? []).map((p) => renderParam(p as Obj)).join(', ');
-        lines.push(`    constructor(${params});`);
-      }
-      for (const method of (def.methods as unknown[]) ?? []) {
-        const m = method as Obj;
-        if (m.accessibility === 'private') continue;
-        const params = ((m.params as unknown[]) ?? []).map((p) => renderParam(p as Obj)).join(', ');
-        const ret = m.returnType ? renderType(m.returnType) : 'void';
-        lines.push(`    ${m.isStatic ? 'static ' : ''}${m.name}(${params}): ${ret};`);
-      }
-      for (const prop of (def.properties as unknown[]) ?? []) {
-        const pr = prop as Obj;
-        if (pr.accessibility === 'private') continue;
-        const type = pr.tsType ? renderType(pr.tsType) : 'unknown';
-        lines.push(
-          `    ${pr.isStatic ? 'static ' : ''}${pr.name}${pr.optional ? '?' : ''}: ${type};`,
-        );
-      }
-      lines.push(`  }`);
-      exported.add(name);
-    } else if (byKind.has('interface')) {
-      const def = (byKind.get('interface')![0].def ?? {}) as Obj;
-      const tparams = renderTypeParams((def.typeParams as unknown[]) ?? []);
-      lines.push(`  interface ${name}${tparams} {`);
-      for (const prop of (def.properties as unknown[]) ?? []) {
-        const pr = prop as Obj;
-        const type = pr.tsType ? renderType(pr.tsType) : 'unknown';
-        lines.push(`    ${pr.name}${pr.optional ? '?' : ''}: ${type};`);
-      }
-      for (const method of (def.methods as unknown[]) ?? []) {
-        const m = method as Obj;
-        const params = ((m.params as unknown[]) ?? []).map((p) => renderParam(p as Obj)).join(', ');
-        const ret = m.returnType ? renderType(m.returnType) : 'void';
-        lines.push(`    ${m.name}(${params}): ${ret};`);
-      }
-      lines.push(`  }`);
-      exported.add(name);
-    } else if (byKind.has('typeAlias')) {
-      const def = (byKind.get('typeAlias')![0].def ?? {}) as Obj;
-      const type = def.tsType ? renderType(def.tsType) : 'unknown';
-      const tparams = renderTypeParams((def.typeParams as unknown[]) ?? []);
-      lines.push(`  type ${name}${tparams} = ${type};`);
-      exported.add(name);
-    } else if (byKind.has('variable')) {
-      const def = (byKind.get('variable')![0].def ?? {}) as Obj;
-      const type = def.tsType ? renderType(def.tsType) : 'unknown';
-      lines.push(`  const ${name}: ${type};`);
-      exported.add(name);
-    }
-  }
-
-  if (exported.size > 0) lines.push(`  export { ${[...exported].join(', ')} };`);
-  lines.push(`}`, ``);
-  const content = lines.join('\n');
-  // Only suppress no-explicit-any when the generated content actually uses `any`.
-  if (/\bany\b/.test(content)) {
-    return content.replace(
-      `// Auto-generated by build.ts from ${specifier}. Do not edit manually.\n`,
-      `// Auto-generated by build.ts from ${specifier}. Do not edit manually.\n// deno-lint-ignore-file no-explicit-any\n`,
-    );
-  }
-  return content;
 }
 
 // Generic recursive file finder. Skips directories named `excludeDir` when set.
@@ -595,7 +383,8 @@ async function findFiles(
   const results = await Promise.all(
     entries.map((e) => {
       const full = `${dir}/${e.name}`;
-      if (e.isDirectory()) return excludeDir && e.name === excludeDir ? [] : findFiles(full, match, excludeDir);
+      if (e.isDirectory())
+        return excludeDir && e.name === excludeDir ? [] : findFiles(full, match, excludeDir);
       return match(e.name) ? [full] : [];
     }),
   );
@@ -604,14 +393,19 @@ async function findFiles(
 
 async function computeInputHash(): Promise<string> {
   const hash = createHash('sha1');
-  const [shimFiles, tsconfig, qunitSrc, denoLock, buildSelf]: [string[], Buffer, Buffer, Buffer, Buffer] =
-    await Promise.all([
-      findFiles('./shims', (n) => n.endsWith('.ts'), 'vendor-types'),
-      fs.readFile('./tsconfig.json').catch(() => Buffer.from('')),
-      fs.readFile('./node_modules/qunit/qunit/qunit.js').catch(() => Buffer.from('')),
-      fs.readFile('./deno.lock').catch(() => Buffer.from('')),
-      fs.readFile('./build.ts').catch(() => Buffer.from('')),
-    ]);
+  const [shimFiles, tsconfig, qunitSrc, denoLock, buildSelf]: [
+    string[],
+    Buffer,
+    Buffer,
+    Buffer,
+    Buffer,
+  ] = await Promise.all([
+    findFiles('./shims', (n) => n.endsWith('.ts'), 'vendor-types'),
+    fs.readFile('./tsconfig.json').catch(() => Buffer.from('')),
+    fs.readFile('./node_modules/qunit/qunit/qunit.js').catch(() => Buffer.from('')),
+    fs.readFile('./deno.lock').catch(() => Buffer.from('')),
+    fs.readFile('./build.ts').catch(() => Buffer.from('')),
+  ]);
   hash.update(tsconfig);
   hash.update(qunitSrc);
   hash.update(denoLock);
