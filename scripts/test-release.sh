@@ -45,15 +45,8 @@ if grep -q '"jsr:' node_modules/qunitx/dist/deno/index.js; then
   exit 1
 fi
 
-# ── Deno functional ─────────────────────────────────────────────────────────
+# ── Deno ─────────────────────────────────────────────────────────
 echo "test-release: deno (consumer)"
-# Use npm: specifier so Deno resolves types via the package's exports["."]["types"]
-# condition (dist/node/index.d.ts).  A direct file path like ./node_modules/.../index.js
-# bypasses npm package resolution and Deno sees the file as untyped JavaScript.
-printf '{"imports":{"qunitx":"npm:qunitx"}}' > deno.json
 deno test --allow-read release-consumer-test.ts
 echo "test-release: deno (full suite)"
-printf '{"imports":{"qunitx":"npm:qunitx"}}' > deno.json
-# The test files probe internal QUnit state in ways that don't type-check cleanly;
-# functionality is what matters here, not types.
 deno test --no-check --allow-read --allow-run test/index.ts

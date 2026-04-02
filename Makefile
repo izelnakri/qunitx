@@ -49,7 +49,6 @@ bench-check:
 	REGRESSION_THRESHOLD=$(REGRESSION_THRESHOLD) deno task bench:check
 
 # Lint, bump version, update changelog, commit, tag, push, publish to npm.
-# CI then creates the GitHub release.
 # Usage: make release          (defaults to patch)
 #        make release LEVEL=minor|major
 LEVEL ?= patch

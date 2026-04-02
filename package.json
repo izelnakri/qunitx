@@ -84,6 +84,7 @@
     "lint": "deno lint shims/",
     "lint:docs": "deno doc --lint shims/deno/module.ts shims/deno/test.ts",
     "build": "node --experimental-strip-types build.ts",
+    "build:cold": "rm -rf dist && node --experimental-strip-types build.ts",
     "pretest": "node --experimental-strip-types build.ts",
     "run:all": "npm run run:node && npm run run:deno",
     "run:node": "node --experimental-strip-types --test test/helpers/passing-tests.ts && node --experimental-strip-types --test test/helpers/failing-tests.ts",
@@ -107,10 +108,10 @@
     "docs": "deno doc --html --name=\"QUnitX\" --output=docs/src shims/deno/index.ts"
   },
   "devDependencies": {
+    "@types/node": "^22.0.0",
     "prettier": "^3.8.1",
     "qunit": "^2.25.0",
-    "qunitx": "^1.0.3",
-    "qunitx-cli": "^0.5.3",
+    "qunitx-cli": "^0.9.10",
     "typescript": "^6.0.2"
   },
   "volta": {
