@@ -158,6 +158,11 @@ The browser UI lets you:
 - Re-run individual tests by clicking them
 - See full assertion diffs inline
 
+> **All browser runner options** — custom HTML templates, watch mode, `--port`,
+> `--browser` (chromium / firefox / webkit), `--failFast`, `--timeout`,
+> `--before` / `--after` lifecycle hooks, and more — are documented in
+> **[qunitx-cli](https://github.com/izelnakri/qunitx-cli)**.
+
 ---
 
 ## Migrating from QUnit
@@ -247,6 +252,6 @@ and unlock v8 instrumentation for browser coverage.
 ## Links
 
 - [QUnit API reference](https://api.qunitjs.com)
-- [qunitx-cli](https://github.com/izelnakri/qunitx-cli) — browser runner / CI reporter
+- [qunitx-cli](https://github.com/izelnakri/qunitx-cli) — browser runner, CI reporter, and all HTML/runner configuration options
 - [Node.js test runner docs](https://nodejs.org/api/test.html)
 - [Deno testing docs](https://docs.deno.com/runtime/fundamentals/testing/)

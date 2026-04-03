@@ -1,13 +1,9 @@
+Make it prominent that qunitx test.html and options are all documented in qunitx-cli
+
 create runtime error for module with no tests, create runtime error for hooks declared in inner modules without hooks reference(typo)
 
-context parameter to module() and test() instead of this
+context parameter to module() and test() in addition/instead of this
 
 Enforce assert.timeout(ms): currently validates the argument but does not actually abort the test after N ms
 
 Add assert.match() / assert.notMatch() for general purpose object matching (strings, objects, arrays, etc.)
-
-function innerFail(obj) {
-  if (obj.message instanceof Error) throw obj.message;
-
-  throw new AssertionError(obj);
-}
