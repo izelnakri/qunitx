@@ -17,10 +17,17 @@ jobs:
           cache: npm
       - uses: browser-actions/setup-chrome@v2
         id: setup-chrome
+      # Run npm ci before setup-deno: qunitx-cli's postinstall runs
+      # "deno install || true" and if deno is in PATH it rewrites node_modules/
+      # via the .deno/ store, landing NixOS-built SEA binaries that can't run
+      # on Ubuntu. Without deno in PATH the postinstall silently no-ops.
+      - run: npm ci
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
-      - run: npm ci
+      # NixOS-built SEA binaries have Nix store paths as ELF interpreter.
+      # Remove execute permission so bin/qunitx.js falls back to dist/cli.js.
+      - run: find node_modules -name "qunitx-cli-linux-x64" -o -name "qunitx-cli-linux-arm64" -o -name "qunitx-cli-darwin-x64" -o -name "qunitx-cli-darwin-arm64" -o -name "qunitx-cli-windows-x64" | xargs -I{} chmod -x {}/bin/qunitx 2>/dev/null || true
       - run: npm test
         env:
           PUPPETEER_SKIP_DOWNLOAD: true
@@ -41,10 +48,11 @@ jobs:
         with:
           node-version: 24
           cache: npm
+      - run: npm ci
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
-      - run: npm ci
+      - run: find node_modules -name "qunitx-cli-linux-x64" -o -name "qunitx-cli-linux-arm64" -o -name "qunitx-cli-darwin-x64" -o -name "qunitx-cli-darwin-arm64" -o -name "qunitx-cli-windows-x64" | xargs -I{} chmod -x {}/bin/qunitx 2>/dev/null || true
       - run: bash scripts/test-release.sh
         env:
           FORCE_COLOR: 0
