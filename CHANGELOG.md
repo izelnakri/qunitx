@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0] - 2026-04-03
+[`v1.1.6...v1.2.0`](https://github.com/izelnakri/qunitx-cli/compare/v1.1.6...v1.2.0)
+
+### Refactoring
+- Build.ts and build process refactors — 2026-04-02 by Izel Nakri ([`4e60bc9`](https://github.com/izelnakri/qunitx-cli/commit/4e60bc966c22228809715ca7668bfc2c21ac278d))
+- Replace auto-generated vendor-types with minimal hand-written stubs — 2026-04-02 by Izel Nakri ([`96c20d4`](https://github.com/izelnakri/qunitx-cli/commit/96c20d45ae4f344ed8e8ef746b863cfac51fe7f7))
+
 ## [1.1.6] - 2026-04-01
 [`v1.1.5...v1.1.6`](https://github.com/izelnakri/qunitx-cli/compare/v1.1.5...v1.1.6)
 
