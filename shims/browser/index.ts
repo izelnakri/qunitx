@@ -6,7 +6,7 @@ import type { HookFn, HooksObject } from '../types.ts';
 type QUnitHookFn = (this: Record<string, unknown>, assert: unknown) => void | Promise<void>;
 interface QUnitHooks { before: (fn: QUnitHookFn) => void; beforeEach: (fn: QUnitHookFn) => void; afterEach: (fn: QUnitHookFn) => void; after: (fn: QUnitHookFn) => void; }
 interface QUnitWithExtensions {
-  module: ((name: string, fn: (this: Record<string, unknown>, hooks: QUnitHooks) => void) => void) & { skip(name: string): void };
+  module: ((name: string, fn: (this: Record<string, unknown>, hooks: QUnitHooks) => void) => void) & { skip(name: string): void; todo(name: string): void };
   test: ((name: string, fn: QUnitHookFn) => void) & { skip(name: string): void; todo(name: string, fn: QUnitHookFn): void };
 }
 const _QUnit = QUnit as unknown as QUnitWithExtensions;
@@ -140,6 +140,26 @@ export function module(
  */
 module.skip = function skipModule(moduleName: string): void {
   _QUnit.module.skip(moduleName);
+};
+
+/**
+ * Marks all tests inside a module as todo. Equivalent to `QUnit.module.todo`.
+ * The module is registered as todo in the QUnit browser runner.
+ *
+ * @param {string} moduleName - Name of the module to mark as todo.
+ * @example
+ * ```js
+ * import { module, test } from "qunitx";
+ *
+ * module.todo("Math — not yet implemented", () => {
+ *   test("addition", (assert) => {
+ *     assert.equal(1 + 1, 2);
+ *   });
+ * });
+ * ```
+ */
+module.todo = function todoModule(moduleName: string): void {
+  _QUnit.module.todo(moduleName);
 };
 
 /**

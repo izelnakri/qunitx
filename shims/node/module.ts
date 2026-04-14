@@ -130,3 +130,25 @@ export default function module(
 module.skip = function skipModule(moduleName: string, _moduleContent?: unknown): void {
   describe(moduleName, { skip: true }, function () {});
 };
+
+/**
+ * Marks all tests inside a module as todo. Equivalent to `QUnit.module.todo`.
+ * The module is registered as skipped by Node's runner; no test bodies run.
+ * Node has no native "todo module" concept, so this maps to skip.
+ *
+ * @param {string} moduleName - Name of the module to mark as todo.
+ * @param {function} [_moduleContent] - Optional body (ignored — no tests run).
+ * @example
+ * ```js
+ * import { module, test } from "qunitx";
+ *
+ * module.todo("Math — not yet implemented", () => {
+ *   test("addition", (assert) => {
+ *     assert.equal(1 + 1, 2);
+ *   });
+ * });
+ * ```
+ */
+module.todo = function todoModule(moduleName: string, _moduleContent?: unknown): void {
+  describe(moduleName, { skip: true }, function () {});
+};
