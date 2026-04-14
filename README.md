@@ -124,20 +124,22 @@ npx c8 node --test math-test.ts
 
 ### Deno
 
-Deno cannot use `npm:qunitx` directly — qunitx's Deno shim imports `jsr:@std/testing/bdd`
-internally, and when loaded through `npm:`, Deno delegates to Node's ESM loader which does not
-support `jsr:` URLs. Use [esm.sh](https://esm.sh) instead, which rewrites those imports at
-serve time:
-
 ```sh
-# One-time: create (or update) deno.json with an import map
-echo '{"imports": {"qunitx": "https://esm.sh/qunitx@latest"}}' > deno.json
+# Install qunitx once (same command as Node)
+npm install qunitx --save-dev
 
 # Run
 deno test math-test.ts
 
 # With explicit permissions
 deno test --allow-read --allow-env math-test.ts
+```
+
+For Deno-only projects without a `package.json`, use an import map instead:
+
+```sh
+echo '{"imports": {"qunitx": "npm:qunitx"}}' > deno.json
+deno test math-test.ts
 ```
 
 ### Browser

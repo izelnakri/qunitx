@@ -585,8 +585,9 @@ export default class Assert {
       });
     }
 
+    let returnValue: unknown;
     try {
-      blockFn();
+      returnValue = blockFn();
     } catch (error) {
       const [result, validatedExpected, validatedMessage] = validateException(error, expected, message);
       if (result === false) {
@@ -599,6 +600,15 @@ export default class Assert {
       }
 
       return;
+    }
+
+    if (returnValue !== null && typeof returnValue === 'object' && typeof (returnValue as PromiseLike<unknown>).then === 'function') {
+      throw new Assert.AssertionError({
+        actual: returnValue,
+        expected: expected,
+        message: 'Function passed to `assert.throws` returned a Promise — did you mean to use `assert.rejects`?',
+        stackStartFn: this.throws,
+      });
     }
 
     throw new Assert.AssertionError({
