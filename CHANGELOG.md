@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.3] - 2026-04-14
+[`v1.2.2...v1.2.3`](https://github.com/izelnakri/qunitx-cli/compare/v1.2.2...v1.2.3)
+
+### Features
+- Add todo support and stop tracking benches/results.json — 2026-04-14 by Izel Nakri ([`6c7167e`](https://github.com/izelnakri/qunitx-cli/commit/6c7167e7d4f61be76756c18d3280a32ce76a4593))
+
 ## [1.2.2] - 2026-04-14
 [`v1.2.1...v1.2.2`](https://github.com/izelnakri/qunitx-cli/compare/v1.2.1...v1.2.2)
 
