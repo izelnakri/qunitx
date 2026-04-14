@@ -25,10 +25,10 @@ Enter
 Sleep 3500ms
 
 # --- Run in Node.js ---
-Type "# Node.js — zero config, built-in test runner"
+Type "# Node.js — zero config, no flags needed, built-in runner"
 Enter
 Sleep 400ms
-Type "node --experimental-strip-types --test docs/demo-math-test.ts"
+Type "node --test docs/demo-math-test.ts"
 Enter
 Sleep 4500ms
 
@@ -36,7 +36,7 @@ Sleep 4500ms
 Type "# Watch mode: reruns on every file save"
 Enter
 Sleep 300ms
-Type "node --experimental-strip-types --test --test-reporter=tap --watch docs/demo-math-test.ts"
+Type "node --test --test-reporter=tap --watch docs/demo-math-test.ts"
 Enter
 Sleep 3500ms
 Ctrl+C

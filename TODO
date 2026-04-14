@@ -5,5 +5,3 @@ context parameter to module() and test() in addition/instead of this, does it ex
 Enforce assert.timeout(ms): currently validates the argument but does not actually abort the test after N ms
 
 Add assert.match() / assert.notMatch() for general purpose object pattern matching (strings, instances, objects, arrays, etc.)
-
-Maybe remove --experimental-skip-types

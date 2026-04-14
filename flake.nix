@@ -73,7 +73,7 @@
             doCheck         = true;
             nativeCheckInputs = [ pkgs.nodejs_24 ];
             checkPhase      = ''
-              node --experimental-strip-types --test test/index.ts
+              node --test test/index.ts
             '';
             installPhase    = "touch $out";
           };

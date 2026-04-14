@@ -30,9 +30,9 @@ cp -r "$ROOT/test" .
 
 # ── Node ────────────────────────────────────────────────────────────────────
 echo "test-release: node (consumer)"
-node --experimental-strip-types --test release-consumer-test.ts
+node --test release-consumer-test.ts
 echo "test-release: node (full suite)"
-node --experimental-strip-types --test test/index.ts
+node --test test/index.ts
 
 # ── Deno shim integrity ──────────────────────────────────────────────────────
 # dist/deno/index.js must contain no jsr: imports. When Deno loads npm:qunitx
