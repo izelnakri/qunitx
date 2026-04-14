@@ -53,15 +53,17 @@ bench-check:
 #        make release LEVEL=minor|major
 LEVEL ?= patch
 release:
-	@npm whoami 2>/dev/null || npm login
-	$(MAKE) check
-	$(MAKE) bench-check
-	npm run test:release
-	npm version $(LEVEL) --no-git-tag-version
-	git-cliff --tag "v$$(node -p 'require("./package.json").version')" --output CHANGELOG.md
-	git add package.json package-lock.json CHANGELOG.md
-	git commit -m "Release $$(node -p 'require("./package.json").version')"
-	git tag "v$$(node -p 'require("./package.json").version')"
-	git push && git push --tags
-	npm publish --access public
+	@set -e; eval $$(ssh-agent -s); trap "ssh-agent -k > /dev/null" EXIT; \
+	ssh-add; \
+	npm whoami 2>/dev/null || npm login; \
+	$(MAKE) check; \
+	$(MAKE) bench-check; \
+	npm run test:release; \
+	npm version $(LEVEL) --no-git-tag-version; \
+	git-cliff --tag "v$$(node -p 'require("./package.json").version')" --output CHANGELOG.md; \
+	git add package.json package-lock.json CHANGELOG.md; \
+	git commit -m "Release $$(node -p 'require("./package.json").version')"; \
+	git tag "v$$(node -p 'require("./package.json").version')"; \
+	git push; git push --tags; \
+	npm publish --access public; \
 	$(MAKE) bench
