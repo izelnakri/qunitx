@@ -61,7 +61,7 @@ release:
 	fi; \
 	eval $$(ssh-agent -s); trap "ssh-agent -k > /dev/null" EXIT; \
 	ssh-add; \
-	npm whoami 2>/dev/null || npm login; \
+	echo "npm user: $$(npm whoami 2>/dev/null || (npm login && npm whoami)) | $$(date '+%Y-%m-%d %H:%M:%S %Z')"; \
 	$(MAKE) check; \
 	$(MAKE) bench-check; \
 	npm run test:release; \

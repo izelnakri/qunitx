@@ -70,6 +70,8 @@ npm install qunitx --save-dev
 
 Requires **Node.js >= 22** (LTS) or **Deno >= 2**.
 
+No config file needed. No `jest.config.js`, no `vitest.config.ts`, no setup files — just import and run.
+
 ---
 
 ## Quick start
@@ -158,10 +160,10 @@ The browser UI lets you:
 - Re-run individual tests by clicking them
 - See full assertion diffs inline
 
-> **All browser runner options** — custom HTML templates, watch mode, `--port`,
+> **All browser runner options are documented in [qunitx-cli](https://github.com/izelnakri/qunitx-cli).**
+> This includes: `test.html` (optional custom HTML template), watch mode, `--port`,
 > `--browser` (chromium / firefox / webkit), `--failFast`, `--timeout`,
-> `--before` / `--after` lifecycle hooks, and more — are documented in
-> **[qunitx-cli](https://github.com/izelnakri/qunitx-cli)**.
+> `--before` / `--after` lifecycle hooks, and more.
 
 ---
 
