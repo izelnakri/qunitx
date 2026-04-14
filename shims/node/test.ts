@@ -70,27 +70,39 @@ export default function test(
   // Node's { todo } on it() handles the result; we just prevent afterAll from calling finish().
   if (todo) moduleContext.tests.pop();
 
-  it(testName, { ...targetRuntimeOptions }, async function () {
-    const hookMeta = { context: userContext };
+  it(testName, { ...targetRuntimeOptions }, function () {
+    return new Promise((resolve, reject) => {
+      context.rejectTimeout = reject;
 
-    for (const module of context.module!.moduleChain) {
-      for (const hook of module.beforeEachHooks) {
-        await hook.call(userContext, context.assert!, hookMeta);
-      }
-    }
+      (async () => {
+        const hookMeta = { context: userContext };
 
-    const result = await targetTestContent.call(userContext, context.assert!, { testName, options: runtimeOptions, context: userContext });
+        try {
+          for (const module of context.module!.moduleChain) {
+            for (const hook of module.beforeEachHooks) {
+              await hook.call(userContext, context.assert!, hookMeta);
+            }
+          }
 
-    await context.assert!.waitForAsyncOps();
+          const result = await targetTestContent.call(userContext, context.assert!, { testName, options: runtimeOptions, context: userContext });
 
-    for (let i = context.module!.moduleChain.length - 1; i >= 0; i--) {
-      const module = context.module!.moduleChain[i];
-      for (let j = module.afterEachHooks.length - 1; j >= 0; j--) {
-        await module.afterEachHooks[j]!.call(userContext, context.assert!, hookMeta);
-      }
-    }
+          await context.assert!.waitForAsyncOps();
 
-    return result;
+          for (let i = context.module!.moduleChain.length - 1; i >= 0; i--) {
+            const module = context.module!.moduleChain[i];
+            for (let j = module.afterEachHooks.length - 1; j >= 0; j--) {
+              await module.afterEachHooks[j]!.call(userContext, context.assert!, hookMeta);
+            }
+          }
+
+          resolve(result);
+        } catch (err) {
+          reject(err);
+        } finally {
+          context.clearTimeoutHandle();
+        }
+      })();
+    });
   });
 }
 

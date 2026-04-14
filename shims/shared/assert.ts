@@ -61,6 +61,7 @@ export default class Assert {
     }
 
     this.test.timeout = number;
+    this.test.setTimeoutDuration(number);
   }
 
   /**

@@ -44,6 +44,29 @@ export default class TestContext {
     this.#timeout = value;
   }
 
+  rejectTimeout: ((err: Error) => void) | undefined;
+  #timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+  #timedOut = false;
+
+  setTimeoutDuration(ms: number) {
+    if (this.#timeoutHandle !== undefined) {
+      clearTimeout(this.#timeoutHandle);
+      this.#timeoutHandle = undefined;
+    }
+    if (!this.rejectTimeout) return;
+    this.#timeoutHandle = setTimeout(() => {
+      this.#timedOut = true;
+      this.rejectTimeout!(new Error(`Test timed out after ${ms}ms`));
+    }, ms);
+  }
+
+  clearTimeoutHandle() {
+    if (this.#timeoutHandle !== undefined) {
+      clearTimeout(this.#timeoutHandle);
+      this.#timeoutHandle = undefined;
+    }
+  }
+
   #steps: string[] = [];
   get steps() {
     return this.#steps;
@@ -80,6 +103,7 @@ export default class TestContext {
   }
 
   finish() {
+    if (this.#timedOut) return;
     if (this.totalExecutedAssertions === 0) {
       this.assert!.pushResult({
         result: false,

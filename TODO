@@ -1,3 +1,4 @@
-Enforce assert.timeout(ms): currently validates the argument but does not actually abort the test after N ms
+Since we've made many changes since last updating of README.md, update the docs, check any further optimizations. Clean up the code, all should be async/non-blocking ideally and performant, make variables and files best named, order imports alphabetical/logical(only exception is if ordering significantly slows down the library, then keep the important speed optimized way, while prefering order), put helper functions to the bottom. Do improvements to best of your ability for long-term maintaince of this project and my very high expectations, they could be related to things I didn't even maybe mention
 
 Add assert.match() / assert.notMatch() for general purpose object pattern matching (strings, instances, objects, arrays, etc.)
+

@@ -39,6 +39,7 @@ export interface TestState {
   expectedAssertionCount?: number;
   userContext?: Record<string, unknown>;
   module?: { name: string };
+  setTimeoutDuration(ms: number): void;
 }
 
 /** Minimal module shape that Assert needs to resolve a fallback test context. */

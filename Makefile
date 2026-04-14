@@ -1,8 +1,11 @@
-.PHONY: check fix test lint lint-docs format build demo coverage coverage-report docs bench-print bench bench-update bench-check release
+.PHONY: check check-release fix test lint lint-docs format build demo coverage coverage-report docs bench-print bench bench-update bench-check release
 
 REGRESSION_THRESHOLD ?= 20
 
 check: format lint lint-docs test
+
+check-release: check
+	npm run test:release
 
 fix:
 	npm run format:fix
