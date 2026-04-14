@@ -14,6 +14,11 @@ module('todo', function () {
   // test.todo with no callback — registers as todo without a body
   test.todo('test.todo with no callback');
 
+  // A regular test after todo entries to verify execution continues
+  test('normal test after todo entries still runs', function (assert) {
+    assert.ok(true);
+  });
+
   // todo via runtimeOptions: { todo: true }
   test('test todo via runtimeOptions { todo: true }', { todo: true }, function (assert) {
     assert.ok(false, 'runtimeOptions todo:true body should not count as suite failure');
@@ -27,9 +32,4 @@ module('todo', function () {
       assert.ok(false, 'runtimeOptions todo:string body should not count as suite failure');
     },
   );
-
-  // A regular test after todo entries to verify execution continues
-  test('normal test after todo entries still runs', function (assert) {
-    assert.ok(true);
-  });
 });

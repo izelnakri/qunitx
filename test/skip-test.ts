@@ -18,6 +18,11 @@ module('skip', function () {
     });
   });
 
+  // A regular test after static skip entries — proves execution continues
+  test('normal test after skip entries still runs', function (assert) {
+    assert.ok(true);
+  });
+
   // skip via runtimeOptions: { skip: true }
   test('test skipped via runtimeOptions { skip: true }', { skip: true }, function (assert) {
     assert.ok(false, 'runtimeOptions skip:true body should never run');
@@ -49,9 +54,4 @@ module('skip', function () {
       });
     },
   );
-
-  // A regular test that runs normally, proving execution continues after skipped entries
-  test('normal test after skip entries still runs', function (assert) {
-    assert.ok(true);
-  });
 });

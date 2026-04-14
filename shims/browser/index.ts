@@ -6,6 +6,14 @@ export const isLocal = QUnit.isLocal;
 export const on = QUnit.on;
 export const test = QUnit.test;
 export const skip = QUnit.skip;
+
+// QUnit.test.todo requires a callback; make it optional for cross-runtime parity.
+type TestWithTodo = typeof test & { todo: (name: string, fn?: () => void) => void };
+const _testWithTodo = test as TestWithTodo;
+const _originalTestTodo = _testWithTodo.todo.bind(test);
+_testWithTodo.todo = function todoTest(testName: string, testContent?: () => void) {
+  _originalTestTodo(testName, testContent ?? function () {});
+};
 export const start = QUnit.start;
 export const is = QUnit.is;
 export const extend = QUnit.extend;

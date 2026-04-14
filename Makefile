@@ -53,7 +53,13 @@ bench-check:
 #        make release LEVEL=minor|major
 LEVEL ?= patch
 release:
-	@set -e; eval $$(ssh-agent -s); trap "ssh-agent -k > /dev/null" EXIT; \
+	@set -e; \
+	if [ -n "$$(git status --porcelain)" ]; then \
+		echo "WARNING: Uncommitted changes detected — these will NOT be included in the release:"; \
+		git status --short; \
+		echo ""; \
+	fi; \
+	eval $$(ssh-agent -s); trap "ssh-agent -k > /dev/null" EXIT; \
 	ssh-add; \
 	npm whoami 2>/dev/null || npm login; \
 	$(MAKE) check; \
