@@ -12,7 +12,7 @@ export default class ModuleContext {
 
   name!: string;
   assert!: Assert;
-  userContext!: object;
+  userContext!: Record<string, unknown>;
 
   // Internal fallback assert for modules with no direct tests
   context = new TestContext();

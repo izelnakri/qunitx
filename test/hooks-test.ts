@@ -396,6 +396,52 @@ module('module', function () {
     });
   });
 
+  module(
+    'context parameter in hooks and tests (arrow-function friendly)',
+    (hooks, { context: moduleCtx }) => {
+      moduleCtx.fromModuleMeta = 'module-meta';
+
+      hooks.before((assert, { context }) => {
+        context.fromBefore = 'before';
+      });
+      hooks.beforeEach((assert, { context }) => {
+        context.fromBeforeEach = 'beforeEach';
+      });
+      hooks.afterEach((assert, { context }) => {
+        assert.strictEqual(context.fromTest, 'test', 'afterEach context sees test-set value');
+      });
+      hooks.after((assert, { context }) => {
+        assert.strictEqual(context.fromTest, 'test', 'after context sees last test value');
+      });
+
+      test('context is the same object as this', (assert, { context }) => {
+        assert.expect(7);
+        assert.strictEqual(
+          context.fromModuleMeta,
+          'module-meta',
+          'module meta context carried into test',
+        );
+        assert.strictEqual(
+          context.fromBefore,
+          'before',
+          'before hook set value visible via context',
+        );
+        assert.strictEqual(
+          context.fromBeforeEach,
+          'beforeEach',
+          'beforeEach hook set value visible via context',
+        );
+        assert.ok(
+          context === Object.getPrototypeOf(context) || context !== null,
+          'context is an object',
+        );
+        context.fromTest = 'test';
+        assert.strictEqual(context.fromTest, 'test', 'test can write to context');
+        // +1 from afterEach, +1 from after (attributed to last test per QUnit model)
+      });
+    },
+  );
+
   module('multiple hooks', function (hooks) {
     hooks.before(function (assert) {
       assert.step('before1');

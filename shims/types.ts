@@ -37,7 +37,7 @@ export interface TestState {
   asyncOps: Promise<void>[];
   timeout?: number;
   expectedAssertionCount?: number;
-  userContext?: object;
+  userContext?: Record<string, unknown>;
   module?: { name: string };
 }
 
@@ -46,11 +46,11 @@ export interface ModuleState {
   context: TestState;
 }
 
-/** A lifecycle hook callback that receives an {@linkcode Assert} instance. */
-export type HookFn<A = unknown> = (assert: A) => void | Promise<void>;
+/** A lifecycle hook callback that receives an {@linkcode Assert} instance and a meta object with the shared context. */
+export type HookFn<A = unknown> = (assert: A, meta: { context: Record<string, unknown> }) => void | Promise<void>;
 export type TestFn<A = unknown> = (
   assert: A,
-  meta: { testName: string; options: unknown },
+  meta: { testName: string; options: unknown; context: Record<string, unknown> },
 ) => void | Promise<unknown>;
 
 /** Lifecycle hooks available inside a `module()` callback. */

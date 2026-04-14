@@ -68,7 +68,7 @@ export default class TestContext {
     this.#totalExecutedAssertions = value;
   }
 
-  userContext: object = {};
+  userContext: Record<string, unknown> = {};
 
   constructor(name?: string, moduleContext?: ModuleContext) {
     if (moduleContext) {

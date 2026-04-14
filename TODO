@@ -1,6 +1,4 @@
-create runtime error for module with no tests, create runtime error for hooks declared in inner modules without hooks reference(typo)
-
-context parameter to module() and test() in addition/instead of this, does it exist inside the options parameter?
+Should I put a tracker for using test() without a module() in deno, node.js and maybe even browser?
 
 Enforce assert.timeout(ms): currently validates the argument but does not actually abort the test after N ms
 

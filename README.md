@@ -193,6 +193,38 @@ qunitx follows the same test-environment model as QUnit:
 
 > **Known difference:** In QUnit's browser runner, `before()` hook assertions are attributed to the first test in the *entire subtree* (including nested modules). In the Node/Deno adapters, they are attributed to the first *direct* test of the module. In the common case where direct tests appear before nested modules, the behavior is identical.
 
+### `context` — arrow-function-friendly shared state
+
+QUnit exposes the shared test context as `this` inside hooks and test bodies. This works with regular functions but not with arrow functions, since arrow functions capture `this` lexically from the surrounding scope.
+
+QUnitX adds `context` to the meta second argument of every hook and test callback. It points to the same shared object as `this`, so you can use whichever style you prefer:
+
+```js
+// QUnit style — regular functions, uses `this`
+module('Suite', function (hooks) {
+  hooks.before(function () { this.db = createDb(); });
+  hooks.afterEach(function (assert) { this.db.reset(); });
+
+  test('query', function (assert) {
+    assert.ok(this.db.query('SELECT 1'));
+  });
+});
+
+// QUnitX style — arrow functions, uses `context`
+module('Suite', (hooks, { context }) => {
+  context.shared = 'module-level value';
+
+  hooks.before((assert, { context }) => { context.db = createDb(); });
+  hooks.afterEach((assert, { context }) => { context.db.reset(); });
+
+  test('query', (assert, { context }) => {
+    assert.ok(context.db.query('SELECT 1'));
+  });
+});
+```
+
+Context inheritance follows QUnit's prototype-chain model regardless of which style you use: `before()` writes are visible to all tests in the module; each test's own writes stay local to that test.
+
 ---
 
 ## Concurrency

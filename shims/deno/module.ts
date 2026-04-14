@@ -1,6 +1,6 @@
 import { describe, beforeAll, afterAll } from "jsr:@std/testing/bdd";
 import type Assert from '../shared/assert.ts';
-import type { HooksObject } from '../types.ts';
+import type { HookFn, HooksObject } from '../types.ts';
 import ModuleContext from '../shared/module-context.ts';
 export type { Assert };
 export type { HookFn, HooksObject, PushResultInfo } from '../types.ts';
@@ -32,13 +32,13 @@ export type { HookFn, HooksObject, PushResultInfo } from '../types.ts';
  * });
  * ```
  */
-export default function module(moduleName: string, moduleContent: (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown }) => void): void;
+export default function module(moduleName: string, moduleContent: (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown; context: Record<string, unknown> }) => void): void;
 /** Defines a test module (suite) with optional Deno BDD runtime options forwarded to `describe()`. */
-export default function module(moduleName: string, runtimeOptions: object, moduleContent: (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown }) => void): void;
+export default function module(moduleName: string, runtimeOptions: object, moduleContent: (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown; context: Record<string, unknown> }) => void): void;
 export default function module(
   moduleName: string,
   runtimeOptions: object | ((hooks: HooksObject<Assert>) => void),
-  moduleContent?: (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown }) => void,
+  moduleContent?: (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown; context: Record<string, unknown> }) => void,
 ): void {
   const targetRuntimeOptions = moduleContent ? runtimeOptions as object : {};
   const { skip } = targetRuntimeOptions as { skip?: boolean | string };
@@ -57,8 +57,8 @@ export default function module(
   const moduleContext = new ModuleContext(moduleName);
 
   describe(moduleName, { ...targetRuntimeOptions }, function () {
-    const beforeHooks: ((assert: Assert) => void | Promise<void>)[] = [];
-    const afterHooks: ((assert: Assert) => void | Promise<void>)[] = [];
+    const beforeHooks: HookFn<Assert>[] = [];
+    const afterHooks: HookFn<Assert>[] = [];
 
     beforeAll(async function () {
       // before() assertions are attributed to the first direct test only (matching QUnit's model).
@@ -67,7 +67,7 @@ export default function module(
       const beforeAssert = firstTest ? firstTest.assert! : moduleContext.assert!;
 
       for (const hook of beforeHooks) {
-        await hook.call(moduleContext.userContext, beforeAssert);
+        await hook.call(moduleContext.userContext, beforeAssert, { context: moduleContext.userContext });
       }
     });
 
@@ -79,7 +79,7 @@ export default function module(
       const lastTest = moduleContext.tests[moduleContext.tests.length - 1];
       if (lastTest) {
         for (let j = afterHooks.length - 1; j >= 0; j--) {
-          await afterHooks[j]!.call(lastTest.userContext, lastTest.assert!);
+          await afterHooks[j]!.call(lastTest.userContext, lastTest.assert!, { context: lastTest.userContext });
         }
       }
 
@@ -101,7 +101,7 @@ export default function module(
       after(afterFn) {
         afterHooks.push(afterFn);
       }
-    }, { moduleName, options: runtimeOptions });
+    }, { moduleName, options: runtimeOptions, context: moduleContext.userContext });
 
     ModuleContext.currentModuleChain.pop();
   });
