@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.2] - 2026-04-14
+[`v1.2.1...v1.2.2`](https://github.com/izelnakri/qunitx-cli/compare/v1.2.1...v1.2.2)
+
+### Features
+- Add skip support for module() and test() across all runtimes — 2026-04-14 by Izel Nakri ([`4aea520`](https://github.com/izelnakri/qunitx-cli/commit/4aea5206594e23ef9815b0b92ec0dc75307d8ce5))
+
 ## [1.2.0] - 2026-04-03
 [`v1.1.6...v1.2.0`](https://github.com/izelnakri/qunitx-cli/compare/v1.1.6...v1.2.0)
 
