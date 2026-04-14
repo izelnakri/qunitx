@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.4] - 2026-04-14
+[`v1.2.3...v1.2.4`](https://github.com/izelnakri/qunitx-cli/compare/v1.2.3...v1.2.4)
+
+### Features
+- Todo feature and `make release` improvements — 2026-04-14 by Izel Nakri ([`9b64e74`](https://github.com/izelnakri/qunitx-cli/commit/9b64e74bc21681040a2a8e1750ef712e966f9853))
+
 ## [1.2.3] - 2026-04-14
 [`v1.2.2...v1.2.3`](https://github.com/izelnakri/qunitx-cli/compare/v1.2.2...v1.2.3)
 
