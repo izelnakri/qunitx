@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.7] - 2026-04-14
+[`v1.2.6...v1.2.7`](https://github.com/izelnakri/qunitx-cli/compare/v1.2.6...v1.2.7)
+
+### Features
+- Detect async fn in assert.throws, export Node types, fix Deno docs — 2026-04-14 by Izel Nakri ([`e329f62`](https://github.com/izelnakri/qunitx-cli/commit/e329f6242808f46732888f9f9134ba528411d235))
+
 ## [1.2.6] - 2026-04-14
 [`v1.2.5...v1.2.6`](https://github.com/izelnakri/qunitx-cli/compare/v1.2.5...v1.2.6)
 
