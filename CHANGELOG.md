@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.6] - 2026-04-14
+[`v1.2.5...v1.2.6`](https://github.com/izelnakri/qunitx-cli/compare/v1.2.5...v1.2.6)
+
+### Features
+- Add module.todo() across all three runtimes — 2026-04-14 by Izel Nakri ([`df577c8`](https://github.com/izelnakri/qunitx-cli/commit/df577c8527329f842197247a6cb913a0daea2ab5))
+- Enforce assert.timeout(ms) on Node and Deno — 2026-04-14 by Izel Nakri ([`f25928e`](https://github.com/izelnakri/qunitx-cli/commit/f25928e196c1d41899991320f9c0df83b1d9a7f1))
+
 ## [1.2.5] - 2026-04-14
 [`v1.2.4...v1.2.5`](https://github.com/izelnakri/qunitx-cli/compare/v1.2.4...v1.2.5)
 
