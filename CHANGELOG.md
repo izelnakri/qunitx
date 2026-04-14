@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.2.5] - 2026-04-14
+[`v1.2.4...v1.2.5`](https://github.com/izelnakri/qunitx-cli/compare/v1.2.4...v1.2.5)
+
+### Documentation
+- Clarify no-config usage and make qunitx-cli docs link prominent — 2026-04-14 by Izel Nakri ([`c14c71a`](https://github.com/izelnakri/qunitx-cli/commit/c14c71a785bc426ab27e17692cd8b483ce8d7182))
+- Update demo.gif — 2026-04-14 by Izel Nakri ([`bff79e8`](https://github.com/izelnakri/qunitx-cli/commit/bff79e803513d0dfbedaf6d055a28c2c2c965e16))
+
+### Features
+- Add context parameter to module/test/hook callbacks for arrow-function support — 2026-04-14 by Izel Nakri ([`4721320`](https://github.com/izelnakri/qunitx-cli/commit/472132094016c519a3bc9c26a4020985e7dc109a))
+
 ## [1.2.4] - 2026-04-14
 [`v1.2.3...v1.2.4`](https://github.com/izelnakri/qunitx-cli/compare/v1.2.3...v1.2.4)
 
