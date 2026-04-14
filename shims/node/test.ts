@@ -16,16 +16,15 @@ export default function test(
   }
 
   const targetRuntimeOptions = testContent ? runtimeOptions as object : {};
-  const { skip } = targetRuntimeOptions as { skip?: boolean | string };
+  const { skip, todo } = targetRuntimeOptions as { skip?: boolean | string; todo?: boolean | string };
 
-  // If skip is set, register a skipped it() without creating a TestContext (whose
-  // finish() would otherwise fire a "0 assertions" failure from afterAll).
+  // skip: no TestContext — finish() would fire "0 assertions" from afterAll otherwise.
   if (skip) {
     it(testName, { skip }, async function () {});
     return;
   }
 
-  const targetTestContent = (testContent ? testContent : runtimeOptions) as (assert: Assert, meta: { testName: string; options: unknown }) => void | Promise<void>;
+  const targetTestContent = (testContent ?? runtimeOptions) as (assert: Assert, meta: { testName: string; options: unknown }) => void | Promise<void>;
   const context = new TestContext(testName, moduleContext);
 
   // Each test gets a fresh plain object inheriting from the module's user context.
@@ -33,6 +32,10 @@ export default function test(
   // tests inherit them, and each test's own writes don't pollute sibling tests.
   const userContext = Object.create(moduleContext.userContext);
   context.userContext = userContext;
+
+  // todo: exclude from finish() loop — todo tests may have zero or failing assertions.
+  // Node's { todo } on it() handles the result; we just prevent afterAll from calling finish().
+  if (todo) moduleContext.tests.pop();
 
   it(testName, { ...targetRuntimeOptions }, async function () {
     for (const module of context.module!.moduleChain) {
@@ -58,4 +61,12 @@ export default function test(
 
 test.skip = function skipTest(testName: string, _testContent?: unknown): void {
   it(testName, { skip: true }, async function () {});
+};
+
+test.todo = function todoTest(testName: string, testContent?: (assert: Assert, meta: { testName: string; options: unknown }) => void | Promise<void>): void {
+  if (!testContent) {
+    it(testName, { todo: true }, async function () {});
+    return;
+  }
+  test(testName, { todo: true }, testContent);
 };

@@ -23,5 +23,6 @@ export { default as module } from './module.ts';
 export { default as test } from './test.ts';
 export { Assert };
 export const skip = Test.skip;
+export const todo = Test.todo;
 
 export default { AssertionError: Assert.AssertionError, module: Module, test: Test, config: {} };

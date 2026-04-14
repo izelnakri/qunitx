@@ -120,8 +120,10 @@ export { default as module } from './module.ts';
  * is an {@linkcode Assert} instance.
  *
  * @param {string} testName - Name of the test.
- * @param {object} [runtimeOptions] - Optional Deno BDD options forwarded to `it()`
- *   (e.g. `{ concurrency: false }`, `{ sanitizeExit: false }`).
+ * @param {object} [runtimeOptions] - Optional options forwarded to `it()`.
+ *   Use `{ skip: true | string }` to skip the test, `{ todo: true | string }` to mark it as todo
+ *   (both map to Deno's `{ ignore: true }`). Other Deno BDD options like
+ *   `{ concurrency: false }` or `{ sanitizeExit: false }` are forwarded as-is.
  * @param {function} testContent - Test callback receiving `(assert, { testName, options })`.
  * @example
  * ```js
@@ -159,6 +161,7 @@ export { default as test } from './test.ts';
  * ```
  */
 export const skip = Test.skip;
+export const todo = Test.todo;
 
 /**
  * The default export provides the full QUnitX API as a single object.

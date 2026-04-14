@@ -14,8 +14,10 @@ export type { PushResultInfo } from '../types.ts';
  * Must be called inside a `module()` callback.
  *
  * @param {string} testName - Name of the test
- * @param {object} [runtimeOptions] - Optional Deno BDD options forwarded to `it()`
- *   (e.g. `{ concurrency: false }`, `{ sanitizeExit: false }`)
+ * @param {object} [runtimeOptions] - Optional options forwarded to `it()`.
+ *   Use `{ skip: true | string }` to skip the test, `{ todo: true | string }` to mark it as todo
+ *   (both map to Deno's `{ ignore: true }`). Other Deno BDD options like
+ *   `{ concurrency: false }` or `{ sanitizeExit: false }` are forwarded as-is.
  * @param {function} testContent - Test callback receiving `(assert, { testName, options })`
  * @returns {void}
  * @example
@@ -48,12 +50,11 @@ export default function test(
   }
 
   const targetRuntimeOptions = testContent ? runtimeOptions as object : {};
-  const { skip } = targetRuntimeOptions as { skip?: boolean | string };
+  const { skip, todo } = targetRuntimeOptions as { skip?: boolean | string; todo?: boolean | string };
 
-  // If skip is set, register a skipped it() without creating a TestContext (whose
-  // finish() would otherwise fire a "0 assertions" failure from afterAll).
-  // Deno uses `ignore` instead of `skip`.
-  if (skip) {
+  // skip/todo: no TestContext — finish() would fire "0 assertions" from afterAll otherwise.
+  // Deno uses `ignore` for both (no native todo concept).
+  if (skip || todo) {
     it(testName, { ignore: true }, async function () {});
     return;
   }
@@ -107,5 +108,27 @@ export default function test(
  * ```
  */
 test.skip = function skipTest(testName: string, _testContent?: unknown): void {
+  it(testName, { ignore: true }, async function () {});
+};
+
+/**
+ * Registers a todo test. Equivalent to `QUnit.test.todo`.
+ * The test body is never executed; the test is reported as ignored by Deno's runner
+ * (Deno has no native todo concept).
+ *
+ * @param {string} testName - Name of the test to mark as todo.
+ * @param {function} [_testContent] - Optional body (ignored — the test will not run).
+ * @example
+ * ```js ignore
+ * import { module, test } from "qunitx";
+ *
+ * module("Math", () => {
+ *   test.todo("addition is not yet implemented", (assert) => {
+ *     assert.equal(1 + 1, 2);
+ *   });
+ * });
+ * ```
+ */
+test.todo = function todoTest(testName: string, _testContent?: unknown): void {
   it(testName, { ignore: true }, async function () {});
 };
