@@ -16,6 +16,15 @@ export default function test(
   }
 
   const targetRuntimeOptions = testContent ? runtimeOptions as object : {};
+  const { skip } = targetRuntimeOptions as { skip?: boolean | string };
+
+  // If skip is set, register a skipped it() without creating a TestContext (whose
+  // finish() would otherwise fire a "0 assertions" failure from afterAll).
+  if (skip) {
+    it(testName, { skip }, async function () {});
+    return;
+  }
+
   const targetTestContent = (testContent ? testContent : runtimeOptions) as (assert: Assert, meta: { testName: string; options: unknown }) => void | Promise<void>;
   const context = new TestContext(testName, moduleContext);
 
@@ -46,3 +55,7 @@ export default function test(
     return result;
   });
 }
+
+test.skip = function skipTest(testName: string, _testContent?: unknown): void {
+  it(testName, { skip: true }, async function () {});
+};

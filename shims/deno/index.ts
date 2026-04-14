@@ -142,6 +142,25 @@ export { default as module } from './module.ts';
 export { default as test } from './test.ts';
 
 /**
+ * Registers a skipped test. Equivalent to `test.skip`. The test body is never
+ * executed and the test is reported as ignored by Deno's runner.
+ *
+ * @param {string} testName - Name of the test to skip.
+ * @param {function} [_testContent] - Optional body (ignored — the test will not run).
+ * @example
+ * ```js
+ * import { module, skip } from "qunitx";
+ *
+ * module("Math", () => {
+ *   skip("addition is not yet implemented", (assert) => {
+ *     assert.equal(1 + 1, 2);
+ *   });
+ * });
+ * ```
+ */
+export const skip = Test.skip;
+
+/**
  * The default export provides the full QUnitX API as a single object.
  *
  * @example

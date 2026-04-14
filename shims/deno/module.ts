@@ -41,6 +41,18 @@ export default function module(
   moduleContent?: (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown }) => void,
 ): void {
   const targetRuntimeOptions = moduleContent ? runtimeOptions as object : {};
+  const { skip } = targetRuntimeOptions as { skip?: boolean | string };
+
+  // If skip is set, register a skipped describe() without creating a ModuleContext.
+  // The ModuleContext constructor pushes to currentModuleChain; the matching pop()
+  // lives inside the describe callback. If the runtime skips the callback, the pop
+  // never runs and corrupts the chain for all subsequent modules.
+  // Deno uses `ignore` instead of `skip`.
+  if (skip) {
+    describe(moduleName, { ignore: true }, function () {});
+    return;
+  }
+
   const targetModuleContent = (moduleContent ? moduleContent : runtimeOptions) as (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown }) => void;
   const moduleContext = new ModuleContext(moduleName);
 
@@ -94,3 +106,24 @@ export default function module(
     ModuleContext.currentModuleChain.pop();
   });
 }
+
+/**
+ * Skips all tests inside a module. Equivalent to `QUnit.module.skip`.
+ * The module is registered as ignored by Deno's runner; no test bodies run.
+ *
+ * @param {string} moduleName - Name of the module to skip.
+ * @param {function} [_moduleContent] - Optional body (ignored — no tests run).
+ * @example
+ * ```js ignore
+ * import { module, test } from "qunitx";
+ *
+ * module.skip("Math — not yet implemented", () => {
+ *   test("addition", (assert) => {
+ *     assert.equal(1 + 1, 2);
+ *   });
+ * });
+ * ```
+ */
+module.skip = function skipModule(moduleName: string, _moduleContent?: unknown): void {
+  describe(moduleName, { ignore: true }, function () {});
+};

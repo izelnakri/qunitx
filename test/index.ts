@@ -1,4 +1,5 @@
 import './assert-failures-test.ts';
+import './skip-test.ts';
 import './async-test.ts';
 import './deepEqual-test.ts';
 import './equal-test.ts';

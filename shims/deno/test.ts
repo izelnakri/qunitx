@@ -48,6 +48,16 @@ export default function test(
   }
 
   const targetRuntimeOptions = testContent ? runtimeOptions as object : {};
+  const { skip } = targetRuntimeOptions as { skip?: boolean | string };
+
+  // If skip is set, register a skipped it() without creating a TestContext (whose
+  // finish() would otherwise fire a "0 assertions" failure from afterAll).
+  // Deno uses `ignore` instead of `skip`.
+  if (skip) {
+    it(testName, { ignore: true }, async function () {});
+    return;
+  }
+
   const targetTestContent = (testContent ? testContent : runtimeOptions) as (assert: Assert, meta: { testName: string; options: unknown }) => void | Promise<void>;
   const context = new TestContext(testName, moduleContext);
 
@@ -78,3 +88,24 @@ export default function test(
     return result;
   });
 }
+
+/**
+ * Registers a skipped test. Equivalent to `QUnit.test.skip`.
+ * The test body is never executed; the test is reported as ignored by Deno's runner.
+ *
+ * @param {string} testName - Name of the test to skip.
+ * @param {function} [_testContent] - Optional body (ignored — the test will not run).
+ * @example
+ * ```js ignore
+ * import { module, test } from "qunitx";
+ *
+ * module("Math", () => {
+ *   test.skip("addition is not yet implemented", (assert) => {
+ *     assert.equal(1 + 1, 2);
+ *   });
+ * });
+ * ```
+ */
+test.skip = function skipTest(testName: string, _testContent?: unknown): void {
+  it(testName, { ignore: true }, async function () {});
+};

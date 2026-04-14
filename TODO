@@ -1,9 +1,13 @@
-Make it prominent that qunitx test.html and options are all documented in qunitx-cli
+Update docs: Now people can use qunitx with no config, if it isnt already in the README.md
+
+Make it prominent that qunitx test.html and options are all documented in qunitx-cli, if it isnt already in the README.md
 
 create runtime error for module with no tests, create runtime error for hooks declared in inner modules without hooks reference(typo)
 
-context parameter to module() and test() in addition/instead of this
+context parameter to module() and test() in addition/instead of this, does it exist inside the options parameter?
 
 Enforce assert.timeout(ms): currently validates the argument but does not actually abort the test after N ms
 
-Add assert.match() / assert.notMatch() for general purpose object matching (strings, objects, arrays, etc.)
+Add assert.match() / assert.notMatch() for general purpose object pattern matching (strings, instances, objects, arrays, etc.)
+
+Maybe remove --experimental-skip-types
