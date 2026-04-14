@@ -7,13 +7,11 @@ import http from 'node:http';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import puppeteer from 'puppeteer';
+import { chromium } from 'playwright-core';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
-const CHROME =
-  process.env.CHROME_BIN ||
-  `${process.env.HOME}/.cache/puppeteer/chrome/linux-146.0.7680.66/chrome-linux64/chrome`;
+const CHROME = process.env.CHROME_BIN || null;
 
 const qunitJS = await fs.readFile(path.join(ROOT, 'vendor/qunit.js'), 'utf8');
 const qunitCSS = await fs.readFile(path.join(ROOT, 'vendor/qunit.css'), 'utf8');
@@ -140,22 +138,22 @@ async function waitForResults(page, timeout = 15000) {
   );
 }
 
-// ── Puppeteer ────────────────────────────────────────────────────────────────
-const browser = await puppeteer.launch({
-  executablePath: CHROME,
+// ── Playwright ───────────────────────────────────────────────────────────────
+const browser = await chromium.launch({
+  ...(CHROME ? { executablePath: CHROME } : {}),
   headless: true,
-  args: ['--no-sandbox', '--disable-gpu', '--window-size=1200,860'],
+  args: ['--no-sandbox', '--disable-gpu'],
 });
 
-const page = await browser.newPage();
-await page.setViewport({ width: 700, height: 680, deviceScaleFactor: 1 });
+const context = await browser.newContext({ viewport: { width: 700, height: 680 } });
+const page = await context.newPage();
 
 // ── Screenshot 1: Failing tests — deepEqual diff visible ─────────────────────
 const failingServer = await createServer(makeHTML(makeSuite(BUGGY_VALUE)));
 const failingURL = `http://127.0.0.1:${failingServer.address().port}/`;
 console.log(`Serving failing tests at ${failingURL}`);
 
-await page.goto(failingURL, { waitUntil: 'networkidle0' });
+await page.goto(failingURL, { waitUntil: 'networkidle' });
 await waitForResults(page);
 
 // Expand the failing test so the deepEqual diff is in view
@@ -180,7 +178,7 @@ const passingServer = await createServer(makeHTML(makeSuite(FIXED_VALUE)));
 const passingURL = `http://127.0.0.1:${passingServer.address().port}/`;
 console.log(`Serving passing tests at ${passingURL}`);
 
-await page.goto(passingURL, { waitUntil: 'networkidle0' });
+await page.goto(passingURL, { waitUntil: 'networkidle' });
 await waitForResults(page);
 await page.evaluate(() => window.scrollTo(0, 0));
 await page.screenshot({ path: path.join(__dirname, 'browser-2-all-passed.png') });
@@ -196,7 +194,7 @@ const asyncModuleId = await page.evaluate(() => {
 });
 
 if (asyncModuleId) {
-  await page.goto(`${passingURL}?moduleId=${asyncModuleId}`, { waitUntil: 'networkidle0' });
+  await page.goto(`${passingURL}?moduleId=${asyncModuleId}`, { waitUntil: 'networkidle' });
   await waitForResults(page);
 }
 await page.evaluate(() => window.scrollTo(0, 0));
@@ -204,7 +202,7 @@ await page.screenshot({ path: path.join(__dirname, 'browser-3-filtered.png') });
 console.log('Screenshot 3: filtered (Async module) ✓');
 
 // ── Screenshot 4: Back to all tests, deepEqual test expanded ─────────────────
-await page.goto(passingURL, { waitUntil: 'networkidle0' });
+await page.goto(passingURL, { waitUntil: 'networkidle' });
 await waitForResults(page);
 
 // Expand the deepEqual test (3rd test in Assertions) to show passing assertion detail

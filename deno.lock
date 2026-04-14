@@ -274,6 +274,7 @@
     "packageJson": {
       "dependencies": [
         "npm:@types/node@22",
+        "npm:playwright-core@^1.59.1",
         "npm:prettier@^3.8.1",
         "npm:qunit@^2.25.0",
         "npm:qunitx-cli@~0.9.10",
