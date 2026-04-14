@@ -1,7 +1,7 @@
-import fs from 'fs/promises';
-import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import type { Plugin } from 'esbuild';
 
 let inputHash = await checkUpToDate();
@@ -139,7 +139,7 @@ declare global {
   await Promise.all([
     fs.writeFile('./vendor/qunit.js', newQUnit),
     fs.writeFile('./vendor/qunit.css', qunitCSS),
-    createPackageJSONIfNotExists(),
+    ensureVendorPackageJson(),
     spawnInherit('./node_modules/.bin/tsc', ['--emitDeclarationOnly']),
     // Fast JS emission. After esbuild, overwrite dist/deno/index.js with a fully
     // self-contained bundle (no jsr: imports) so npm:qunitx works in Deno.
@@ -228,19 +228,16 @@ async function fixDenoIndexDts(): Promise<void> {
   if (fixed !== src) await fs.writeFile(dtsPath, fixed);
 }
 
-async function createPackageJSONIfNotExists() {
-  try {
-    await fs.stat('./vendor/package.json');
-    return true;
-  } catch {
-    await fs.writeFile(
+async function ensureVendorPackageJson(): Promise<void> {
+  await fs
+    .writeFile(
       './vendor/package.json',
-      JSON.stringify({
-        name: 'qunitx-vendor',
-        version: '0.0.1',
-      }),
-    );
-  }
+      JSON.stringify({ name: 'qunitx-vendor', version: '0.0.1' }),
+      { flag: 'wx' },
+    )
+    .catch((err: { code?: string }) => {
+      if (err.code !== 'EEXIST') throw err;
+    });
 }
 
 // Produces dist/deno/index.js with all jsr: imports inlined.
@@ -261,7 +258,8 @@ async function bundleDenoShim(): Promise<void> {
 
   const fetchTextCache = new Map<string, string>();
   async function fetchText(url: string): Promise<string> {
-    if (fetchTextCache.has(url)) return fetchTextCache.get(url)!;
+    const cached = fetchTextCache.get(url);
+    if (cached !== undefined) return cached;
     const resp = await fetch(url);
     if (!resp.ok) throw new Error(`fetch ${url} → ${resp.status} ${resp.statusText}`);
     const text = await resp.text();
@@ -274,7 +272,8 @@ async function bundleDenoShim(): Promise<void> {
   const exportsCache = new Map<string, Record<string, string>>();
   async function getExports(pkg: string, version: string): Promise<Record<string, string>> {
     const key = `${pkg}@${version}`;
-    if (exportsCache.has(key)) return exportsCache.get(key)!;
+    const cached = exportsCache.get(key);
+    if (cached !== undefined) return cached;
     const url = `https://jsr.io/${pkg}/${version}/deno.json`;
     const resp = await fetch(url);
     const exports = resp.ok
@@ -393,13 +392,7 @@ async function findFiles(
 
 async function computeInputHash(): Promise<string> {
   const hash = createHash('sha1');
-  const [shimFiles, tsconfig, qunitSrc, denoLock, buildSelf]: [
-    string[],
-    Buffer,
-    Buffer,
-    Buffer,
-    Buffer,
-  ] = await Promise.all([
+  const [shimFiles, tsconfig, qunitSrc, denoLock, buildSelf] = await Promise.all([
     findFiles('./shims', (n) => n.endsWith('.ts'), 'vendor-types'),
     fs.readFile('./tsconfig.json').catch(() => Buffer.from('')),
     fs.readFile('./node_modules/qunit/qunit/qunit.js').catch(() => Buffer.from('')),
@@ -410,16 +403,22 @@ async function computeInputHash(): Promise<string> {
   hash.update(qunitSrc);
   hash.update(denoLock);
   hash.update(buildSelf);
-  for (const file of shimFiles.sort()) {
-    hash.update(file);
-    hash.update(await fs.readFile(file));
+  const sortedFiles = shimFiles.sort();
+  const fileContents = await Promise.all(sortedFiles.map((f) => fs.readFile(f)));
+  for (let i = 0; i < sortedFiles.length; i++) {
+    hash.update(sortedFiles[i]!);
+    hash.update(fileContents[i]!);
   }
   return hash.digest('hex');
 }
 
 async function isBuildUpToDate(currentHash: string, storedHash: string): Promise<boolean> {
   try {
-    await Promise.all([fs.stat('./dist/node/index.js'), fs.stat('./dist/deno/index.js')]);
+    await Promise.all([
+      fs.stat('./dist/browser/index.js'),
+      fs.stat('./dist/deno/index.js'),
+      fs.stat('./dist/node/index.js'),
+    ]);
     return storedHash === currentHash;
   } catch {
     return false;

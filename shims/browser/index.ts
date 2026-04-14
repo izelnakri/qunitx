@@ -13,59 +13,33 @@ const _QUnit = QUnit as unknown as QUnitWithExtensions;
 
 QUnit.config.autostart = false;
 
-export const isLocal = QUnit.isLocal;
-export const on = QUnit.on;
-export const skip = QUnit.skip;
-export const start = QUnit.start;
-export const is = QUnit.is;
-export const extend = QUnit.extend;
-export const stack = QUnit.stack;
-export const onUnhandledRejection = QUnit.onUnhandledRejection;
 export const assert = QUnit.assert;
-export const dump = QUnit.dump;
-export const done = QUnit.done;
-export const testStart = QUnit.testStart;
-export const moduleStart = QUnit.moduleStart;
-export const version = QUnit.version;
-export const todo = QUnit.todo;
-export const only = QUnit.only;
-export const config = QUnit.config;
-export const objectType = QUnit.objectType;
-export const load = QUnit.load;
-export const onError = QUnit.onError;
-export const pushFailure = QUnit.pushFailure;
-export const equiv = QUnit.equiv;
 export const begin = QUnit.begin;
-export const log = QUnit.log;
-export const testDone = QUnit.testDone;
-export const moduleDone = QUnit.moduleDone;
+export const config = QUnit.config;
 export const diff = QUnit.diff;
-
-// Wrap QUnit's hooks object so each registered hook callback receives
-// `{ context: this }` as its second argument (arrow-function-friendly).
-// Must use regular functions — QUnit sets `this` to testEnvironment when calling them.
-// The meta object is allocated once per hook registration and reused across test runs;
-// `meta.context` is updated to the current testEnvironment before each invocation.
-function wrapHooks(qunitHooks: QUnitHooks): HooksObject {
-  return {
-    before(fn: HookFn) {
-      const meta = { context: {} };
-      qunitHooks.before(function (this: Record<string, unknown>, assert: unknown) { meta.context = this; return fn.call(this, assert, meta); });
-    },
-    beforeEach(fn: HookFn) {
-      const meta = { context: {} };
-      qunitHooks.beforeEach(function (this: Record<string, unknown>, assert: unknown) { meta.context = this; return fn.call(this, assert, meta); });
-    },
-    afterEach(fn: HookFn) {
-      const meta = { context: {} };
-      qunitHooks.afterEach(function (this: Record<string, unknown>, assert: unknown) { meta.context = this; return fn.call(this, assert, meta); });
-    },
-    after(fn: HookFn) {
-      const meta = { context: {} };
-      qunitHooks.after(function (this: Record<string, unknown>, assert: unknown) { meta.context = this; return fn.call(this, assert, meta); });
-    },
-  };
-}
+export const done = QUnit.done;
+export const dump = QUnit.dump;
+export const equiv = QUnit.equiv;
+export const extend = QUnit.extend;
+export const is = QUnit.is;
+export const isLocal = QUnit.isLocal;
+export const load = QUnit.load;
+export const log = QUnit.log;
+export const moduleDone = QUnit.moduleDone;
+export const moduleStart = QUnit.moduleStart;
+export const objectType = QUnit.objectType;
+export const on = QUnit.on;
+export const onError = QUnit.onError;
+export const onUnhandledRejection = QUnit.onUnhandledRejection;
+export const only = QUnit.only;
+export const pushFailure = QUnit.pushFailure;
+export const skip = QUnit.skip;
+export const stack = QUnit.stack;
+export const start = QUnit.start;
+export const testDone = QUnit.testDone;
+export const testStart = QUnit.testStart;
+export const todo = QUnit.todo;
+export const version = QUnit.version;
 
 /**
  * Defines a test module (suite) for the QUnit browser runner.
@@ -278,5 +252,31 @@ test.todo = function todoTest(testName: string, testContent?: (assert: unknown, 
     return testContent.call(this, assert, meta);
   });
 };
+
+// Wrap QUnit's hooks object so each registered hook callback receives
+// `{ context: this }` as its second argument (arrow-function-friendly).
+// Must use regular functions — QUnit sets `this` to testEnvironment when calling them.
+// The meta object is allocated once per hook registration and reused across test runs;
+// `meta.context` is updated to the current testEnvironment before each invocation.
+function wrapHooks(qunitHooks: QUnitHooks): HooksObject {
+  return {
+    before(fn: HookFn) {
+      const meta = { context: {} };
+      qunitHooks.before(function (this: Record<string, unknown>, assert: unknown) { meta.context = this; return fn.call(this, assert, meta); });
+    },
+    beforeEach(fn: HookFn) {
+      const meta = { context: {} };
+      qunitHooks.beforeEach(function (this: Record<string, unknown>, assert: unknown) { meta.context = this; return fn.call(this, assert, meta); });
+    },
+    afterEach(fn: HookFn) {
+      const meta = { context: {} };
+      qunitHooks.afterEach(function (this: Record<string, unknown>, assert: unknown) { meta.context = this; return fn.call(this, assert, meta); });
+    },
+    after(fn: HookFn) {
+      const meta = { context: {} };
+      qunitHooks.after(function (this: Record<string, unknown>, assert: unknown) { meta.context = this; return fn.call(this, assert, meta); });
+    },
+  };
+}
 
 export default QUnit;

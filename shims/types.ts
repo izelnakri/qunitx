@@ -44,7 +44,7 @@ export interface TestState {
 
 /** Minimal module shape that Assert needs to resolve a fallback test context. */
 export interface ModuleState {
-  context: TestState;
+  testContext: TestState;
 }
 
 /** A lifecycle hook callback that receives an {@linkcode Assert} instance and a meta object with the shared context. */

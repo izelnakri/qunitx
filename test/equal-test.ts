@@ -32,28 +32,23 @@ module('Assertion: Equality - failing assertions', function (hooks) {
   });
 
   test('assert.equal', function (assert) {
-    let { throws } = assert;
-
-    debugger;
-    throws(() => assert.equal(1, 2));
-    throws(() => assert.equal('foo', 'bar'));
-    throws(() => assert.equal({}, {}));
-    throws(() => assert.equal([], []));
+    assert.throws(() => assert.equal(1, 2));
+    assert.throws(() => assert.equal('foo', 'bar'));
+    assert.throws(() => assert.equal({}, {}));
+    assert.throws(() => assert.equal([], []));
   });
 
   test('assert.notEqual', function (assert) {
-    let { throws } = assert;
-
-    throws(() => assert.notEqual(1, 1));
-    throws(() => assert.notEqual('foo', 'foo'));
-    throws(() => assert.notEqual('foo', ['foo']));
-    throws(() =>
+    assert.throws(() => assert.notEqual(1, 1));
+    assert.throws(() => assert.notEqual('foo', 'foo'));
+    assert.throws(() => assert.notEqual('foo', ['foo']));
+    assert.throws(() =>
       assert.notEqual('foo', {
         toString: function () {
           return 'foo';
         },
       }),
     );
-    throws(() => assert.notEqual(0, [0]));
+    assert.throws(() => assert.notEqual(0, [0]));
   });
 });

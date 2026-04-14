@@ -1,6 +1,9 @@
 import '../../vendor/qunit.js';
-import { objectValues, objectValuesSubset, validateExpectedExceptionArgs, validateException } from './index.ts';
-import type { QUnitObject, AssertionErrorConstructor, InspectFn, TestState, ModuleState, PushResultInfo } from '../types.ts';
+import type { AssertionErrorConstructor, InspectFn, ModuleState, PushResultInfo, QUnitObject, TestState } from '../types.ts';
+import { objectValues, objectValuesSubset, validateException, validateExpectedExceptionArgs } from './index.ts';
+
+// Sentinel used by rejects() to distinguish "promise resolved" from "caught undefined".
+const PENDING = Symbol('pending');
 
 /**
  * The assertion object passed to every test callback and lifecycle hook.
@@ -34,11 +37,11 @@ export default class Assert {
 
   /** @internal */
   constructor(module: ModuleState | null, test?: TestState) {
-    this.test = test || (module as ModuleState).context;
+    this.test = test || (module as ModuleState).testContext;
   }
 
   /** @internal */
-  _incrementAssertionCount() {
+  private _incrementAssertionCount() {
     this.test.totalExecutedAssertions++;
   }
 
@@ -80,22 +83,16 @@ export default class Assert {
    * ```
    */
   step(message: string): void {
-    let assertionMessage = message;
-    let result = !!message;
-
     this.test.steps.push(message);
 
-    if (typeof message === 'undefined' || message === '') {
-      assertionMessage = 'You must provide a message to assert.step';
-    } else if (typeof message !== 'string') {
-      assertionMessage = 'You must provide a string value to assert.step';
-      result = false;
-    }
+    const result = typeof message === 'string' && message.length > 0;
+    const assertionMessage = result
+      ? message
+      : (message === undefined || message === '')
+        ? 'You must provide a message to assert.step'
+        : 'You must provide a string value to assert.step';
 
-    this.pushResult({
-      result,
-      message: assertionMessage
-    });
+    this.pushResult({ result, message: assertionMessage });
   }
 
   /**
@@ -159,12 +156,9 @@ export default class Assert {
    * ```
    */
   async(): () => void {
-    let resolveFn!: () => void;
-    const done = new Promise<void>(resolve => { resolveFn = resolve; });
-
-    this.test.asyncOps.push(done);
-
-    return () => { resolveFn(); };
+    const { promise, resolve } = Promise.withResolvers<void>();
+    this.test.asyncOps.push(promise);
+    return resolve;
   }
 
   /** @internal Used by the test runner to wait for all async operations to complete. */
@@ -580,7 +574,7 @@ export default class Assert {
    * ```
    */
   throws(blockFn: unknown, expectedInput?: unknown, assertionMessage?: string): void {
-    this?._incrementAssertionCount();
+    this._incrementAssertionCount();
     const [expected, message] = validateExpectedExceptionArgs(expectedInput, assertionMessage, 'throws');
     if (typeof blockFn !== 'function') {
       throw new Assert.AssertionError({
@@ -643,16 +637,14 @@ export default class Assert {
       });
     }
 
-    let didReject = false;
-    let rejectionError;
+    let caught: unknown = PENDING;
     try {
       await promise;
     } catch (error) {
-      didReject = true;
-      rejectionError = error;
+      caught = error;
     }
 
-    if (!didReject) {
+    if (caught === PENDING) {
       throw new Assert.AssertionError({
         actual: promise,
         expected: expected,
@@ -661,7 +653,7 @@ export default class Assert {
       });
     }
 
-    const [result, validatedExpected, validatedMessage] = validateException(rejectionError, expected, message);
+    const [result, validatedExpected, validatedMessage] = validateException(caught, expected, message);
     if (result === false) {
       throw new Assert.AssertionError({
         actual: result,
@@ -671,7 +663,7 @@ export default class Assert {
       });
     }
   }
-};
+}
 
 function defaultMessage(actual: unknown, description: string, expected: unknown): string {
   return `
@@ -683,6 +675,8 @@ ${description}
 ${inspect(expected)}`
 }
 
+const INSPECT_OPTIONS = { depth: 10, colors: true, compact: false as const };
+
 function inspect(value: unknown): string {
-  return Assert.inspect(value, { depth: 10, colors: true, compact: false });
+  return Assert.inspect(value, INSPECT_OPTIONS);
 }

@@ -1,4 +1,4 @@
-const hasOwn = Object.prototype.hasOwnProperty
+const hasOwn = Object.prototype.hasOwnProperty;
 
 export function objectType(obj: unknown): string {
   if (typeof obj === 'undefined') {
@@ -32,12 +32,8 @@ export function objectType(obj: unknown): string {
   }
 }
 
-function is(type: string, obj: unknown): boolean {
-  return objectType(obj) === type;
-}
-
 export function objectValues(obj: unknown, allowArray = true): unknown {
-  const vals: Record<string, unknown> | unknown[] = allowArray && is('array', obj) ? [] : {};
+  const vals: Record<string, unknown> | unknown[] = allowArray && objectType(obj) === 'array' ? [] : {};
 
   for (const key in obj as object) {
     if (hasOwn.call(obj, key)) {
@@ -50,13 +46,8 @@ export function objectValues(obj: unknown, allowArray = true): unknown {
 }
 
 /**
- *
  * Recursively clone an object into a plain object, taking only the
- * subset of own enumerable properties that exist a given model.
- *
- * @param {any} obj
- * @param {any} model
- * @return {Object}
+ * subset of own enumerable properties that exist in a given model.
  */
 export function objectValuesSubset(obj: unknown, model: unknown): unknown {
   // Return primitive values unchanged to avoid false positives or confusing
@@ -95,14 +86,15 @@ export function validateExpectedExceptionArgs(
       expected = undefined;
       return [expected, message];
     } else {
-      throw new Error('assert.' + assertionMethod + ' does not accept a string value for the expected argument.\n' + 'Use a non-string object value (e.g. RegExp or validator function) ' + 'instead if necessary.');
+      throw new Error(
+        `assert.${assertionMethod} does not accept a string value for the expected argument.\n` +
+        'Use a non-string object value (e.g. RegExp or validator function) instead if necessary.',
+      );
     }
   }
-  const valid = !expected ||
-  // TODO: be more explicit here
-  expectedType === 'regexp' || expectedType === 'function' || expectedType === 'object';
+  const valid = !expected || expectedType === 'regexp' || expectedType === 'function' || expectedType === 'object';
   if (!valid) {
-    throw new Error('Invalid expected value type (' + expectedType + ') ' + 'provided to assert.' + assertionMethod + '.');
+    throw new Error(`Invalid expected value type (${expectedType}) provided to assert.${assertionMethod}.`);
   }
   return [expected, message];
 }
@@ -170,15 +162,10 @@ function errorString(error: unknown): string {
   // an object literal with name and message properties...
   if (resultErrorString.slice(0, 7) === '[object') {
     // Based on https://es5.github.io/#x15.11.4.4
-    return (
-      ((error as { name?: string }).name || 'Error') +
-      ((error as { message?: string }).message
-        ? ': '.concat((error as { message: string }).message)
-        : '')
-    );
-  } else {
-    return resultErrorString;
+    const name = (error as { name?: string }).name || 'Error';
+    const msg = (error as { message?: string }).message;
+    return msg ? `${name}: ${msg}` : name;
   }
-}
 
-export default { objectValues, objectValuesSubset, validateExpectedExceptionArgs, validateException };
+  return resultErrorString;
+}

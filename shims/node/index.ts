@@ -19,10 +19,10 @@ Object.freeze(Assert);
 Object.freeze(ModuleContext);
 Object.freeze(TestContext);
 
-export { default as module } from './module.ts';
-export { default as test } from './test.ts';
 export { Assert };
+export { default as module } from './module.ts';
 export const skip = Test.skip;
+export { default as test } from './test.ts';
 export const todo = Test.todo;
 
 export default { AssertionError: Assert.AssertionError, module: Module, test: Test, config: {} };

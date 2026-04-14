@@ -33,6 +33,8 @@ ecosystem:
   catches missing async callbacks that other frameworks silently swallow
 - **`assert.expect(n)`** — fails the test if exactly _n_ assertions didn't run;
   invaluable for async code where missing assertions would otherwise pass silently
+- **`assert.timeout(ms)`** — hard deadline per test; the test fails with a descriptive
+  message if it doesn't complete in time (all three runtimes)
 - **Hooks** — `before`, `beforeEach`, `afterEach`, `after` with correct FIFO/LIFO ordering,
   properly scoped across nested modules
 - **Shareable browser URLs** — the QUnit browser UI filters tests via query params, so you can
@@ -71,13 +73,14 @@ npm install qunitx --save-dev
 Requires **Node.js >= 22** (LTS) or **Deno >= 2**.
 
 No config file needed. No `jest.config.js`, no `vitest.config.ts`, no setup files — just import and run.
+TypeScript is supported natively: pass `.ts` files directly to `node --test` or `deno test`.
 
 ---
 
 ## Quick start
 
-```js
-// math-test.js  (works in Node, Deno, and browser unchanged)
+```ts
+// math-test.ts  (works in Node, Deno, and browser unchanged)
 import { module, test } from 'qunitx';
 
 module('Math utilities', (hooks) => {
@@ -107,18 +110,16 @@ module('Math utilities', (hooks) => {
 
 ```sh
 # No extra dependencies — uses the Node built-in test runner
-node --test math-test.js
-
-# Watch mode (re-runs on save)
-node --test --watch math-test.js
-
-# Glob pattern
-node --test --watch 'test/**/*.js'
-
 node --test math-test.ts
 
+# Watch mode (re-runs on save)
+node --test --watch math-test.ts
+
+# Glob pattern
+node --test --watch 'test/**/*.ts'
+
 # Code coverage
-npx c8 node --test math-test.js
+npx c8 node --test math-test.ts
 ```
 
 ### Deno
@@ -133,10 +134,10 @@ serve time:
 echo '{"imports": {"qunitx": "https://esm.sh/qunitx@latest"}}' > deno.json
 
 # Run
-deno test math-test.js
+deno test math-test.ts
 
 # With explicit permissions
-deno test --allow-read --allow-env math-test.js
+deno test --allow-read --allow-env math-test.ts
 ```
 
 ### Browser
@@ -148,10 +149,10 @@ in your terminal / CI, or to open the live QUnit UI during development:
 npm install -g qunitx-cli
 
 # Headless (CI-friendly — outputs TAP to stdout)
-qunitx math-test.js
+qunitx math-test.ts
 
 # Open QUnit browser UI alongside terminal output
-qunitx math-test.js --debug
+qunitx math-test.ts --debug
 ```
 
 The browser UI lets you:
@@ -227,6 +228,86 @@ Context inheritance follows QUnit's prototype-chain model regardless of which st
 
 ---
 
+## Skip and todo
+
+Mark individual tests or entire modules as skipped or pending:
+
+```js
+import { module, test } from 'qunitx';
+
+module('Suite', () => {
+  // Skip a single test — body never runs
+  test.skip('not yet implemented', (assert) => {
+    assert.ok(false); // never executes
+  });
+
+  // todo — body runs but failures do not fail the suite
+  test.todo('multiplication', (assert) => {
+    assert.equal(2 * 3, 6);
+  });
+
+  // todo with no body — registers the test as pending
+  test.todo('division');
+
+  // Skip via runtime options (useful for conditional or cross-runtime skipping)
+  test('flaky on CI', { skip: true }, (assert) => { assert.ok(true); });
+  test('not ready', { todo: 'needs implementation' }, (assert) => { assert.ok(false); });
+});
+
+// Skip or todo an entire module
+module.skip('Legacy API', () => {
+  test('old behaviour', (assert) => { assert.ok(false); }); // never runs
+});
+
+module.todo('Future features', () => {
+  test('planned', (assert) => { assert.ok(false); }); // never runs
+});
+```
+
+Top-level `skip` and `todo` aliases are also exported for QUnit-style usage:
+
+```js
+import { module, test, skip, todo } from 'qunitx';
+
+module('Suite', () => {
+  skip('skipped test', (assert) => { assert.ok(false); });
+  todo('pending test', (assert) => { assert.ok(false); });
+});
+```
+
+> **Node vs. Deno behaviour:** Node's `test.todo` runs the body but does not count failures
+> against the suite. Deno has no native todo concept and maps both `skip` and `todo` to
+> "ignored" — the body does not run.
+
+---
+
+## Timeouts
+
+```js
+test('slow async operation', async (assert) => {
+  assert.timeout(500); // fail after 500 ms if not complete
+
+  const result = await fetchSomething();
+  assert.ok(result);
+});
+
+test('adjustable deadline', async (assert) => {
+  assert.timeout(100);
+  assert.timeout(500); // calling again resets the deadline
+  await doWork();
+  assert.ok(true);
+});
+```
+
+`assert.timeout(ms)` sets a hard deadline for the current test. If the test does not complete
+within `ms` milliseconds the runner aborts it with a descriptive error message.
+
+`assert.timeout()` works across all three runtimes. In Node.js and Deno it is handled by
+qunitx's internal deadline mechanism; in the browser it delegates to QUnit's native
+`assert.timeout()` (available since QUnit 2.16).
+
+---
+
 ## Concurrency
 
 Tests run **sequentially by default** — matching QUnit's browser behavior where tests run one at a time. You can enable concurrency by passing options to the underlying Node / Deno runner:
@@ -267,7 +348,8 @@ familiar browser UI with zero extra layers.
 
 ## Code coverage
 
-Probably c8 isn't even needed since qunitx runs as a dependency(rather than runtime) on node.js and deno.
+qunitx loads as a regular dependency rather than wrapping the runtime process, so
+Node.js and Deno's built-in v8 coverage instruments it naturally — no special configuration needed.
 
 ```sh
 # Node (any c8-compatible reporter)

@@ -24,12 +24,12 @@
  *
  * @module
  */
-import { AssertionError as DenoAssertionError } from "jsr:@std/assert";
-import type { AssertionErrorOptions } from "../types.ts";
 import '../../vendor/qunit.js';
+import { AssertionError as DenoAssertionError } from 'jsr:@std/assert';
 import Assert from '../shared/assert.ts';
 import ModuleContext from '../shared/module-context.ts';
 import TestContext from '../shared/test-context.ts';
+import type { AssertionErrorOptions } from '../types.ts';
 import Module from './module.ts';
 import Test from './test.ts';
 
@@ -112,6 +112,25 @@ export { Assert };
 export { default as module } from './module.ts';
 
 /**
+ * Registers a skipped test. Equivalent to `test.skip`. The test body is never
+ * executed and the test is reported as ignored by Deno's runner.
+ *
+ * @param {string} testName - Name of the test to skip.
+ * @param {function} [_testContent] - Optional body (ignored — the test will not run).
+ * @example
+ * ```js
+ * import { module, skip } from "qunitx";
+ *
+ * module("Math", () => {
+ *   skip("addition is not yet implemented", (assert) => {
+ *     assert.equal(1 + 1, 2);
+ *   });
+ * });
+ * ```
+ */
+export const skip = Test.skip;
+
+/**
  * Defines an individual test. Wraps Deno's `it()` and handles the full QUnit
  * lifecycle: `beforeEach`/`afterEach` hooks, async assertion waiting, and step
  * verification. Must be called inside a {@linkcode module} callback.
@@ -142,25 +161,6 @@ export { default as module } from './module.ts';
  * ```
  */
 export { default as test } from './test.ts';
-
-/**
- * Registers a skipped test. Equivalent to `test.skip`. The test body is never
- * executed and the test is reported as ignored by Deno's runner.
- *
- * @param {string} testName - Name of the test to skip.
- * @param {function} [_testContent] - Optional body (ignored — the test will not run).
- * @example
- * ```js
- * import { module, skip } from "qunitx";
- *
- * module("Math", () => {
- *   skip("addition is not yet implemented", (assert) => {
- *     assert.equal(1 + 1, 2);
- *   });
- * });
- * ```
- */
-export const skip = Test.skip;
 export const todo = Test.todo;
 
 /**

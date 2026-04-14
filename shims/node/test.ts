@@ -1,7 +1,7 @@
 import { it } from 'node:test';
 import type Assert from '../shared/assert.ts';
-import TestContext from '../shared/test-context.ts';
 import ModuleContext from '../shared/module-context.ts';
+import TestContext from '../shared/test-context.ts';
 
 /**
  * Defines an individual test within a module for Node's built-in test runner.
@@ -71,38 +71,38 @@ export default function test(
   if (todo) moduleContext.tests.pop();
 
   it(testName, { ...targetRuntimeOptions }, function () {
-    return new Promise((resolve, reject) => {
-      context.rejectTimeout = reject;
+    const { promise, resolve, reject } = Promise.withResolvers<void>();
+    context.rejectTimeout = reject;
 
-      (async () => {
-        const hookMeta = { context: userContext };
+    const hookMeta = { context: userContext };
 
-        try {
-          for (const module of context.module!.moduleChain) {
-            for (const hook of module.beforeEachHooks) {
-              await hook.call(userContext, context.assert!, hookMeta);
-            }
+    (async () => {
+      try {
+        for (const mod of context.module!.moduleChain) {
+          for (const hook of mod.beforeEachHooks) {
+            await hook.call(userContext, context.assert!, hookMeta);
           }
-
-          const result = await targetTestContent.call(userContext, context.assert!, { testName, options: runtimeOptions, context: userContext });
-
-          await context.assert!.waitForAsyncOps();
-
-          for (let i = context.module!.moduleChain.length - 1; i >= 0; i--) {
-            const module = context.module!.moduleChain[i];
-            for (let j = module.afterEachHooks.length - 1; j >= 0; j--) {
-              await module.afterEachHooks[j]!.call(userContext, context.assert!, hookMeta);
-            }
-          }
-
-          resolve(result);
-        } catch (err) {
-          reject(err);
-        } finally {
-          context.clearTimeoutHandle();
         }
-      })();
-    });
+
+        await targetTestContent.call(userContext, context.assert!, { testName, options: targetRuntimeOptions, context: userContext });
+
+        await context.assert!.waitForAsyncOps();
+
+        for (const mod of context.module!.moduleChain.toReversed()) {
+          for (const hook of mod.afterEachHooks.toReversed()) {
+            await hook.call(userContext, context.assert!, hookMeta);
+          }
+        }
+
+        resolve();
+      } catch (err) {
+        reject(err);
+      } finally {
+        context.clearTimeoutHandle();
+      }
+    })();
+
+    return promise;
   });
 }
 

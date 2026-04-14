@@ -1,9 +1,7 @@
-import { describe, beforeAll, afterAll } from "jsr:@std/testing/bdd";
+import { afterAll, beforeAll, describe } from 'jsr:@std/testing/bdd';
 import type Assert from '../shared/assert.ts';
-import type { HookFn, HooksObject } from '../types.ts';
 import ModuleContext from '../shared/module-context.ts';
-export type { Assert };
-export type { HookFn, HooksObject, PushResultInfo } from '../types.ts';
+import type { HookFn, HooksObject } from '../types.ts';
 
 /**
  * Defines a test module (suite) for Deno's BDD test runner.
@@ -53,14 +51,14 @@ export default function module(
     return;
   }
 
-  const targetModuleContent = (moduleContent ? moduleContent : runtimeOptions) as (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown }) => void;
+  const targetModuleContent = (moduleContent ?? runtimeOptions) as (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown }) => void;
   const moduleContext = new ModuleContext(moduleName);
 
   describe(moduleName, { ...targetRuntimeOptions }, function () {
     const beforeHooks: HookFn<Assert>[] = [];
     const afterHooks: HookFn<Assert>[] = [];
 
-    beforeAll(async function () {
+    beforeAll(async () => {
       // before() assertions are attributed to the first direct test only (matching QUnit's model).
       // Tests inherit parent context via prototype chain, so no Object.assign needed.
       const firstTest = moduleContext.tests[0];
@@ -72,19 +70,18 @@ export default function module(
     });
 
     afterAll(async () => {
-      for (const testContext of moduleContext.tests) {
-        await testContext.assert!.waitForAsyncOps();
-      }
+      const allAsyncOps = moduleContext.tests.flatMap((t) => t.asyncOps);
+      if (allAsyncOps.length > 0) await Promise.all(allAsyncOps);
 
-      const lastTest = moduleContext.tests[moduleContext.tests.length - 1];
+      const lastTest = moduleContext.tests.at(-1);
       if (lastTest) {
-        for (let j = afterHooks.length - 1; j >= 0; j--) {
-          await afterHooks[j]!.call(lastTest.userContext, lastTest.assert!, { context: lastTest.userContext });
+        for (const hook of afterHooks.toReversed()) {
+          await hook.call(lastTest.userContext, lastTest.assert!, { context: lastTest.userContext });
         }
       }
 
-      for (let i = 0, len = moduleContext.tests.length; i < len; i++) {
-        moduleContext.tests[i].finish();
+      for (const testCtx of moduleContext.tests) {
+        testCtx.finish();
       }
     });
 
@@ -101,7 +98,7 @@ export default function module(
       after(afterFn) {
         afterHooks.push(afterFn);
       }
-    }, { moduleName, options: runtimeOptions, context: moduleContext.userContext });
+    }, { moduleName, options: targetRuntimeOptions, context: moduleContext.userContext });
 
     ModuleContext.currentModuleChain.pop();
   });
@@ -149,3 +146,6 @@ module.skip = function skipModule(moduleName: string, _moduleContent?: unknown):
 module.todo = function todoModule(moduleName: string, _moduleContent?: unknown): void {
   describe(moduleName, { ignore: true }, function () {});
 };
+
+export type { Assert };
+export type { HookFn, HooksObject, PushResultInfo } from '../types.ts';

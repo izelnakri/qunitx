@@ -1,5 +1,5 @@
-import type Assert from './assert.ts';
 import type { HookFn } from '../types.ts';
+import type Assert from './assert.ts';
 import TestContext from './test-context.ts';
 
 export default class ModuleContext {
@@ -7,7 +7,7 @@ export default class ModuleContext {
   static currentModuleChain: ModuleContext[] = [];
 
   static get lastModule() {
-    return this.currentModuleChain[this.currentModuleChain.length - 1];
+    return this.currentModuleChain.at(-1);
   }
 
   name!: string;
@@ -15,7 +15,7 @@ export default class ModuleContext {
   userContext!: Record<string, unknown>;
 
   // Internal fallback assert for modules with no direct tests
-  context = new TestContext();
+  testContext = new TestContext();
 
   moduleChain: ModuleContext[] = [];
   beforeEachHooks: HookFn<Assert>[] = [];
@@ -23,11 +23,11 @@ export default class ModuleContext {
   tests: TestContext[] = [];
 
   constructor(name: string) {
-    const parentModule = ModuleContext.currentModuleChain[ModuleContext.currentModuleChain.length - 1];
+    const parentModule = ModuleContext.currentModuleChain.at(-1);
 
     ModuleContext.currentModuleChain.push(this);
 
-    this.moduleChain = ModuleContext.currentModuleChain.slice(0);
+    this.moduleChain = [...ModuleContext.currentModuleChain];
     this.name = parentModule ? `${parentModule.name} > ${name}` : name;
     this.assert = new ModuleContext.Assert(this);
 
