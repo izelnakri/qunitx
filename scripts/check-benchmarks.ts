@@ -12,6 +12,9 @@ import { red, green, yellow, dim } from 'jsr:@std/fmt/colors';
 
 const BASELINE_PATH = new URL('../benches/results.json', import.meta.url).pathname;
 const REGRESSION_THRESHOLD = Number(Deno.env.get('REGRESSION_THRESHOLD') ?? '20');
+// Ignore regressions where the absolute change is below this floor (nanoseconds).
+// Sub-microsecond benchmarks are too noisy for percentage-only gating.
+const MIN_ABS_DELTA_NS = Number(Deno.env.get('MIN_ABS_DELTA_NS') ?? '1000');
 const isSave = Deno.args.includes('--save');
 
 const raw = await new Response(Deno.stdin.readable).text();
@@ -57,8 +60,10 @@ for (const [name, avgNs] of Object.entries(current)) {
     continue;
   }
   const pct = ((avgNs - baseNs) / baseNs) * 100;
-  if (pct > REGRESSION_THRESHOLD) hasRegression = true;
-  rows.push({ name, avgNs, baseNs, pct, status: pct > REGRESSION_THRESHOLD ? 'fail' : 'ok' });
+  const absDelta = avgNs - baseNs;
+  const isRegression = pct > REGRESSION_THRESHOLD && absDelta > MIN_ABS_DELTA_NS;
+  if (isRegression) hasRegression = true;
+  rows.push({ name, avgNs, baseNs, pct, status: isRegression ? 'fail' : 'ok' });
 }
 
 const maxName = Math.max(...rows.map((r) => r.name.length));
