@@ -1,7 +1,7 @@
 {
   "name": "qunitx",
   "type": "module",
-  "version": "1.2.7",
+  "version": "1.2.8",
   "description": "Universal test library — run the same test file in Node.js, Deno, and the browser with QUnit's battle-tested assertion API",
   "author": "Izel Nakri",
   "license": "MIT",

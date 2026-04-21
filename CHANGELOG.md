@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.2.8] - 2026-04-21
+[`v1.2.7...v1.2.8`](https://github.com/izelnakri/qunitx-cli/compare/v1.2.7...v1.2.8)
+
+### Bug Fixes
+- Replace .bin/ shims with cross-platform invocations — 2026-04-21 by Izel Nakri ([`5e2f450`](https://github.com/izelnakri/qunitx-cli/commit/5e2f4500c2d2ec6fa5182aebb66e03722cbfea18))
+- Use native path resolution for helper in timeout-test — 2026-04-21 by Izel Nakri ([`56743e3`](https://github.com/izelnakri/qunitx-cli/commit/56743e3f2c0523605f47278d7d5fc92aafa81456))
+
+### Features
+- Improve assertion failure messages, diffs, and stack traces — 2026-04-21 by Izel Nakri ([`56f8fb0`](https://github.com/izelnakri/qunitx-cli/commit/56f8fb02ae4423a8953a8ba8c62be2ed2fe5bf1e))
+
 ## [1.2.7] - 2026-04-14
 [`v1.2.6...v1.2.7`](https://github.com/izelnakri/qunitx-cli/compare/v1.2.6...v1.2.7)
 
