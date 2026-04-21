@@ -21,7 +21,9 @@ module('assert.timeout - pass cases', function () {
 if (typeof globalThis['document'] === 'undefined') {
   module('assert.timeout - timeout fires', function () {
     test('slow test is aborted with a timeout error', async function (assert) {
-      const helperPath = new URL('./helpers/timeout-fires.ts', import.meta.url).pathname;
+      // URL.pathname on Windows is '/C:/path' — strip the leading slash to get a valid path.
+      const { pathname } = new URL('./helpers/timeout-fires.ts', import.meta.url);
+      const helperPath = process.platform === 'win32' ? pathname.slice(1) : pathname;
       let exitCode: number;
       let output: string;
 
