@@ -314,7 +314,7 @@ export default class Assert {
       throw new Assert.AssertionError({
         actual,
         expected,
-        message: message || `Expected: ${defaultMessage(actual, 'should equal to:', expected)}`,
+        message: message || `Values are not equal:${formatDiff(actual, expected)}`,
         operator: '==',
         stackStartFn: this.equal,
       });
@@ -340,7 +340,7 @@ export default class Assert {
         actual,
         expected,
         operator: '!=',
-        message: message || `Expected: ${defaultMessage(actual, 'should notEqual to:', expected)}`,
+        message: message || `Values are unexpectedly equal:${formatUnexpectedMatch(actual)}`,
         stackStartFn: this.notEqual,
       });
     }
@@ -370,7 +370,7 @@ export default class Assert {
       throw new Assert.AssertionError({
         actual: targetActual,
         expected: targetExpected,
-        message: message || `Expected properties to be propEqual: ${defaultMessage(targetActual, 'should propEqual to:', targetExpected)}`,
+        message: message || `Own properties are not equal:${formatDiff(targetActual, targetExpected)}`,
         stackStartFn: this.propEqual,
       });
     }
@@ -397,7 +397,7 @@ export default class Assert {
       throw new Assert.AssertionError({
         actual: targetActual,
         expected: targetExpected,
-        message: message || `Expected properties to NOT be propEqual: ${defaultMessage(targetActual, 'should notPropEqual to:', targetExpected)}`,
+        message: message || `Own properties are unexpectedly equal:${formatUnexpectedMatch(targetActual)}`,
         stackStartFn: this.notPropEqual,
       });
     }
@@ -424,7 +424,7 @@ export default class Assert {
       throw new Assert.AssertionError({
         actual: targetActual,
         expected: targetExpected,
-        message: message || `propContains assertion fail on: ${defaultMessage(targetActual, 'should propContains to:', targetExpected)}`,
+        message: message || `Object does not contain expected properties:${formatDiff(targetActual, targetExpected)}`,
         stackStartFn: this.propContains,
       });
     }
@@ -451,7 +451,7 @@ export default class Assert {
       throw new Assert.AssertionError({
         actual: targetActual,
         expected: targetExpected,
-        message: message || `notPropContains assertion fail on: ${defaultMessage(targetActual, 'should notPropContains of:', targetExpected)}`,
+        message: message || `Object unexpectedly contains all expected properties:${formatUnexpectedMatch(targetActual)}`,
         stackStartFn: this.notPropContains,
       });
     }
@@ -476,7 +476,7 @@ export default class Assert {
       throw new Assert.AssertionError({
         actual,
         expected,
-        message: message || `Expected values to be deepEqual: ${defaultMessage(actual, 'should deepEqual to:', expected)}`,
+        message: message || `Values are not deeply equal:${formatDiff(actual, expected)}`,
         operator: 'deepEqual',
         stackStartFn: this.deepEqual,
       });
@@ -501,7 +501,7 @@ export default class Assert {
       throw new Assert.AssertionError({
         actual,
         expected,
-        message: message || `Expected values to be NOT deepEqual: ${defaultMessage(actual, 'should notDeepEqual to:', expected)}`,
+        message: message || `Values are unexpectedly deeply equal:${formatUnexpectedMatch(actual)}`,
         operator: 'notDeepEqual',
         stackStartFn: this.notDeepEqual,
       });
@@ -526,7 +526,7 @@ export default class Assert {
       throw new Assert.AssertionError({
         actual,
         expected,
-        message: message || `Expected: ${defaultMessage(actual, 'is strictEqual to:', expected)}`,
+        message: message || `Values are not strictly equal:${formatDiff(actual, expected)}`,
         operator: 'strictEqual',
         stackStartFn: this.strictEqual,
       });
@@ -551,7 +551,7 @@ export default class Assert {
       throw new Assert.AssertionError({
         actual,
         expected,
-        message: message || `Expected: ${defaultMessage(actual, 'is notStrictEqual to:', expected)}`,
+        message: message || `Values are unexpectedly strictly equal:${formatUnexpectedMatch(actual)}`,
         operator: 'notStrictEqual',
         stackStartFn: this.notStrictEqual,
       });
@@ -589,12 +589,14 @@ export default class Assert {
     try {
       returnValue = blockFn();
     } catch (error) {
-      const [result, validatedExpected, validatedMessage] = validateException(error, expected, message);
+      const [result, , validatedMessage] = validateException(error, expected, message);
       if (result === false) {
+        const expectedDesc = describeExpected(expected);
+        const receivedDesc = String(error);
         throw new Assert.AssertionError({
-          actual: result,
-          expected: validatedExpected,
-          message: validatedMessage,
+          actual: receivedDesc,
+          expected: expectedDesc,
+          message: validatedMessage || throwsFailMessage('throws', expectedDesc, receivedDesc),
           stackStartFn: this.throws,
         });
       }
@@ -663,30 +665,60 @@ export default class Assert {
       });
     }
 
-    const [result, validatedExpected, validatedMessage] = validateException(caught, expected, message);
+    const [result, , validatedMessage] = validateException(caught, expected, message);
     if (result === false) {
+      const expectedDesc = describeExpected(expected);
+      const receivedDesc = String(caught);
       throw new Assert.AssertionError({
-        actual: result,
-        expected: validatedExpected,
-        message: validatedMessage,
+        actual: receivedDesc,
+        expected: expectedDesc,
+        message: validatedMessage || throwsFailMessage('rejects', expectedDesc, receivedDesc),
         stackStartFn: this.rejects,
       });
     }
   }
 }
 
-function defaultMessage(actual: unknown, description: string, expected: unknown): string {
-  return `
-
-${inspect(actual)}
-
-${description}
-
-${inspect(expected)}`
-}
 
 const INSPECT_OPTIONS = { depth: 10, colors: true, compact: false as const };
 
-function inspect(value: unknown): string {
-  return Assert.inspect(value, INSPECT_OPTIONS);
+const inspect = (value: unknown): string => Assert.inspect(value, INSPECT_OPTIONS);
+
+function formatDiff(actual: unknown, expected: unknown): string {
+  const aStr = inspect(actual), bStr = inspect(expected);
+  const aLines = aStr.split('\n'), bLines = bStr.split('\n');
+  if (aLines.length === 1 && bLines.length === 1) return `\n\nActual:   ${aStr}\nExpected: ${bStr}`;
+  const lines = lcsDiff(aLines, bLines).map(([t, line]) =>
+    t === '=' ? `  ${line}` : t === '-' ? `- ${line}` : `+ ${line}`
+  );
+  return `\n\n- Actual  + Expected\n\n${lines.join('\n')}`;
+}
+
+const formatUnexpectedMatch = (actual: unknown): string => `\n\n${inspect(actual)}`;
+
+const describeExpected = (expected: unknown): string =>
+  expected == null ? '(no pattern)' :
+  typeof expected === 'string' ? expected :
+  typeof expected === 'function' ? ((expected as { name?: string }).name || String(expected)) :
+  String(expected);
+
+const throwsFailMessage = (method: string, pattern: string, received: string): string =>
+  `assert.${method}: thrown error did not match expected:\n\nPattern:  ${pattern}\nReceived: ${received}`;
+
+type DiffEntry = ['=' | '-' | '+', string];
+
+function lcsDiff(a: string[], b: string[]): DiffEntry[] {
+  const m = a.length, n = b.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, () => new Array<number>(n + 1).fill(0));
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1]);
+  const result: DiffEntry[] = [];
+  let i = m, j = n;
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && a[i - 1] === b[j - 1]) { result.push(['=', a[i - 1]]); i--; j--; }
+    else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) { result.push(['+', b[j - 1]]); j--; }
+    else { result.push(['-', a[i - 1]]); i--; }
+  }
+  return result.reverse();
 }

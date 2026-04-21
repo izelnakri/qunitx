@@ -54,6 +54,7 @@ import Test from './test.ts';
 export class AssertionError extends DenoAssertionError {
   constructor(object: AssertionErrorOptions) {
     super(object.message ?? 'Assertion failed');
+    if (object.stackStartFn) Error.captureStackTrace(this, object.stackStartFn);
   }
 }
 
