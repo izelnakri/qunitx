@@ -147,13 +147,16 @@ declare global {
       const shimSources = (
         await findFiles('./shims', (n) => n.endsWith('.ts'), 'vendor-types')
       ).filter((f) => !f.endsWith('.d.ts'));
-      await spawnInherit('./node_modules/.bin/esbuild', [
-        ...shimSources,
-        '--bundle=false',
-        '--format=esm',
-        '--outbase=shims',
-        '--outdir=dist',
-      ]);
+      // Use the JS API directly: esbuild/bin/esbuild is a native binary that cannot
+      // be spawned cross-platform (ELF on Linux, .exe on Windows, Mach-O on macOS).
+      const esbuild = await import('esbuild');
+      await esbuild.build({
+        entryPoints: shimSources,
+        bundle: false,
+        format: 'esm',
+        outbase: 'shims',
+        outdir: 'dist',
+      });
       await bundleDenoShim();
     })(),
   ]);
@@ -364,10 +367,16 @@ async function bundleDenoShim(): Promise<void> {
 }
 
 function spawnInherit(cmd: string, args: string[]): Promise<void> {
+  // node_modules/.bin/ shims are symlinks on Unix but .cmd batch files on Windows.
+  // Resolve known JS-based bin shims to their underlying scripts and spawn node
+  // directly — no shell needed, works on all platforms.
+  const BIN_SCRIPTS: Record<string, string> = {
+    './node_modules/.bin/tsc': './node_modules/typescript/bin/tsc',
+  };
   return new Promise((resolve, reject) => {
-    // shell: true is required on Windows: .bin/ contains .cmd shims that spawn() cannot
-    // execute directly without going through cmd.exe.
-    const proc = spawn(cmd, args, { stdio: 'inherit', shell: process.platform === 'win32' });
+    const script = BIN_SCRIPTS[cmd];
+    const [exe, execArgs] = script ? [process.execPath, [script, ...args]] : [cmd, args];
+    const proc = spawn(exe, execArgs, { stdio: 'inherit' });
     proc.on('close', (code) =>
       code === 0 ? resolve() : reject(new Error(`${cmd} exited with code ${code}`)),
     );
