@@ -38,10 +38,14 @@ jobs:
   # Packs the built artefact and runs release-consumer-test.ts against the tarball
   # on every supported runtime, catching issues (e.g. broken dist/ exports, missing
   # jsr: bundling) that only surface when a downstream developer installs the package.
+  # Runs on all three target platforms to catch OS-specific packaging regressions.
   release-consumer-test:
     needs: [test]
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -52,8 +56,10 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
-      - run: find node_modules -name "qunitx-cli-linux-x64" -o -name "qunitx-cli-linux-arm64" -o -name "qunitx-cli-darwin-x64" -o -name "qunitx-cli-darwin-arm64" -o -name "qunitx-cli-windows-x64" | xargs -I{} chmod -x {}/bin/qunitx 2>/dev/null || true
+      - if: runner.os != 'Windows'
+        run: find node_modules -name "qunitx-cli-linux-x64" -o -name "qunitx-cli-linux-arm64" -o -name "qunitx-cli-darwin-x64" -o -name "qunitx-cli-darwin-arm64" -o -name "qunitx-cli-windows-x64" | xargs -I{} chmod -x {}/bin/qunitx 2>/dev/null || true
       - run: bash scripts/test-release.sh
+        shell: bash
         env:
           FORCE_COLOR: 0
 

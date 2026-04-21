@@ -365,7 +365,9 @@ async function bundleDenoShim(): Promise<void> {
 
 function spawnInherit(cmd: string, args: string[]): Promise<void> {
   return new Promise((resolve, reject) => {
-    const proc = spawn(cmd, args, { stdio: 'inherit' });
+    // shell: true is required on Windows: .bin/ contains .cmd shims that spawn() cannot
+    // execute directly without going through cmd.exe.
+    const proc = spawn(cmd, args, { stdio: 'inherit', shell: process.platform === 'win32' });
     proc.on('close', (code) =>
       code === 0 ? resolve() : reject(new Error(`${cmd} exited with code ${code}`)),
     );
