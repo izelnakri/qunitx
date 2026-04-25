@@ -1,7 +1,33 @@
+import { compileFunction } from 'node:vm';
 import { it } from 'node:test';
 import type Assert from '../shared/assert.ts';
 import ModuleContext from '../shared/module-context.ts';
 import TestContext from '../shared/test-context.ts';
+
+const QUNITX_DIST_URL = new URL('../', import.meta.url).href;
+
+// Walks the JS stack above `stopAt`, returning the first non-node/non-qunitx frame.
+// V8 lazily calls prepareStackTrace when .stack is accessed, so we swap it briefly.
+function captureCallerLocation(stopAt: (...args: never[]) => unknown): { file: string; line: number } | null {
+  const saved = Error.prepareStackTrace;
+  Error.prepareStackTrace = (_, frames) => frames;
+  const obj = {} as { stack: NodeJS.CallSite[] };
+  Error.captureStackTrace(obj, stopAt);
+  const { stack } = obj;
+  Error.prepareStackTrace = saved;
+  for (const f of stack) {
+    const file = f.getFileName(), line = f.getLineNumber();
+    if (file && !file.startsWith('node:') && !file.startsWith(QUNITX_DIST_URL) && line != null) return { file, line };
+  }
+  return null;
+}
+
+// Calls it() via a tiny vm thunk attributed to `loc` so node:test's C++ stack
+// walker (getCallerLocation) sees the user's file/line, not qunitx's wrapper.
+function itAt(name: string, opts: object, fn: () => void | Promise<void>, loc: { file: string; line: number } | null): void {
+  if (!loc) return void (it as unknown as (...args: unknown[]) => void)(name, opts, fn);
+  (compileFunction('return it_(n,o,f)', ['it_', 'n', 'o', 'f'], { filename: loc.file, lineOffset: loc.line - 1 }) as unknown as (...args: unknown[]) => void)(it, name, opts, fn);
+}
 
 /**
  * Defines an individual test within a module for Node's built-in test runner.
@@ -43,6 +69,7 @@ export default function test(
   runtimeOptions: object | ((assert: Assert, meta: { testName: string; options: unknown; context: Record<string, unknown> }) => void | Promise<void>),
   testContent?: (assert: Assert, meta: { testName: string; options: unknown; context: Record<string, unknown> }) => void | Promise<void>,
 ): void {
+  const loc = captureCallerLocation(test);
   const moduleContext = ModuleContext.lastModule;
   if (!moduleContext) {
     throw new Error(`Test '${testName}' called outside of module context.`);
@@ -53,7 +80,7 @@ export default function test(
 
   // skip: no TestContext — finish() would fire "0 assertions" from afterAll otherwise.
   if (skip) {
-    it(testName, { skip }, async function () {});
+    itAt(testName, { skip }, async function () {}, loc);
     return;
   }
 
@@ -70,7 +97,7 @@ export default function test(
   // Node's { todo } on it() handles the result; we just prevent afterAll from calling finish().
   if (todo) moduleContext.tests.pop();
 
-  it(testName, { ...targetRuntimeOptions }, function () {
+  itAt(testName, { ...targetRuntimeOptions }, function () {
     const { promise, resolve, reject } = Promise.withResolvers<void>();
     context.rejectTimeout = reject;
 
@@ -103,7 +130,7 @@ export default function test(
     })();
 
     return promise;
-  });
+  }, loc);
 }
 
 /**
@@ -124,7 +151,7 @@ export default function test(
  * ```
  */
 test.skip = function skipTest(testName: string, _testContent?: unknown): void {
-  it(testName, { skip: true }, async function () {});
+  itAt(testName, { skip: true }, async function () {}, captureCallerLocation(skipTest));
 };
 
 /**
@@ -149,7 +176,7 @@ test.skip = function skipTest(testName: string, _testContent?: unknown): void {
  */
 test.todo = function todoTest(testName: string, testContent?: (assert: Assert, meta: { testName: string; options: unknown }) => void | Promise<void>): void {
   if (!testContent) {
-    it(testName, { todo: true }, async function () {});
+    itAt(testName, { todo: true }, async function () {}, captureCallerLocation(todoTest));
     return;
   }
   test(testName, { todo: true }, testContent);
