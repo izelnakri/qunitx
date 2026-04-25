@@ -66,8 +66,9 @@ release:
 	ssh-add; \
 	npm whoami > /dev/null 2>&1 || npm login; \
 	echo "npm user: $$(npm whoami) | $$(date '+%Y-%m-%d %H:%M:%S %Z')"; \
-	$(MAKE) check; \
+	$(MAKE) format; $(MAKE) lint; $(MAKE) lint-docs; \
 	$(MAKE) bench-check; \
+	$(MAKE) test; \
 	npm run test:release; \
 	npm version $(LEVEL) --no-git-tag-version; \
 	git-cliff --tag "v$$(node -p 'require("./package.json").version')" --output CHANGELOG.md; \
