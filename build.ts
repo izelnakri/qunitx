@@ -4,23 +4,31 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { Plugin } from 'esbuild';
 
-let inputHash = await checkUpToDate();
-await compileAndVendor();
-await Promise.all([fixJsImports(), fixDtsImports()]);
-await fixDenoIndexDts();
-if (!inputHash) inputHash = await computeInputHash();
-await fs.writeFile('./dist/.build-hash', inputHash + '\n');
+// null means the build is already up-to-date; skip everything.
+const inputHash = await checkUpToDate();
+if (inputHash !== null) {
+  await compileAndVendor();
+  await Promise.all([fixJsImports(), fixDtsImports()]);
+  await fixDenoIndexDts();
+  const hash = inputHash || (await computeInputHash());
+  await fs.writeFile('./dist/.build-hash', hash + '\n');
+}
 
 // Skip the full build when no inputs have changed. Inputs: shims/**/*.ts
 // (excl. vendor-types/), tsconfig.json, qunit source, deno.lock, and build.ts.
-async function checkUpToDate(): Promise<string> {
+// Returns null when up-to-date (caller skips the build).
+// Returns precomputed hash string when a rebuild is needed ('' if not yet computed).
+// Avoids process.exit() — calling it from async context on Windows races with
+// pending libuv handles (e.g. Node's TS-stripping worker), crashing with
+// "Assertion failed: !(handle->flags & UV_HANDLE_CLOSING), src\win\async.c".
+async function checkUpToDate(): Promise<string | null> {
   const storedHash = await fs
     .readFile('./dist/.build-hash', 'utf8')
     .then((s) => s.trim())
     .catch(() => null);
   if (storedHash !== null) {
     const hash = await computeInputHash();
-    if (await isBuildUpToDate(hash, storedHash)) process.exit(0);
+    if (await isBuildUpToDate(hash, storedHash)) return null;
     return hash;
   }
   return '';
@@ -377,6 +385,7 @@ function spawnInherit(cmd: string, args: string[]): Promise<void> {
     const script = BIN_SCRIPTS[cmd];
     const [exe, execArgs] = script ? [process.execPath, [script, ...args]] : [cmd, args];
     const proc = spawn(exe, execArgs, { stdio: 'inherit' });
+    proc.on('error', reject);
     proc.on('close', (code) =>
       code === 0 ? resolve() : reject(new Error(`${cmd} exited with code ${code}`)),
     );
