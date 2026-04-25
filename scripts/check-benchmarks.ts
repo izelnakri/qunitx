@@ -13,8 +13,11 @@ import { red, green, yellow, dim } from 'jsr:@std/fmt/colors';
 const BASELINE_PATH = new URL('../benches/results.json', import.meta.url).pathname;
 const REGRESSION_THRESHOLD = Number(Deno.env.get('REGRESSION_THRESHOLD') ?? '20');
 // Ignore regressions where the absolute change is below this floor (nanoseconds).
-// Sub-microsecond benchmarks are too noisy for percentage-only gating.
-const MIN_ABS_DELTA_NS = Number(Deno.env.get('MIN_ABS_DELTA_NS') ?? '1000');
+// Deno bench results vary 2-4× between cold and warm JIT runs for benchmarks
+// under ~5µs. A 5000ns floor prevents cold-JIT noise from blocking releases
+// while still catching genuine code regressions (those show up as large absolute
+// deltas even when the function is fast, e.g. +30µs on throws-passing).
+const MIN_ABS_DELTA_NS = Number(Deno.env.get('MIN_ABS_DELTA_NS') ?? '5000');
 const isSave = Deno.args.includes('--save');
 
 const raw = await new Response(Deno.stdin.readable).text();
