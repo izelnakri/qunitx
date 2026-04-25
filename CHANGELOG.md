@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.9] - 2026-04-25
+[`v1.2.8...v1.2.9`](https://github.com/izelnakri/qunitx-cli/compare/v1.2.8...v1.2.9)
+
+### Bug Fixes
+- Attribute test location to caller file, not qunitx dist — 2026-04-25 by Izel Nakri ([`288e4f6`](https://github.com/izelnakri/qunitx-cli/commit/288e4f6e0270d1344524272c74e15d1cf2e965c5))
+- Replace process.exit(0) with early return to prevent Windows libuv crash — 2026-04-25 by Izel Nakri ([`a95729c`](https://github.com/izelnakri/qunitx-cli/commit/a95729c84bbc15e2b2a39d4b2d9ce2c8771f3bcd))
+- Raise MIN_ABS_DELTA_NS to 5000ns to avoid cold-JIT false regressions — 2026-04-25 by Izel Nakri ([`a973c7a`](https://github.com/izelnakri/qunitx-cli/commit/a973c7af01f5f548742210b817e19cd2b7876f2e))
+
 ## [1.2.8] - 2026-04-21
 [`v1.2.7...v1.2.8`](https://github.com/izelnakri/qunitx-cli/compare/v1.2.7...v1.2.8)
 
