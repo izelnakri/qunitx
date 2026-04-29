@@ -27,6 +27,7 @@
 import '../../vendor/qunit.js';
 import { AssertionError as DenoAssertionError } from 'jsr:@std/assert';
 import Assert from '../shared/assert.ts';
+import { filterStack } from '../shared/filter-stack.ts';
 import ModuleContext from '../shared/module-context.ts';
 import TestContext from '../shared/test-context.ts';
 import type { AssertionErrorOptions } from '../types.ts';
@@ -55,6 +56,7 @@ export class AssertionError extends DenoAssertionError {
   constructor(object: AssertionErrorOptions) {
     super(object.message ?? 'Assertion failed');
     if (object.stackStartFn) Error.captureStackTrace(this, object.stackStartFn);
+    this.stack = filterStack(this.stack);
   }
 }
 

@@ -1,31 +1,34 @@
 // @ts-nocheck — runtime-specific subprocess APIs (Deno.Command / node:child_process)
 import { module, test } from 'qunitx';
 
-if (typeof globalThis['document'] === 'undefined') {
-  module('test location attribution', function () {
-    test('failing test reports user file location, not qunitx dist', async function (assert) {
-      const { pathname } = new URL('./helpers/failing-location-fixture.ts', import.meta.url);
-      const helperPath = process.platform === 'win32' ? pathname.slice(1) : pathname;
+async function runFailingFixture(extraEnv: Record<string, string> = {}): Promise<string> {
+  const { pathname } = new URL('./helpers/failing-location-fixture.ts', import.meta.url);
+  const helperPath = process.platform === 'win32' ? pathname.slice(1) : pathname;
 
-      const output = await (async () => {
-        if (typeof globalThis['Deno'] !== 'undefined') {
-          const result = await new Deno.Command('deno', {
-            args: ['test', '--allow-read', '--allow-env', '--no-check', helperPath],
-            stdout: 'piped',
-            stderr: 'piped',
-          }).output();
-          return new TextDecoder().decode(result.stdout) + new TextDecoder().decode(result.stderr);
-        }
-        const cp = 'node:child_process';
-        const { spawn } = await import(cp);
-        const { NODE_TEST_CONTEXT: _, ...cleanEnv } = process.env;
-        const child = spawn('node', ['--test', helperPath], { env: cleanEnv });
-        const chunks: Buffer[] = [];
-        child.stdout.on('data', (d) => chunks.push(d));
-        child.stderr.on('data', (d) => chunks.push(d));
-        await new Promise((resolve) => child.on('close', resolve));
-        return Buffer.concat(chunks).toString();
-      })();
+  if (typeof globalThis['Deno'] !== 'undefined') {
+    const result = await new Deno.Command('deno', {
+      args: ['test', '--allow-read', '--allow-env', '--no-check', helperPath],
+      stdout: 'piped',
+      stderr: 'piped',
+      env: extraEnv,
+    }).output();
+    return new TextDecoder().decode(result.stdout) + new TextDecoder().decode(result.stderr);
+  }
+  const cp = 'node:child_process';
+  const { spawn } = await import(cp);
+  const { NODE_TEST_CONTEXT: _, ...cleanEnv } = process.env;
+  const child = spawn('node', ['--test', helperPath], { env: { ...cleanEnv, ...extraEnv } });
+  const chunks: Buffer[] = [];
+  child.stdout.on('data', (d) => chunks.push(d));
+  child.stderr.on('data', (d) => chunks.push(d));
+  await new Promise((resolve) => child.on('close', resolve));
+  return Buffer.concat(chunks).toString();
+}
+
+if (typeof globalThis['document'] === 'undefined') {
+  module('failing-test output', function () {
+    test('reports user file location, not qunitx dist', async function (assert) {
+      const output = await runFailingFixture();
 
       // Match both `/` and `\` separators so this runs on Windows too — the
       // previous Linux-only regex silently passed even when the suite location
@@ -52,6 +55,38 @@ if (typeof globalThis['document'] === 'undefined') {
         badLocations,
         [],
         `no reported location should point inside qunitx/dist — got bad locations: ${JSON.stringify(badLocations)}\nfull output:\n${output.slice(0, 800)}`,
+      );
+    });
+
+    test('strips node:internal test-runner frames from the assertion stack', async function (assert) {
+      // Node-only check: Deno's failing-test output doesn't reach into Node-internal
+      // modules, so there's nothing to filter on Deno (the filter is a no-op there).
+      if (typeof globalThis['Deno'] !== 'undefined') {
+        assert.ok(true, 'skipped on Deno — Node-internal frames do not appear in Deno output');
+        return;
+      }
+
+      const output = await runFailingFixture();
+      assert.ok(
+        output.includes('failing-location-fixture'),
+        `output should mention the fixture file — got:\n${output.slice(0, 800)}`,
+      );
+      assert.notOk(
+        /\bnode:internal\/test_runner\//.test(output),
+        `failing test stack should not include node:internal/test_runner frames — got:\n${output.slice(0, 800)}`,
+      );
+      assert.notOk(
+        /\bnode:async_hooks\b/.test(output),
+        `failing test stack should not include node:async_hooks frames — got:\n${output.slice(0, 800)}`,
+      );
+
+      // Sanity check: with QUNITX_DEBUG=1 the filter is bypassed, so the noisy
+      // frames return. This guards against silently disabling filtering in
+      // future refactors (e.g. accidentally always reading some other env var).
+      const debugOutput = await runFailingFixture({ QUNITX_DEBUG: '1' });
+      assert.ok(
+        /\bnode:internal\/test_runner\//.test(debugOutput),
+        `QUNITX_DEBUG=1 should bypass filtering and surface the original frames — got:\n${debugOutput.slice(0, 800)}`,
       );
     });
   });
