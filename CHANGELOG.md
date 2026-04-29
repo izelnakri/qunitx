@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.12] - 2026-04-29
+[`v1.2.11...v1.2.12`](https://github.com/izelnakri/qunitx-cli/compare/v1.2.11...v1.2.12)
+
+### Performance
+- Cut hot-path costs in objectType, objectValues, assert dispatch — 2026-04-29 by Izel Nakri ([`aac86e8`](https://github.com/izelnakri/qunitx-cli/commit/aac86e816d9664a3e7b61bb6f41386315071f398))
+- Trim per-test allocations in node and deno shims — 2026-04-29 by Izel Nakri ([`61f52d2`](https://github.com/izelnakri/qunitx-cli/commit/61f52d23c4261807f0ab715f83b02ed901f8866f))
+
 ## [1.2.11] - 2026-04-29
 [`v1.2.10...v1.2.11`](https://github.com/izelnakri/qunitx-cli/compare/v1.2.10...v1.2.11)
 
