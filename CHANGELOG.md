@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.11] - 2026-04-29
+[`v1.2.10...v1.2.11`](https://github.com/izelnakri/qunitx-cli/compare/v1.2.10...v1.2.11)
+
+### Features
+- Strip node-internal frames from failing assertion stacks — 2026-04-29 by Izel Nakri ([`40c93e6`](https://github.com/izelnakri/qunitx-cli/commit/40c93e6abddc031ca555441a947cd0f8abdebdff))
+
 ## [1.2.10] - 2026-04-29
 [`v1.2.9...v1.2.10`](https://github.com/izelnakri/qunitx-cli/compare/v1.2.9...v1.2.10)
 
