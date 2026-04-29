@@ -40,11 +40,6 @@ export default class Assert {
     this.test = test || (module as ModuleState).testContext;
   }
 
-  /** @internal */
-  private _incrementAssertionCount() {
-    this.test.totalExecutedAssertions++;
-  }
-
   /**
    * Sets the number of milliseconds after which the current test will fail if not yet complete.
    *
@@ -186,7 +181,7 @@ export default class Assert {
    * ```
    */
   pushResult(resultInfo: PushResultInfo = {}): this {
-    this._incrementAssertionCount();
+    this.test.totalExecutedAssertions++;
     if (!resultInfo.result) {
       throw new Assert.AssertionError({
         actual: resultInfo.actual,
@@ -212,7 +207,7 @@ export default class Assert {
    * ```
    */
   ok(state: unknown, message?: string): void {
-    this._incrementAssertionCount();
+    this.test.totalExecutedAssertions++;
     if (!state) {
       throw new Assert.AssertionError({
         actual: state,
@@ -236,7 +231,7 @@ export default class Assert {
    * ```
    */
   notOk(state: unknown, message?: string): void {
-    this._incrementAssertionCount();
+    this.test.totalExecutedAssertions++;
     if (state) {
       throw new Assert.AssertionError({
         actual: state,
@@ -259,7 +254,7 @@ export default class Assert {
    * ```
    */
   true(state: unknown, message?: string): void {
-    this._incrementAssertionCount();
+    this.test.totalExecutedAssertions++;
     if (state !== true) {
       throw new Assert.AssertionError({
         actual: state,
@@ -282,7 +277,7 @@ export default class Assert {
    * ```
    */
   false(state: unknown, message?: string): void {
-    this._incrementAssertionCount();
+    this.test.totalExecutedAssertions++;
     if (state !== false) {
       throw new Assert.AssertionError({
         actual: state,
@@ -309,7 +304,7 @@ export default class Assert {
    * ```
    */
   equal(actual: unknown, expected: unknown, message?: string): void {
-    this._incrementAssertionCount();
+    this.test.totalExecutedAssertions++;
     if (actual != expected) {
       throw new Assert.AssertionError({
         actual,
@@ -334,7 +329,7 @@ export default class Assert {
    * ```
    */
   notEqual(actual: unknown, expected: unknown, message?: string): void {
-    this._incrementAssertionCount();
+    this.test.totalExecutedAssertions++;
     if (actual == expected) {
       throw new Assert.AssertionError({
         actual,
@@ -363,7 +358,7 @@ export default class Assert {
    * ```
    */
   propEqual(actual: unknown, expected: unknown, message?: string): void {
-    this._incrementAssertionCount();
+    this.test.totalExecutedAssertions++;
     const targetActual = objectValues(actual);
     const targetExpected = objectValues(expected);
     if (!Assert.QUnit.equiv(targetActual, targetExpected)) {
@@ -390,7 +385,7 @@ export default class Assert {
    * ```
    */
   notPropEqual(actual: unknown, expected: unknown, message?: string): void {
-    this._incrementAssertionCount();
+    this.test.totalExecutedAssertions++;
     const targetActual = objectValues(actual);
     const targetExpected = objectValues(expected);
     if (Assert.QUnit.equiv(targetActual, targetExpected)) {
@@ -417,7 +412,7 @@ export default class Assert {
    * ```
    */
   propContains(actual: unknown, expected: unknown, message?: string): void {
-    this._incrementAssertionCount();
+    this.test.totalExecutedAssertions++;
     const targetActual = objectValuesSubset(actual, expected);
     const targetExpected = objectValues(expected, false);
     if (!Assert.QUnit.equiv(targetActual, targetExpected)) {
@@ -444,7 +439,7 @@ export default class Assert {
    * ```
    */
   notPropContains(actual: unknown, expected: unknown, message?: string): void {
-    this._incrementAssertionCount();
+    this.test.totalExecutedAssertions++;
     const targetActual = objectValuesSubset(actual, expected);
     const targetExpected = objectValues(expected);
     if (Assert.QUnit.equiv(targetActual, targetExpected)) {
@@ -471,7 +466,7 @@ export default class Assert {
    * ```
    */
   deepEqual(actual: unknown, expected: unknown, message?: string): void {
-    this._incrementAssertionCount();
+    this.test.totalExecutedAssertions++;
     if (!Assert.QUnit.equiv(actual, expected)) {
       throw new Assert.AssertionError({
         actual,
@@ -496,7 +491,7 @@ export default class Assert {
    * ```
    */
   notDeepEqual(actual: unknown, expected: unknown, message?: string): void {
-    this._incrementAssertionCount();
+    this.test.totalExecutedAssertions++;
     if (Assert.QUnit.equiv(actual, expected)) {
       throw new Assert.AssertionError({
         actual,
@@ -521,7 +516,7 @@ export default class Assert {
    * ```
    */
   strictEqual(actual: unknown, expected: unknown, message?: string): void {
-    this._incrementAssertionCount();
+    this.test.totalExecutedAssertions++;
     if (actual !== expected) {
       throw new Assert.AssertionError({
         actual,
@@ -546,7 +541,7 @@ export default class Assert {
    * ```
    */
   notStrictEqual(actual: unknown, expected: unknown, message?: string): void {
-    this._incrementAssertionCount();
+    this.test.totalExecutedAssertions++;
     if (actual === expected) {
       throw new Assert.AssertionError({
         actual,
@@ -574,7 +569,7 @@ export default class Assert {
    * ```
    */
   throws(blockFn: unknown, expectedInput?: unknown, assertionMessage?: string): void {
-    this._incrementAssertionCount();
+    this.test.totalExecutedAssertions++;
     const [expected, message] = validateExpectedExceptionArgs(expectedInput, assertionMessage, 'throws');
     if (typeof blockFn !== 'function') {
       throw new Assert.AssertionError({
@@ -637,7 +632,7 @@ export default class Assert {
    * ```
    */
   async rejects(promise: unknown, expectedInput?: unknown, assertionMessage?: string): Promise<void> {
-    this._incrementAssertionCount();
+    this.test.totalExecutedAssertions++;
     const [expected, message] = validateExpectedExceptionArgs(expectedInput, assertionMessage, 'rejects');
     const then = promise && (promise as PromiseLike<unknown>).then;
     if (typeof then !== 'function') {

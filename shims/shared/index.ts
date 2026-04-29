@@ -1,22 +1,31 @@
 const hasOwn = Object.prototype.hasOwnProperty;
+const objToString = Object.prototype.toString;
 
 export function objectType(obj: unknown): string {
-  if (typeof obj === 'undefined') {
-    return 'undefined';
+  if (obj === null) return 'null';
+  const t = typeof obj;
+  // Fast path: primitives + functions return their `typeof` directly. Skips
+  // the Object.prototype.toString.call() detour that allocates a "[object Foo]"
+  // string for every primitive check.
+  switch (t) {
+    case 'undefined':
+    case 'string':
+    case 'boolean':
+    case 'function':
+    case 'symbol':
+    case 'bigint':
+      return t;
+    case 'number':
+      // x !== x is true only for NaN.
+      return obj !== obj ? 'nan' : 'number';
   }
-
-  // Consider: typeof null === object
-  if (obj === null) {
-    return 'null';
-  }
-  // slice(8, -1) extracts the type name from "[object Foo]" without a regex
-  const type = Object.prototype.toString.call(obj).slice(8, -1);
+  // typeof === 'object': fall through to qunit.js's exact slow path so
+  // boxed primitives, cross-realm objects, and Symbol.toStringTag overrides
+  // produce the same classification as the upstream library.
+  const type = objToString.call(obj).slice(8, -1);
   switch (type) {
     case 'Number':
-      if (isNaN(obj as number)) {
-        return 'nan';
-      }
-      return 'number';
+      return isNaN(obj as number) ? 'nan' : 'number';
     case 'String':
     case 'Boolean':
     case 'Array':
@@ -28,17 +37,23 @@ export function objectType(obj: unknown): string {
     case 'Symbol':
       return type.toLowerCase();
     default:
-      return typeof obj;
+      return 'object';
   }
 }
 
 export function objectValues(obj: unknown, allowArray = true): unknown {
-  const vals: Record<string, unknown> | unknown[] = allowArray && objectType(obj) === 'array' ? [] : {};
+  const vals: Record<string, unknown> | unknown[] = allowArray && Array.isArray(obj) ? [] : {};
 
   for (const key in obj as object) {
     if (hasOwn.call(obj, key)) {
       const val = (obj as Record<string, unknown>)[key];
-      (vals as Record<string, unknown>)[key] = val === Object(val) ? objectValues(val, allowArray) : val;
+      // `val === Object(val)` returns true for objects+functions and false for
+      // primitives/null — but it boxes every primitive into a wrapper object
+      // just to throw it away. The typeof check is the same boolean without
+      // the per-call allocation.
+      const t = typeof val;
+      const isObjectish = val !== null && (t === 'object' || t === 'function');
+      (vals as Record<string, unknown>)[key] = isObjectish ? objectValues(val, allowArray) : val;
     }
   }
 
@@ -54,9 +69,11 @@ export function objectValuesSubset(obj: unknown, model: unknown): unknown {
   // results from assert.propContains().
   // E.g. an actual null or false wrongly equaling an empty object,
   // or an actual string being reported as object not matching a partial object.
-  if (obj !== Object(obj)) {
-    return obj;
-  }
+  // `obj !== Object(obj)` boxes primitives into wrapper objects every call —
+  // typeof matches the same set without allocating.
+  if (obj === null) return obj;
+  const objT = typeof obj;
+  if (objT !== 'object' && objT !== 'function') return obj;
 
   // Unlike objectValues(), subset arrays to a plain objects as well.
   // This enables subsetting [20, 30] with {1: 30}.

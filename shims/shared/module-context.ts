@@ -7,7 +7,8 @@ export default class ModuleContext {
   static currentModuleChain: ModuleContext[] = [];
 
   static get lastModule() {
-    return this.currentModuleChain.at(-1);
+    const chain = this.currentModuleChain;
+    return chain[chain.length - 1];
   }
 
   name!: string;
@@ -23,11 +24,12 @@ export default class ModuleContext {
   tests: TestContext[] = [];
 
   constructor(name: string) {
-    const parentModule = ModuleContext.currentModuleChain.at(-1);
+    const chain = ModuleContext.currentModuleChain;
+    const parentModule = chain[chain.length - 1];
 
-    ModuleContext.currentModuleChain.push(this);
+    chain.push(this);
 
-    this.moduleChain = [...ModuleContext.currentModuleChain];
+    this.moduleChain = chain.slice();
     this.name = parentModule ? `${parentModule.name} > ${name}` : name;
     this.assert = new ModuleContext.Assert(this);
 
