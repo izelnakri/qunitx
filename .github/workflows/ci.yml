@@ -165,24 +165,20 @@ jobs:
           FORCE_COLOR: 0
 
   # ── GitHub release ─────────────────────────────────────────────────────────────
+  # Intentionally NOT gated on release-consumer-test: by the time this runs,
+  # `make release` has already published to npm, so blocking the GitHub
+  # release on a flaky consumer test causes drift (npm has it, GH doesn't).
+  # release-consumer-test still runs in parallel and surfaces failures in CI
+  # status; release-reconcile.yml is the weekly backstop for any other
+  # publish failures (GH API outages, runner death, etc.).
   github-release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [release-consumer-test]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v6
-      - name: Create GitHub release from CHANGELOG.md
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          VERSION="${{ github.ref_name }}"
-          VERSION_NO_V="${VERSION#v}"
-          # Escape dots so awk treats them as literals, not regex wildcards (e.g. 1.2.8 ≠ 1X2Y8)
-          VERSION_ESC="${VERSION_NO_V//./\\.}"
-          NOTES_FILE=$(mktemp)
-          awk "/^## \[${VERSION_ESC}\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md > "$NOTES_FILE"
-          gh release create "$VERSION" --title "$VERSION" --notes-file "$NOTES_FILE" 2>/dev/null || \
-          gh release edit "$VERSION" --title "$VERSION" --notes-file "$NOTES_FILE"
-          rm "$NOTES_FILE"
+      - uses: ./.github/actions/publish-release
+        with:
+          tag: ${{ github.ref_name }}
+          github_token: ${{ github.token }}

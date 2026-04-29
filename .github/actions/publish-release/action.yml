@@ -1,0 +1,58 @@
+name: Publish GitHub release
+description: Create or update a GitHub release using the matching CHANGELOG.md section as the body, optionally uploading artifacts (with sha256 checksums).
+
+inputs:
+  tag:
+    description: Tag to release (e.g. v1.2.3). Must already exist on the remote.
+    required: true
+  artifacts_dir:
+    description: Directory of artifacts to upload. Empty to skip artifact upload.
+    required: false
+    default: ''
+  github_token:
+    description: 'GitHub token with `contents: write` permission.'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Publish ${{ inputs.tag }}
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github_token }}
+        TAG: ${{ inputs.tag }}
+        ARTIFACTS_DIR: ${{ inputs.artifacts_dir }}
+      run: |
+        set -euo pipefail
+
+        VERSION_NO_V="${TAG#v}"
+        # Escape dots so awk treats them as literals (1.2.8 ≠ 1X2Y8)
+        VERSION_ESC="${VERSION_NO_V//./\\.}"
+        NOTES_FILE=$(mktemp)
+        trap 'rm -f "$NOTES_FILE"' EXIT
+        awk "/^## \[${VERSION_ESC}\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md > "$NOTES_FILE"
+        if [ ! -s "$NOTES_FILE" ]; then
+          echo "::warning::No CHANGELOG.md section found for ${TAG}; release notes will be empty."
+        fi
+
+        # Explicit existence check so real errors (auth, rate limit) surface
+        # instead of being swallowed by `create || edit`.
+        if gh release view "$TAG" >/dev/null 2>&1; then
+          gh release edit "$TAG" --title "$TAG" --notes-file "$NOTES_FILE"
+        else
+          gh release create "$TAG" --title "$TAG" --notes-file "$NOTES_FILE"
+        fi
+
+        if [ -n "$ARTIFACTS_DIR" ]; then
+          if [ ! -d "$ARTIFACTS_DIR" ]; then
+            echo "::error::artifacts_dir '$ARTIFACTS_DIR' does not exist"
+            exit 1
+          fi
+          ( cd "$ARTIFACTS_DIR" && sha256sum * > checksums.txt )
+          shopt -s nullglob
+          files=( "$ARTIFACTS_DIR"/* )
+          shopt -u nullglob
+          if [ ${#files[@]} -gt 0 ]; then
+            gh release upload "$TAG" --clobber "${files[@]}"
+          fi
+        fi

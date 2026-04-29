@@ -1,0 +1,97 @@
+name: Reconcile GitHub releases
+
+# Weekly safety net for the release pipeline. `make release` publishes to
+# npm and pushes a `v*` tag; ci.yml's github-release job then creates the
+# matching GitHub release. If that job is skipped (gate failure, GH API
+# outage, runner death, etc.) the npm package ships but the GitHub release
+# is missing — this workflow detects that drift and backfills.
+#
+# Cron only fires from the default branch. Use the workflow_dispatch input
+# `dry_run` to verify behaviour without creating releases.
+
+on:
+  schedule:
+    - cron: '0 4 * * 0' # Sundays 04:00 UTC
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: List missing tags without creating releases
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      missing: ${{ steps.scan.outputs.missing }}
+      has_missing: ${{ steps.scan.outputs.has_missing }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # need full tag history
+      - id: scan
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # `comm` requires LC_ALL=C lexicographic order — `sort -V` does NOT
+          # produce that, so we pin LC_ALL=C and use plain `sort` for the diff.
+          # Version order is only used at the end for human-friendly display.
+          export LC_ALL=C
+          tags=$(git tag -l 'v*' | sort)
+          releases=$(gh release list --limit 500 --json tagName --jq '.[].tagName' | sort)
+          missing=$(comm -23 <(echo "$tags") <(echo "$releases"))
+          tag_count=$(echo "$tags" | grep -c . || true)
+          release_count=$(echo "$releases" | grep -c . || true)
+
+          {
+            echo "## Release reconcile scan"
+            echo ""
+            echo "- tags: $tag_count"
+            echo "- existing releases: $release_count"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ -z "$missing" ]; then
+            echo "All tags have GitHub releases. ✅"
+            echo "- missing: 0 ✅" >> "$GITHUB_STEP_SUMMARY"
+            echo "has_missing=false" >> "$GITHUB_OUTPUT"
+            echo "missing=[]" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          missing_sorted=$(echo "$missing" | sort -V)
+          missing_count=$(echo "$missing_sorted" | grep -c .)
+          echo "Missing GitHub releases ($missing_count):"
+          echo "$missing_sorted" | sed 's/^/  - /'
+          {
+            echo "- missing: $missing_count"
+            echo ""
+            echo "$missing_sorted" | sed 's/^/- /'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          json=$(echo "$missing_sorted" | jq -Rcs 'split("\n") | map(select(length>0))')
+          echo "has_missing=true" >> "$GITHUB_OUTPUT"
+          echo "missing=$json" >> "$GITHUB_OUTPUT"
+
+  publish:
+    needs: detect
+    if: needs.detect.outputs.has_missing == 'true' && inputs.dry_run != true
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        tag: ${{ fromJSON(needs.detect.outputs.missing) }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/publish-release
+        with:
+          tag: ${{ matrix.tag }}
+          github_token: ${{ github.token }}
