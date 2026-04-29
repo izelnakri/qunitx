@@ -80,10 +80,12 @@ export default function module(
       const allAsyncOps = moduleContext.tests.flatMap((t) => t.asyncOps);
       if (allAsyncOps.length > 0) await Promise.all(allAsyncOps);
 
-      const lastTest = moduleContext.tests.at(-1);
+      const tests = moduleContext.tests;
+      const lastTest = tests[tests.length - 1];
       if (lastTest) {
-        for (const hook of afterHooks.toReversed()) {
-          await hook.call(lastTest.userContext, lastTest.assert!, { context: lastTest.userContext });
+        // Indexed reverse iteration avoids `afterHooks.toReversed()`'s per-call alloc.
+        for (let i = afterHooks.length - 1; i >= 0; i--) {
+          await afterHooks[i]!.call(lastTest.userContext, lastTest.assert!, { context: lastTest.userContext });
         }
       }
 

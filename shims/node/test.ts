@@ -80,7 +80,8 @@ export default function test(
 
     (async () => {
       try {
-        for (const mod of context.module!.moduleChain) {
+        const chain = context.module!.moduleChain;
+        for (const mod of chain) {
           for (const hook of mod.beforeEachHooks) {
             await hook.call(userContext, context.assert!, hookMeta);
           }
@@ -88,11 +89,15 @@ export default function test(
 
         await targetTestContent.call(userContext, context.assert!, { testName, options: targetRuntimeOptions, context: userContext });
 
-        await context.assert!.waitForAsyncOps();
+        // Skip the microtask hop when no `assert.async()` callbacks were registered.
+        if (context.asyncOps.length > 0) await context.assert!.waitForAsyncOps();
 
-        for (const mod of context.module!.moduleChain.toReversed()) {
-          for (const hook of mod.afterEachHooks.toReversed()) {
-            await hook.call(userContext, context.assert!, hookMeta);
+        // Indexed reverse iteration avoids the per-test allocations from
+        // `chain.toReversed()` + per-module `hooks.toReversed()`.
+        for (let i = chain.length - 1; i >= 0; i--) {
+          const hooks = chain[i]!.afterEachHooks;
+          for (let j = hooks.length - 1; j >= 0; j--) {
+            await hooks[j]!.call(userContext, context.assert!, hookMeta);
           }
         }
 
