@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.10] - 2026-04-29
+[`v1.2.9...v1.2.10`](https://github.com/izelnakri/qunitx-cli/compare/v1.2.9...v1.2.10)
+
+### Bug Fixes
+- Attribute describe() suite location to caller file — 2026-04-29 by Izel Nakri ([`be40145`](https://github.com/izelnakri/qunitx-cli/commit/be4014564574c3c91ad64c2deb0814ae7c43c12f))
+
 ## [1.2.9] - 2026-04-25
 [`v1.2.8...v1.2.9`](https://github.com/izelnakri/qunitx-cli/compare/v1.2.8...v1.2.9)
 
