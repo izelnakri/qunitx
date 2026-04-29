@@ -2,6 +2,7 @@ import { after as afterAll, before as beforeAll, describe } from 'node:test';
 import type Assert from '../shared/assert.ts';
 import ModuleContext from '../shared/module-context.ts';
 import type { HookFn, HooksObject } from '../types.ts';
+import { callAtLocation, captureCallerLocation } from './caller-location.ts';
 
 /**
  * Defines a test module (suite) for Node's built-in test runner.
@@ -44,6 +45,7 @@ export default function module(
   runtimeOptions: object | ((hooks: HooksObject<Assert>) => void),
   moduleContent?: (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown; context: Record<string, unknown> }) => void,
 ): void {
+  const loc = captureCallerLocation(module);
   const targetRuntimeOptions = moduleContent ? runtimeOptions as object : {};
   const { skip } = targetRuntimeOptions as { skip?: boolean | string };
 
@@ -52,14 +54,14 @@ export default function module(
   // lives inside the describe callback. If the runtime skips the callback, the pop
   // never runs and corrupts the chain for all subsequent modules.
   if (skip) {
-    describe(moduleName, { skip }, function () {});
+    callAtLocation(describe, loc, moduleName, { skip }, function () {});
     return;
   }
 
   const targetModuleContent = (moduleContent ?? runtimeOptions) as (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown }) => void;
   const moduleContext = new ModuleContext(moduleName);
 
-  describe(moduleName, { ...targetRuntimeOptions }, function () {
+  callAtLocation(describe, loc, moduleName, { ...targetRuntimeOptions }, function () {
     const beforeHooks: HookFn<Assert>[] = [];
     const afterHooks: HookFn<Assert>[] = [];
 
@@ -127,7 +129,7 @@ export default function module(
  * ```
  */
 module.skip = function skipModule(moduleName: string, _moduleContent?: unknown): void {
-  describe(moduleName, { skip: true }, function () {});
+  callAtLocation(describe, captureCallerLocation(skipModule), moduleName, { skip: true }, function () {});
 };
 
 /**
@@ -149,5 +151,5 @@ module.skip = function skipModule(moduleName: string, _moduleContent?: unknown):
  * ```
  */
 module.todo = function todoModule(moduleName: string, _moduleContent?: unknown): void {
-  describe(moduleName, { skip: true }, function () {});
+  callAtLocation(describe, captureCallerLocation(todoModule), moduleName, { skip: true }, function () {});
 };
