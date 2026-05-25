@@ -1,6 +1,7 @@
 {
   "imports": {
-    "qunitx": "./shims/deno/index.ts"
+    "qunitx": "./shims/deno/index.ts",
+    "qunitx/assert": "./shims/shared/assert.ts"
   },
   "tasks": {
     "bench": "deno bench --allow-read --allow-env benches/assert.bench.ts benches/context.bench.ts benches/utils.bench.ts",

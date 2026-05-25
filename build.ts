@@ -320,6 +320,17 @@ async function bundleDenoShim(): Promise<void> {
   const jsrPlugin: Plugin = {
     name: 'jsr',
     setup(build) {
+      // Mark `../shared/*` imports as external so the published deno bundle
+      // re-uses `dist/shared/assert.js` (the same module that `qunitx/assert`
+      // resolves to). Inlining a copy here would give the deno entry its own
+      // `Assert` class, breaking `Assert.prototype.<name> = …` extensions made
+      // through the `qunitx/assert` subpath. Rewrite `.ts` → `.js` so the
+      // emitted bundle imports the built file directly without relying on the
+      // later fixJsImports pass.
+      build.onResolve({ filter: /^\.\.\/shared\// }, (args) => ({
+        path: args.path.replace(/\.ts$/, '.js'),
+        external: true,
+      }));
       // jsr: imports from local TypeScript files → resolve to https://jsr.io
       build.onResolve({ filter: /^jsr:/ }, async (args) => ({
         path: await jsrToUrl(args.path),
