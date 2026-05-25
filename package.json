@@ -63,7 +63,6 @@
     },
     "./assert": {
       "types": "./dist/shared/assert.d.ts",
-      "deno": "./shims/shared/assert.ts",
       "default": "./dist/shared/assert.js"
     }
   },
