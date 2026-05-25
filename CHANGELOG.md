@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.17] - 2026-05-25
+[`v1.2.16...v1.2.17`](https://github.com/izelnakri/qunitx-cli/compare/v1.2.16...v1.2.17)
+
+### Bug Fixes
+- Drop deno .ts shim for ./assert to avoid type-stripping crash — 2026-05-25 by Izel Nakri ([`b3a1828`](https://github.com/izelnakri/qunitx-cli/commit/b3a182895037bcdb70cfb4fe90899d61aff8720a))
+
 ## [1.2.12] - 2026-04-29
 [`v1.2.11...v1.2.12`](https://github.com/izelnakri/qunitx-cli/compare/v1.2.11...v1.2.12)
 
