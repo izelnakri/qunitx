@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.18] - 2026-05-25
+[`v1.2.17...v1.2.18`](https://github.com/izelnakri/qunitx-cli/compare/v1.2.17...v1.2.18)
+
+### Bug Fixes
+- Share canonical Assert class between qunitx and qunitx/assert — 2026-05-25 by Izel Nakri ([`08e0795`](https://github.com/izelnakri/qunitx-cli/commit/08e0795085c486e664c73e59438cceebda5e38e9))
+
 ## [1.2.17] - 2026-05-25
 [`v1.2.16...v1.2.17`](https://github.com/izelnakri/qunitx-cli/compare/v1.2.16...v1.2.17)
 
