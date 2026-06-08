@@ -121,7 +121,7 @@ jobs:
           restore-keys: dist-
       - run: npm ci
       - run: npm run coverage
-      - uses: codecov/codecov-action@v6
+      - uses: codecov/codecov-action@v7
         with:
           files: tmp/coverage/lcov.info
           fail_ci_if_error: false
