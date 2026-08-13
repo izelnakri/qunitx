@@ -21,9 +21,13 @@ Set TypingSpeed 35ms
 Set PlaybackSpeed 1.0
 
 # --- Show the test file ---
-Type "bat --paging=never docs/demo-math-test.ts"
+# Line-ranged deliberately: the full 59-line file overflows a 680px terminal and
+# scrolls, so the frame that lands is the tail. The head is the pitch — the single
+# `import { module, test } from 'qunitx'` line every reader is looking for — so we
+# stop at the nested-module example and let node --test show the rest.
+Type "bat --paging=never -r 1:26 docs/demo-math-test.ts"
 Enter
-Sleep 1500ms
+Sleep 2000ms
 
 # --- Node.js: zero config, passes on the clean file ---
 Type "# Node.js — zero config, built-in runner"
@@ -70,9 +74,19 @@ Enter
 Sleep 2500ms
 
 # --- qunitx: browser runner (the finale) ---
-Type "# Browser UI: qunitx docs/demo-math-test.ts --debug"
+# The command shown is the one that produces the pane on the right: --debug opens the
+# live QUnit UI beside the terminal output. Recorded without it because VHS has no
+# browser to open, and a headless run streams the same TAP.
+# Ctrl+L first: the run prints ~20 lines of TAP and the deno output above it would
+# push the summary off-screen. A clean screen fits the whole run.
+Ctrl+L
+Sleep 200ms
+Type "# Browser UI — same file, real Chrome (add --debug for the UI)"
 Enter
 Sleep 200ms
 Type "npx qunitx docs/demo-math-test.ts"
 Enter
-Sleep 2500ms
+# The run itself takes ~2.4s. The old 2500ms ended the recording the moment the
+# summary printed, so the finale was a blank wait rather than the result. This
+# holds the finished TAP output on screen for ~4.5s before the GIF loops.
+Sleep 7000ms
