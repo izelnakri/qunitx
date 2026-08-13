@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.2.19] - 2026-08-13
+[`v1.2.18...v1.2.19`](https://github.com/izelnakri/qunitx-cli/compare/v1.2.18...v1.2.19)
+
+### Bug Fixes
+- Ship declaration files that actually type-check — 2026-08-13 by Izel Nakri ([`e9f0834`](https://github.com/izelnakri/qunitx-cli/commit/e9f0834e2013f8e5822a3fe191538a51b7b65e3f))
+- Point the run:* debug commands at files that exist — 2026-08-13 by Izel Nakri ([`86acb15`](https://github.com/izelnakri/qunitx-cli/commit/86acb15a2afc9705eec7d91c0df6d90a89ebf76e))
+
+### Features
+- Publish to JSR from CI, with provenance — 2026-08-13 by Izel Nakri ([`fc6d0d8`](https://github.com/izelnakri/qunitx-cli/commit/fc6d0d87dd1431c09e3ab80c37f1381682543861))
+
 ## [1.2.18] - 2026-05-25
 [`v1.2.17...v1.2.18`](https://github.com/izelnakri/qunitx-cli/compare/v1.2.17...v1.2.18)
 
