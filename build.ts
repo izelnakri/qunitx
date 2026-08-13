@@ -10,6 +10,7 @@ if (inputHash !== null) {
   await compileAndVendor();
   await Promise.all([fixJsImports(), fixDtsImports()]);
   await fixDenoIndexDts();
+  await assertDeclarationIntegrity();
   const hash = inputHash || (await computeInputHash());
   await fs.writeFile('./dist/.build-hash', hash + '\n');
 }
@@ -191,6 +192,9 @@ async function fixDtsImports(): Promise<void> {
     findFiles('./vendor', (n) => n.endsWith('.d.ts')),
   ]);
   const dtsSet = new Set([...distDts, ...vendorDts].map((f) => path.resolve(f)));
+  const jsSet = new Set(
+    (await findFiles('./dist', (n) => n.endsWith('.js'))).map((f) => path.resolve(f)),
+  );
   await Promise.all(
     distDts.map(async (dtsPath) => {
       const dir = path.dirname(dtsPath);
@@ -220,6 +224,28 @@ async function fixDtsImports(): Promise<void> {
           /(from\s+['"]|import\(['"])(\.\.?\/[^'"]*?)\.js(['"]\)|['"])/g,
           (match, pre, p, post) =>
             dtsSet.has(path.resolve(dir, p + '.d.ts')) ? `${pre}${p}.d.ts${post}` : match,
+        )
+        // import Foo from './bar.d.ts'  →  import type Foo from './bar.d.ts'
+        // The .js→.d.ts rewrite above turns value imports into imports of a declaration
+        // file, which TypeScript rejects as TS2846 ("a declaration file cannot be
+        // imported without 'import type'") whenever a consumer type-checks with
+        // `skipLibCheck: false`. A declaration file has no runtime side, so the binding
+        // was only ever usable as a type here — marking it `type` is what was meant.
+        .replace(
+          /^(\s*)import\s+(?!type\b)([A-Za-z_$][\w$]*\s+from\s+['"]\.\.?\/[^'"]*?\.d\.ts['"])/gm,
+          '$1import type $2',
+        )
+        // export { default as module } from './module.d.ts'  →  from './module.js'
+        // Undoes the .js→.d.ts pass for *value* re-exports only. A re-exported binding
+        // is not a type, so `import type` cannot rescue it the way it does above, and
+        // naming a declaration file is TS2846 for every consumer type-checking with
+        // `skipLibCheck: false`. Type-only re-exports (`export type { … } from`) are
+        // untouched and keep pointing at .d.ts for the Deno reason above — checked
+        // against both tsc and `deno check` from a packed tarball, on Node and Deno.
+        .replace(
+          /^export\s+(?!type\b)[^\n]*?\bfrom\s+(['"])(\.\.?\/[^'"]*?)\.d\.ts\1/gm,
+          (match, _quote, p) =>
+            jsSet.has(path.resolve(dir, p + '.js')) ? match.replace(`${p}.d.ts`, `${p}.js`) : match,
         );
       if (fixed !== original) await fs.writeFile(dtsPath, fixed);
     }),
@@ -233,10 +259,54 @@ async function fixDtsImports(): Promise<void> {
 async function fixDenoIndexDts(): Promise<void> {
   const dtsPath = './dist/deno/index.d.ts';
   const src = await fs.readFile(dtsPath, 'utf8');
+  // Quote style is tsc's to choose and has changed between releases, so match either.
   const fixed = src
-    .replace('import { AssertionError as DenoAssertionError } from "jsr:@std/assert";\n', '')
+    .replace(
+      /^import \{ AssertionError as DenoAssertionError \} from ['"]jsr:@std\/assert['"];\n/m,
+      '',
+    )
     .replace('extends DenoAssertionError', 'extends Error');
+  // Assert the outcome rather than the edit: this must stay idempotent, because an
+  // incremental build where tsc skips re-emitting hands us the already-fixed file.
+  // Checking the result also catches the emit drifting out from under the pattern
+  // above — a silent no-op there ships a declaration file consumers cannot resolve.
+  if (fixed.includes('jsr:') || fixed.includes('DenoAssertionError')) {
+    throw new Error(`${dtsPath}: jsr:@std/assert reference survived post-processing`);
+  }
   if (fixed !== src) await fs.writeFile(dtsPath, fixed);
+}
+
+// Two invariants the emitted declarations have to hold, both of which have shipped
+// broken before. Neither shows up in the runtime output or in this repo's own tests —
+// only a consumer type-checking with `skipLibCheck: false` ever sees them, which is
+// exactly why they need asserting at build time.
+//
+//   1. A module may declare at most one default export. tsc emits two when
+//      `export default function` is used on an overload set that also carries a
+//      namespace merge (module.skip / test.todo). Declare the overloads plain and
+//      `export default` the merged binding once at the end.
+//   2. A value re-export may not name a declaration file (TS2846). fixDtsImports
+//      points those at the .js sibling; type-only re-exports stay on .d.ts.
+async function assertDeclarationIntegrity(): Promise<void> {
+  const dtsFiles = await findFiles('./dist', (n) => n.endsWith('.d.ts'));
+  const problems = (
+    await Promise.all(
+      dtsFiles.map(async (f) => {
+        const src = await fs.readFile(f, 'utf8');
+        const defaults = src.match(/^export default\b/gm)?.length ?? 0;
+        const valueReExports = src.match(
+          /^export\s+(?!type\b)[^\n]*?\bfrom\s+['"]\.\.?\/[^'"]*?\.d\.ts['"]/gm,
+        );
+        return [
+          defaults > 1 ? `${f}: ${defaults} default exports` : null,
+          valueReExports ? `${f}: value re-export of a declaration file` : null,
+        ].filter((p) => p !== null);
+      }),
+    )
+  ).flat();
+  if (problems.length > 0) {
+    throw new Error(`invalid declaration output:\n  ${problems.join('\n  ')}`);
+  }
 }
 
 async function ensureVendorPackageJson(): Promise<void> {

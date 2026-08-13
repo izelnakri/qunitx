@@ -30,10 +30,10 @@ import type { HookFn, HooksObject } from '../types.ts';
  * });
  * ```
  */
-export default function module(moduleName: string, moduleContent: (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown; context: Record<string, unknown> }) => void): void;
+function module(moduleName: string, moduleContent: (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown; context: Record<string, unknown> }) => void): void;
 /** Defines a test module (suite) with optional Deno BDD runtime options forwarded to `describe()`. */
-export default function module(moduleName: string, runtimeOptions: object, moduleContent: (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown; context: Record<string, unknown> }) => void): void;
-export default function module(
+function module(moduleName: string, runtimeOptions: object, moduleContent: (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown; context: Record<string, unknown> }) => void): void;
+function module(
   moduleName: string,
   runtimeOptions: object | ((hooks: HooksObject<Assert>) => void),
   moduleContent?: (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown; context: Record<string, unknown> }) => void,
@@ -148,6 +148,12 @@ module.skip = function skipModule(moduleName: string, _moduleContent?: unknown):
 module.todo = function todoModule(moduleName: string, _moduleContent?: unknown): void {
   describe(moduleName, { ignore: true }, function () {});
 };
+
+// Exported here rather than on the declarations above: `export default function` on an
+// overload set that also carries a namespace merge (.skip/.todo) emits a .d.ts with two
+// `export default` statements, which is invalid TypeScript (TS2528/TS2652/TS2383) and
+// breaks consumers that typecheck with `skipLibCheck: false`.
+export default module;
 
 export type { Assert };
 export type { HookFn, HooksObject, PushResultInfo } from '../types.ts';

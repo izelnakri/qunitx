@@ -36,10 +36,10 @@ import { callAtLocation, captureCallerLocation } from './caller-location.ts';
  * });
  * ```
  */
-export default function test(testName: string, testContent: (assert: Assert, meta: { testName: string; options: unknown; context: Record<string, unknown> }) => void | Promise<void>): void;
+function test(testName: string, testContent: (assert: Assert, meta: { testName: string; options: unknown; context: Record<string, unknown> }) => void | Promise<void>): void;
 /** Defines an individual test with optional Node test runner options forwarded to `it()`. */
-export default function test(testName: string, runtimeOptions: object, testContent: (assert: Assert, meta: { testName: string; options: unknown; context: Record<string, unknown> }) => void | Promise<void>): void;
-export default function test(
+function test(testName: string, runtimeOptions: object, testContent: (assert: Assert, meta: { testName: string; options: unknown; context: Record<string, unknown> }) => void | Promise<void>): void;
+function test(
   testName: string,
   runtimeOptions: object | ((assert: Assert, meta: { testName: string; options: unknown; context: Record<string, unknown> }) => void | Promise<void>),
   testContent?: (assert: Assert, meta: { testName: string; options: unknown; context: Record<string, unknown> }) => void | Promise<void>,
@@ -161,3 +161,9 @@ test.todo = function todoTest(testName: string, testContent?: (assert: Assert, m
   }
   test(testName, { todo: true }, testContent);
 };
+
+// Exported here rather than on the declarations above: `export default function` on an
+// overload set that also carries a namespace merge (.skip/.todo) emits a .d.ts with two
+// `export default` statements, which is invalid TypeScript (TS2528/TS2652/TS2383) and
+// breaks consumers that typecheck with `skipLibCheck: false`.
+export default test;
