@@ -1,4 +1,4 @@
-.PHONY: check check-release fix test lint lint-docs format build demo coverage coverage-report docs bench-print bench bench-update bench-check release
+.PHONY: check check-release fix test lint lint-docs format build demo coverage coverage-report docs bench-print bench bench-update bench-check release run
 
 REGRESSION_THRESHOLD ?= 26
 
@@ -21,6 +21,16 @@ lint-docs:
 
 test:
 	npm test
+
+# Eyeball what qunitx's own output looks like, one runtime after the other:
+# test/truthy-test.ts passes, test/helpers/failing-location-fixture.ts fails on
+# purpose, so a run shows both shapes side by side. Both recipes are prefixed with
+# `-` because the failing fixture makes them exit non-zero by design — without it
+# the Deno half would never run. This is for reading, not a gate; `make check` is
+# the gate.
+run:
+	-npm run run:node
+	-npm run run:deno
 
 build:
 	npm run build
