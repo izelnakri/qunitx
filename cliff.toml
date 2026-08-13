@@ -44,4 +44,6 @@ sort_commits = "oldest"
 
 [remote.github]
 owner = "izelnakri"
-repo  = "qunitx-cli"
+# This repo. The template builds every commit and compare link from it, so a wrong
+# value here silently points the whole changelog at another project.
+repo  = "qunitx"
