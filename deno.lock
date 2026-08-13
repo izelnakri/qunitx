@@ -6,6 +6,7 @@
     "jsr:@std/fmt@*": "1.0.9",
     "jsr:@std/internal@^1.0.12": "1.0.12",
     "jsr:@std/testing@*": "1.0.17",
+    "jsr:@std/testing@^1.0.17": "1.0.17",
     "npm:@types/node@^26.2.0": "26.2.0",
     "npm:esbuild@0.28.2": "0.28.2",
     "npm:playwright-core@^1.62.1": "1.62.1",

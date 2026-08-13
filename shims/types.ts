@@ -49,6 +49,7 @@ export interface ModuleState {
 
 /** A lifecycle hook callback that receives an {@linkcode Assert} instance and a meta object with the shared context. */
 export type HookFn<A = unknown> = (assert: A, meta: { context: Record<string, unknown> }) => void | Promise<void>;
+/** A test body: receives an {@linkcode Assert} instance and a meta object naming the test, its runtime options, and the shared context. */
 export type TestFn<A = unknown> = (
   assert: A,
   meta: { testName: string; options: unknown; context: Record<string, unknown> },

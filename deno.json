@@ -1,4 +1,12 @@
 {
+  "name": "@izelnakri/qunitx",
+  "version": "1.2.18",
+  "description": "Universal test library — run the same test file in Node.js, Deno, and the browser with QUnit's battle-tested assertion API",
+  "license": "MIT",
+  "exports": {
+    ".": "./shims/deno/index.ts",
+    "./assert": "./shims/shared/assert.ts"
+  },
   "imports": {
     "qunitx": "./shims/deno/index.ts",
     "qunitx/assert": "./shims/shared/assert.ts"
@@ -11,12 +19,26 @@
   "lint": {
     "rules": {
       "exclude": [
-        "no-import-prefix",
-        "no-unversioned-import"
+        "no-import-prefix"
       ]
     }
   },
   "compilerOptions": {
     "strict": false
+  },
+  "publish": {
+    "include": [
+      "shims/deno",
+      "shims/shared",
+      "shims/types.ts",
+      "vendor/qunit.js",
+      "vendor/qunit.d.ts",
+      "README.md",
+      "LICENSE",
+      "deno.json"
+    ],
+    "exclude": [
+      "shims/deno/vendor-types"
+    ]
   }
 }
