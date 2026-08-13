@@ -25,7 +25,7 @@
  * @module
  */
 import '../../vendor/qunit.js';
-import { AssertionError as DenoAssertionError } from 'jsr:@std/assert';
+import { AssertionError as DenoAssertionError } from 'jsr:@std/assert@^1.0.17';
 import Assert from '../shared/assert.ts';
 import { filterStack } from '../shared/filter-stack.ts';
 import ModuleContext from '../shared/module-context.ts';
@@ -53,6 +53,15 @@ import Test from './test.ts';
  * ```
  */
 export class AssertionError extends DenoAssertionError {
+  /**
+   * Builds an assertion failure, trimming the stack to the caller's frame.
+   *
+   * @param {object} object - Failure details.
+   * @param {string} [object.message] - Failure message; defaults to `"Assertion failed"`.
+   * @param {Function} [object.stackStartFn] - Frames at and above this function are cut
+   *   from the stack, so the trace starts at the caller's assertion rather than inside
+   *   QUnitX.
+   */
   constructor(object: AssertionErrorOptions) {
     super(object.message ?? 'Assertion failed');
     if (object.stackStartFn) Error.captureStackTrace(this, object.stackStartFn);
@@ -131,7 +140,7 @@ export { default as module } from './module.ts';
  * });
  * ```
  */
-export const skip = Test.skip;
+export const skip: (testName: string, _testContent?: unknown) => void = Test.skip;
 
 /**
  * Defines an individual test. Wraps Deno's `it()` and handles the full QUnit
@@ -164,7 +173,25 @@ export const skip = Test.skip;
  * ```
  */
 export { default as test } from './test.ts';
-export const todo = Test.todo;
+
+/**
+ * Registers a todo test. Equivalent to `test.todo`. The test body is never executed
+ * and the test is reported as ignored by Deno's runner, which has no native todo concept.
+ *
+ * @param {string} testName - Name of the test to mark as todo.
+ * @param {function} [_testContent] - Optional body (ignored — the test will not run).
+ * @example
+ * ```js
+ * import { module, todo } from "qunitx";
+ *
+ * module("Math", () => {
+ *   todo("addition is not yet implemented", (assert) => {
+ *     assert.equal(1 + 1, 2);
+ *   });
+ * });
+ * ```
+ */
+export const todo: (testName: string, _testContent?: unknown) => void = Test.todo;
 
 /**
  * The default export provides the full QUnitX API as a single object.
@@ -192,3 +219,6 @@ export const todo = Test.todo;
  *   for future QUnit config compatibility).
  */
 export default { AssertionError: Assert.AssertionError, module: Module, test: Test, config: {} };
+
+/** Public types referenced by the signatures above, so consumers can name them. */
+export type { HookFn, HooksObject, PushResultInfo, TestFn } from '../types.ts';

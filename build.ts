@@ -262,7 +262,7 @@ async function fixDenoIndexDts(): Promise<void> {
   // Quote style is tsc's to choose and has changed between releases, so match either.
   const fixed = src
     .replace(
-      /^import \{ AssertionError as DenoAssertionError \} from ['"]jsr:@std\/assert['"];\n/m,
+      /^import \{ AssertionError as DenoAssertionError \} from ['"]jsr:@std\/assert(?:@[^'"]+)?['"];\n/m,
       '',
     )
     .replace('extends DenoAssertionError', 'extends Error');

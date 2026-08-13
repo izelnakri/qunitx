@@ -1,3 +1,23 @@
+/**
+ * QUnitX's assertion API, on its own.
+ *
+ * The same {@linkcode Assert} instance every `test()` callback receives, importable
+ * directly for code that wants QUnit's assertions without QUnitX's runner wrapper —
+ * a custom harness, a helper that takes `assert` and adds domain checks, or a runtime
+ * where no test runner is involved at all. This entrypoint touches no runner API, so
+ * unlike the package root it runs anywhere: Deno, Node.js and the browser.
+ *
+ * @example
+ * ```ts
+ * import Assert from '@izelnakri/qunitx/assert';
+ *
+ * function assertIsEven(assert: Assert, value: number) {
+ *   assert.strictEqual(value % 2, 0, `${value} is even`);
+ * }
+ * ```
+ *
+ * @module
+ */
 import '../../vendor/qunit.js';
 import type { AssertionErrorConstructor, InspectFn, ModuleState, PushResultInfo, QUnitObject, TestState } from '../types.ts';
 import { objectValues, objectValuesSubset, validateException, validateExpectedExceptionArgs } from './index.ts';
@@ -717,3 +737,7 @@ function lcsDiff(a: string[], b: string[]): DiffEntry[] {
   }
   return result.reverse();
 }
+
+// Re-exported so the public signature of Assert#pushResult does not reference a type
+// that consumers of this entrypoint cannot name (deno doc: private-type-ref).
+export type { PushResultInfo } from '../types.ts';
