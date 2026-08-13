@@ -37,10 +37,10 @@ import { callAtLocation, captureCallerLocation } from './caller-location.ts';
  * });
  * ```
  */
-export default function module(moduleName: string, moduleContent: (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown; context: Record<string, unknown> }) => void): void;
+function module(moduleName: string, moduleContent: (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown; context: Record<string, unknown> }) => void): void;
 /** Defines a test module (suite) with optional Node test runner options forwarded to `describe()`. */
-export default function module(moduleName: string, runtimeOptions: object, moduleContent: (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown; context: Record<string, unknown> }) => void): void;
-export default function module(
+function module(moduleName: string, runtimeOptions: object, moduleContent: (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown; context: Record<string, unknown> }) => void): void;
+function module(
   moduleName: string,
   runtimeOptions: object | ((hooks: HooksObject<Assert>) => void),
   moduleContent?: (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown; context: Record<string, unknown> }) => void,
@@ -155,3 +155,9 @@ module.skip = function skipModule(moduleName: string, _moduleContent?: unknown):
 module.todo = function todoModule(moduleName: string, _moduleContent?: unknown): void {
   callAtLocation(describe, captureCallerLocation(todoModule), moduleName, { skip: true }, function () {});
 };
+
+// Exported here rather than on the declarations above: `export default function` on an
+// overload set that also carries a namespace merge (.skip/.todo) emits a .d.ts with two
+// `export default` statements, which is invalid TypeScript (TS2528/TS2652/TS2383) and
+// breaks consumers that typecheck with `skipLibCheck: false`.
+export default module;

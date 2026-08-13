@@ -34,10 +34,10 @@ import TestContext from '../shared/test-context.ts';
  * });
  * ```
  */
-export default function test(testName: string, testContent: (assert: Assert, meta: { testName: string; options: unknown; context: Record<string, unknown> }) => void | Promise<void>): void;
+function test(testName: string, testContent: (assert: Assert, meta: { testName: string; options: unknown; context: Record<string, unknown> }) => void | Promise<void>): void;
 /** Defines an individual test with optional Deno BDD runtime options forwarded to `it()`. */
-export default function test(testName: string, runtimeOptions: object, testContent: (assert: Assert, meta: { testName: string; options: unknown; context: Record<string, unknown> }) => void | Promise<void>): void;
-export default function test(
+function test(testName: string, runtimeOptions: object, testContent: (assert: Assert, meta: { testName: string; options: unknown; context: Record<string, unknown> }) => void | Promise<void>): void;
+function test(
   testName: string,
   runtimeOptions: object | ((assert: Assert, meta: { testName: string; options: unknown; context: Record<string, unknown> }) => void | Promise<void>),
   testContent?: (assert: Assert, meta: { testName: string; options: unknown; context: Record<string, unknown> }) => void | Promise<void>,
@@ -149,6 +149,12 @@ test.skip = function skipTest(testName: string, _testContent?: unknown): void {
 test.todo = function todoTest(testName: string, _testContent?: unknown): void {
   it(testName, { ignore: true }, async function () {});
 };
+
+// Exported here rather than on the declarations above: `export default function` on an
+// overload set that also carries a namespace merge (.skip/.todo) emits a .d.ts with two
+// `export default` statements, which is invalid TypeScript (TS2528/TS2652/TS2383) and
+// breaks consumers that typecheck with `skipLibCheck: false`.
+export default test;
 
 export type { Assert };
 export type { PushResultInfo } from '../types.ts';
