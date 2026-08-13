@@ -1,10 +1,22 @@
-name: Reconcile GitHub releases
+name: Reconcile releases
 
-# Weekly safety net for the release pipeline. `make release` publishes to
-# npm and pushes a `v*` tag; ci.yml's github-release job then creates the
-# matching GitHub release. If that job is skipped (gate failure, GH API
-# outage, runner death, etc.) the npm package ships but the GitHub release
-# is missing — this workflow detects that drift and backfills.
+# Weekly safety net for the release pipeline. `make release` publishes to npm and
+# pushes a `v*` tag; ci.yml then creates the matching GitHub release (github-release)
+# and publishes to JSR (publish-jsr). Either of those can be skipped by a gate
+# failure, an API outage or a dead runner, leaving a version on npm with no
+# counterpart. This workflow scans all three registries against the tags and
+# backfills what it can.
+#
+# What each arm can do differs, and the difference is about credentials:
+#
+#   GitHub releases  detect + backfill — github.token is already in scope
+#   JSR              detect + backfill — OIDC provenance, same as the tag-time job
+#   npm              detect only — publishing needs an NPM_TOKEN secret this repo
+#                    does not have. `make release` runs `npm publish` from a laptop,
+#                    so npm is normally the arm that succeeds and the others that
+#                    lag. The scan is here because "normally" is not "always", and
+#                    a tag with no npm version is worth an alarm even when the fix
+#                    is manual. Add NPM_TOKEN and this arm can publish too.
 #
 # Cron only fires from the default branch. Use the workflow_dispatch input
 # `dry_run` to verify behaviour without creating releases.
@@ -95,3 +107,185 @@ jobs:
         with:
           tag: ${{ matrix.tag }}
           github_token: ${{ github.token }}
+
+  # ── JSR ───────────────────────────────────────────────────────────────────────
+  # ci.yml's publish-jsr is tag-gated and runs in CI rather than from `make release`,
+  # precisely so the release carries provenance — which also means it can fail
+  # independently of npm, leaving a version on npm but not JSR.
+  detect-jsr:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      missing: ${{ steps.scan.outputs.missing }}
+      has_missing: ${{ steps.scan.outputs.has_missing }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # need full tag history
+      - id: scan
+        shell: bash
+        run: |
+          set -euo pipefail
+          api="https://api.jsr.io/scopes/izelnakri/packages/qunitx"
+
+          # 404 until the package exists on JSR. Treat that as "nothing to reconcile"
+          # rather than letting curl -f abort the run every Sunday before first publish.
+          if ! curl -fsSL "$api" > /dev/null 2>&1; then
+            echo "@izelnakri/qunitx is not on JSR yet — nothing to reconcile."
+            echo "- JSR package does not exist yet ⏭" >> "$GITHUB_STEP_SUMMARY"
+            echo "has_missing=false" >> "$GITHUB_OUTPUT"
+            echo "missing=[]" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Page explicitly. `?limit=100` on its own is NOT a full listing: for
+          # @izelnakri/qunitx-cli it returns 14 of 16 versions and reports total=14,
+          # silently omitting the two most recent — while `&page=1` returns all 16.
+          # Trusting the short list would mark freshly published versions as missing
+          # and send the backfill arm to republish them, which JSR rejects outright.
+          # Loop until a page comes back empty instead of assuming any one page is all.
+          published=""
+          page=1
+          while :; do
+            chunk=$(curl -fsSL "$api/versions?limit=100&page=$page" | jq -r '.items[].version')
+            [ -z "$chunk" ] && break
+            published=$(printf '%s\n%s' "$published" "$chunk")
+            page=$((page + 1))
+          done
+          published=$(echo "$published" | grep -v '^$' | sort -V)
+
+          # Floor at the earliest version JSR actually holds. Every tag before JSR
+          # publishing existed has no jsr config in its tree; without this floor they
+          # read as missing forever and the publish arm would try to ship them.
+          floor=$(echo "$published" | head -1)
+          if [ -z "$floor" ]; then
+            echo "JSR package exists but holds no versions — nothing to reconcile."
+            echo "has_missing=false" >> "$GITHUB_OUTPUT"
+            echo "missing=[]" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          missing=()
+          for tag in $(git tag -l 'v*'); do
+            version=${tag#v}
+            # version >= floor iff sorting the pair puts floor first
+            [ "$(printf '%s\n%s\n' "$version" "$floor" | sort -V | head -1)" = "$floor" ] || continue
+            echo "$published" | grep -qx "$version" && continue
+            missing+=("$tag")
+          done
+
+          {
+            echo "## JSR reconcile scan"
+            echo ""
+            echo "- versions on JSR: $(echo "$published" | grep -c .)"
+            echo "- floor (earliest published): $floor"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ ${#missing[@]} -eq 0 ]; then
+            echo "Every tag at or above $floor is on JSR. ✅"
+            echo "- missing: 0 ✅" >> "$GITHUB_STEP_SUMMARY"
+            echo "has_missing=false" >> "$GITHUB_OUTPUT"
+            echo "missing=[]" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          printf '%s\n' "${missing[@]}" | sed 's/^/  - /'
+          {
+            echo "- missing: ${#missing[@]}"
+            echo ""
+            printf '%s\n' "${missing[@]}" | sed 's/^/- /'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          json=$(printf '%s\n' "${missing[@]}" | jq -Rcs 'split("\n") | map(select(length>0))')
+          echo "has_missing=true" >> "$GITHUB_OUTPUT"
+          echo "missing=$json" >> "$GITHUB_OUTPUT"
+
+  publish-jsr:
+    needs: detect-jsr
+    if: needs.detect-jsr.outputs.has_missing == 'true' && inputs.dry_run != true
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write # OIDC — the backfill gets provenance too
+    strategy:
+      fail-fast: false
+      max-parallel: 1 # one publish at a time; a version can never be replaced
+      matrix:
+        tag: ${{ fromJSON(needs.detect-jsr.outputs.missing) }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ matrix.tag }} # publish that tag's tree, not main's
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+          cache: true
+      # Same as the tag-time job: everything published is committed, so no build.
+      - run: deno publish
+
+  # ── npm ───────────────────────────────────────────────────────────────────────
+  # Detect only — see the note at the top of this file.
+  #
+  # Alarms on tags NEWER than the newest version on npm, which is the failure worth
+  # waking up for: `make release` tagged and pushed, then `npm publish` did not land.
+  # Older gaps are reported but do not fail. This repo has ten of them (v0.10.0,
+  # v1.2.12..v1.2.15 and friends 404 on npm today) — tags from releases that were
+  # abandoned and superseded years ago. Failing on those would paint the weekly cron
+  # permanently red, and a red that is always red is not an alarm.
+  detect-npm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # need full tag history
+      - shell: bash
+        run: |
+          set -euo pipefail
+          published=$(npm view qunitx versions --json | jq -r '.[]' | sort -V)
+          latest=$(echo "$published" | tail -1)
+
+          stale=() ; fresh=()
+          for tag in $(git tag -l 'v*'); do
+            version=${tag#v}
+            echo "$published" | grep -qx "$version" && continue
+            # newer than everything on npm iff sorting the pair puts latest first
+            if [ "$(printf '%s\n%s\n' "$version" "$latest" | sort -V | head -1)" = "$latest" ]; then
+              fresh+=("$tag")
+            else
+              stale+=("$tag")
+            fi
+          done
+
+          {
+            echo "## npm reconcile scan"
+            echo ""
+            echo "- versions on npm: $(echo "$published" | grep -c .)"
+            echo "- newest on npm: $latest"
+            echo "- historical gaps (informational): ${#stale[@]}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ ${#stale[@]} -gt 0 ]; then
+            printf '%s\n' "${stale[@]}" | sed 's/^/- /' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          if [ ${#fresh[@]} -eq 0 ]; then
+            echo "No tag newer than $latest is missing from npm. ✅"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "- unpublished releases: 0 ✅" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          printf '%s\n' "${fresh[@]}" | sed 's/^/  - /'
+          {
+            echo ""
+            echo "- unpublished releases: ${#fresh[@]} ❌"
+            echo ""
+            printf '%s\n' "${fresh[@]}" | sed 's/^/- /'
+            echo ""
+            echo "Publish each from its tag: \`git checkout <tag> && npm publish --access public\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "::error::${#fresh[@]} tag(s) newer than $latest are missing from npm — see job summary"
+          exit 1
