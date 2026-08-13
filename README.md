@@ -14,7 +14,7 @@
 
 **The oldest, most battle-tested JavaScript test API — now universal.**
 
-Run the **same test file** in Node.js, Deno, and the browser without changes.
+Run the **same test file** in Node.js, Deno, and the browser without changes, their usual way.
 Zero dependencies. No config needed for Node. TypeScript works out of the box.
 
 ---
