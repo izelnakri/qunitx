@@ -81,7 +81,7 @@
     "format": "prettier --check \"test/**/*.ts\" \"*.ts\" \"package.json\"",
     "format:fix": "prettier --write \"test/**/*.ts\" \"*.ts\" \"package.json\"",
     "lint": "deno lint shims/",
-    "lint:docs": "deno doc --lint shims/deno/module.ts shims/deno/test.ts",
+    "lint:docs": "deno doc --lint shims/deno/index.ts shims/deno/module.ts shims/deno/test.ts shims/shared/assert.ts",
     "build": "node build.ts",
     "build:cold": "rm -rf dist && node build.ts",
     "pretest": "node build.ts && node --input-type=module -e \"import{symlinkSync}from'fs';try{symlinkSync('..','node_modules/qunitx','junction')}catch(_){}\"",
@@ -104,7 +104,9 @@
     "docs": "deno doc --html --name=\"QUnitX\" --output=docs/src shims/deno/index.ts",
     "run:node": "node --test test/truthy-test.ts test/helpers/failing-location-fixture.ts",
     "run:deno": "deno test --allow-read test/truthy-test.ts test/helpers/failing-location-fixture.ts",
-    "prerun:node": "npm run build"
+    "prerun:node": "npm run build",
+    "version": "node scripts/sync-jsr-version.ts",
+    "lint:jsr": "deno publish --dry-run --allow-dirty"
   },
   "devDependencies": {
     "@types/node": "^26.2.0",

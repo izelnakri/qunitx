@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe } from 'jsr:@std/testing/bdd';
+import { afterAll, beforeAll, describe } from 'jsr:@std/testing@^1.0.17/bdd';
 import type Assert from '../shared/assert.ts';
 import ModuleContext from '../shared/module-context.ts';
 import type { HookFn, HooksObject } from '../types.ts';

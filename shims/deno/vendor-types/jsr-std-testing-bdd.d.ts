@@ -1,4 +1,4 @@
-declare module 'jsr:@std/testing/bdd' {
+declare module 'jsr:@std/testing@^1.0.17/bdd' {
   function describe(name: string, options: Record<string, unknown>, fn: () => void): void;
   function describe(name: string, fn: () => void): void;
   function beforeAll(fn: () => void | Promise<void>): void;
