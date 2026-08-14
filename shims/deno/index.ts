@@ -6,13 +6,16 @@
  *
  * @example
  * ```js
+ * // math_test.js
  * import { module, test } from "qunitx";
  *
  * module("Math", (hooks) => {
- *   hooks.before((assert) => assert.step("setup"));
+ *   hooks.beforeEach(function () {
+ *     this.numbers = [1, 2, 3];
+ *   });
  *
- *   test("addition", (assert) => {
- *     assert.equal(1 + 1, 2);
+ *   test("addition", function (assert) {
+ *     assert.equal(this.numbers.reduce((sum, n) => sum + n, 0), 6);
  *   });
  *
  *   test("async", async (assert) => {
@@ -21,6 +24,52 @@
  *   });
  * });
  * ```
+ *
+ * Both runtimes install it under the same name, so that one file runs on either.
+ * In a Deno project:
+ *
+ * ```sh
+ * deno add qunitx
+ * ```
+ *
+ * In a Node project:
+ *
+ * ```sh
+ * npm install --save-dev qunitx
+ * ```
+ *
+ * Then run it with whichever runner you have:
+ *
+ * ```sh
+ * deno test math_test.js
+ * node --test math_test.js
+ * ```
+ *
+ * @example
+ * ```js
+ * // The same test written with the BDD aliases — describe and it are the same
+ * // function objects as module and test, so everything above applies unchanged.
+ * import { describe, it } from "qunitx";
+ *
+ * describe("Math", (hooks) => {
+ *   hooks.beforeEach(function () {
+ *     this.numbers = [1, 2, 3];
+ *   });
+ *
+ *   it("addition", function (assert) {
+ *     assert.equal(this.numbers.reduce((sum, n) => sum + n, 0), 6);
+ *   });
+ *
+ *   it("async", async (assert) => {
+ *     const n = await Promise.resolve(42);
+ *     assert.strictEqual(n, 42);
+ *   });
+ * });
+ * ```
+ *
+ * `describe.skip`, `it.skip`, `it.todo`, runtime options, and nesting all behave
+ * identically to their `module` / `test` counterparts, and the commands above are
+ * unchanged.
  *
  * @module
  */

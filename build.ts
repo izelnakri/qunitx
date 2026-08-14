@@ -270,7 +270,13 @@ async function fixDenoIndexDts(): Promise<void> {
   // incremental build where tsc skips re-emitting hands us the already-fixed file.
   // Checking the result also catches the emit drifting out from under the pattern
   // above — a silent no-op there ships a declaration file consumers cannot resolve.
-  if (fixed.includes('jsr:') || fixed.includes('DenoAssertionError')) {
+  //
+  // Comments are excluded before asserting. Only a specifier the module resolver
+  // reads can break a consumer, and tsc copies JSDoc into the emit — the module doc
+  // documents `deno add jsr:@izelnakri/qunitx`, which is prose, not an import. A real
+  // surviving import is still caught, since it lives outside a comment by definition.
+  const code = fixed.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[^\S\n]*\/\/.*$/gm, '');
+  if (code.includes('jsr:') || code.includes('DenoAssertionError')) {
     throw new Error(`${dtsPath}: jsr:@std/assert reference survived post-processing`);
   }
   if (fixed !== src) await fs.writeFile(dtsPath, fixed);
