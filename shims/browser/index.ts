@@ -6,7 +6,7 @@ import type { HookFn, HooksObject } from '../types.ts';
 type QUnitHookFn = (this: Record<string, unknown>, assert: unknown) => void | Promise<void>;
 interface QUnitHooks { before: (fn: QUnitHookFn) => void; beforeEach: (fn: QUnitHookFn) => void; afterEach: (fn: QUnitHookFn) => void; after: (fn: QUnitHookFn) => void; }
 interface QUnitWithExtensions {
-  module: ((name: string, fn: (this: Record<string, unknown>, hooks: QUnitHooks) => void) => void) & { skip(name: string): void; todo(name: string): void };
+  module: ((name: string, fn: (this: Record<string, unknown>, hooks: QUnitHooks) => void) => void) & { skip(name: string, fn?: () => void): void; todo(name: string, fn?: () => void): void };
   test: ((name: string, fn: QUnitHookFn) => void) & { skip(name: string): void; todo(name: string, fn: QUnitHookFn): void };
 }
 const _QUnit = QUnit as unknown as QUnitWithExtensions;
@@ -87,7 +87,8 @@ export function module(
   const { skip } = options as { skip?: boolean | string };
 
   if (skip) {
-    _QUnit.module.skip(moduleName);
+    // The empty callback is load-bearing — see skipScopeNote below.
+    _QUnit.module.skip(moduleName, function () {});
     return;
   }
 
@@ -95,6 +96,15 @@ export function module(
     callback.call(this, wrapHooks(qunitHooks as QUnitHooks), { moduleName, options, context: this });
   });
 }
+
+// skipScopeNote: every QUnit.module.skip/.todo call below passes an empty callback,
+// and must keep doing so. QUnit's processModule() assigns `config.currentModule = module`
+// unconditionally, but only restores the previous module inside its
+// `if (typeof scope === 'function')` branch. Called without a callback, the skipped
+// module stays the current module for the rest of the file, so every sibling test
+// declared afterwards is reparented under it and reported as skipped. Passing a
+// callback — even an empty one — takes the branch that restores the scope.
+// The callback is never invoked for a skipped module, so nothing else changes.
 
 /**
  * Skips all tests inside a module. Equivalent to `QUnit.module.skip`.
@@ -113,7 +123,7 @@ export function module(
  * ```
  */
 module.skip = function skipModule(moduleName: string): void {
-  _QUnit.module.skip(moduleName);
+  _QUnit.module.skip(moduleName, function () {});
 };
 
 /**
@@ -133,7 +143,7 @@ module.skip = function skipModule(moduleName: string): void {
  * ```
  */
 module.todo = function todoModule(moduleName: string): void {
-  _QUnit.module.todo(moduleName);
+  _QUnit.module.todo(moduleName, function () {});
 };
 
 /**
