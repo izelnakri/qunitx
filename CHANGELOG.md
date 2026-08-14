@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.1] - 2026-08-14
+[`v1.3.0...v1.3.1`](https://github.com/izelnakri/qunitx/compare/v1.3.0...v1.3.1)
+
+### Documentation
+- Show how to run the example, and add a describe/it version — 2026-08-14 by [@izelnakri](https://github.com/izelnakri) ([`cb4a9ad`](https://github.com/izelnakri/qunitx/commit/cb4a9ad6ac1c31229179bb9187d6c4c7662eb795))
+
 ## [1.3.0] - 2026-08-14
 [`v1.2.19...v1.3.0`](https://github.com/izelnakri/qunitx/compare/v1.2.19...v1.3.0)
 
