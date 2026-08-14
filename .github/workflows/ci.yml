@@ -23,6 +23,8 @@ jobs:
         with:
           node-version: 24
           cache: npm
+      # Must precede setup-deno — see the note in the test job below.
+      - run: npm ci
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
@@ -32,7 +34,6 @@ jobs:
           # so the lint job on main populates the cache the rest of them restore from.
           # A corrupt entry surfaces as a failed pre-upload check, never as a bad publish.
           cache: true
-      - run: npm ci
       - run: npm run format
       - run: npm run lint
       - run: npm run lint:docs
@@ -73,6 +74,13 @@ jobs:
       # If deno is in PATH, it rewrites node_modules/ layout via .deno/ store and the
       # NixOS-built SEA binaries end up there. Run npm ci before setup-deno so the
       # postinstall silently skips (deno not found) and npm owns node_modules/.
+      #
+      # This ordering is required in EVERY job that runs npm ci, not just this one.
+      # npm runs package postinstalls concurrently, so with deno in PATH the rewrite
+      # races esbuild's own postinstall — esbuild validates node_modules/esbuild/bin/esbuild
+      # while deno is moving it, and npm ci dies with MODULE_NOT_FOUND. Intermittent by
+      # nature: it took down the coverage job on 2026-08-14 while lint passed in the
+      # same run, both being equally exposed.
       - run: npm ci
       - uses: denoland/setup-deno@v2
         with:
@@ -125,16 +133,17 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - uses: denoland/setup-deno@v2
-        with:
-          deno-version: v2.x
-          cache: true
       - uses: actions/cache@v6
         with:
           path: dist
           key: dist-${{ hashFiles('shims/**', 'tsconfig.json', 'deno.lock', 'package-lock.json', 'build.ts') }}
           restore-keys: dist-
+      # Must precede setup-deno — see the note in the test job above.
       - run: npm ci
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+          cache: true
       - run: npm run coverage
       - uses: codecov/codecov-action@v7
         with:
