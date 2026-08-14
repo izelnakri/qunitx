@@ -1,3 +1,4 @@
+import './alias-test.ts';
 import './assert-failures-test.ts';
 import './assert-identity-test.ts';
 import './error-messages-test.ts';

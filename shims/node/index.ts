@@ -31,10 +31,21 @@ Object.freeze(ModuleContext);
 Object.freeze(TestContext);
 
 export { Assert };
+// BDD-style aliases. Same function objects as `module`/`test`, so `describe.skip`,
+// `describe.todo`, `it.skip`, and `it.todo` come along for free.
+export { default as describe } from './module.ts';
+export { default as it } from './test.ts';
 export { default as module } from './module.ts';
 export const skip = Test.skip;
 export { default as test } from './test.ts';
 export const todo = Test.todo;
 export type { HookFn, HooksObject, PushResultInfo, TestFn } from '../types.ts';
 
-export default { AssertionError: Assert.AssertionError, module: Module, test: Test, config: {} };
+export default {
+  AssertionError: Assert.AssertionError,
+  describe: Module,
+  it: Test,
+  module: Module,
+  test: Test,
+  config: {},
+};

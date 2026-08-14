@@ -397,6 +397,35 @@ module('Database', (hooks) => {
 `before` / `beforeEach` run FIFO (outermost first); `afterEach` / `after` run LIFO
 (innermost first) — exactly as in QUnit.
 
+### `describe` / `it` — BDD aliases
+
+If you prefer BDD naming, `describe` and `it` are exported as aliases of `module` and
+`test`. They are the *same function objects*, so everything that works on one works on
+the other — options, `.skip`, `.todo`, nesting, and mixing the two styles in one file:
+
+```js
+import { describe, it } from 'qunitx';
+
+describe('Math utilities', (hooks) => {
+  hooks.beforeEach(function () {
+    this.numbers = [1, 2, 3];
+  });
+
+  it('adds', (assert) => {
+    assert.equal(2 + 2, 4);
+  });
+
+  it.skip('not yet implemented', (assert) => { /* never runs */ });
+  it('flaky on CI', { skip: true }, (assert) => {});
+
+  describe('Nested', () => {
+    it('inherits parent hooks', function (assert) {
+      assert.deepEqual(this.numbers, [1, 2, 3]);
+    });
+  });
+});
+```
+
 ### `context` — for arrow functions
 
 QUnit exposes shared state as `this`, which arrow functions cannot see. QUnitX passes the
@@ -443,6 +472,9 @@ module.todo('Future features', () => { /* whole module pending */ });
 import { module, test, skip, todo } from 'qunitx';
 ```
 
+The BDD aliases carry the same helpers — `describe.skip`, `describe.todo`, `it.skip`,
+and `it.todo` are the exact same functions.
+
 > **Runtime difference:** Node's `todo` runs the body and ignores its failures. Deno has
 > no todo concept and maps both `skip` and `todo` to "ignored" — the body does not run.
 
@@ -478,6 +510,9 @@ One line:
 - import { module, test } from 'qunit';
 + import { module, test } from 'qunitx';
 ```
+
+Coming from a BDD runner instead? Import `describe` / `it` — they are aliases of
+`module` / `test`, see [`describe` / `it`](#describe--it--bdd-aliases).
 
 ---
 

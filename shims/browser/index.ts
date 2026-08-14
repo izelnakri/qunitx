@@ -253,6 +253,41 @@ test.todo = function todoTest(testName: string, testContent?: (assert: unknown, 
   });
 };
 
+/**
+ * BDD-style alias for {@linkcode module}. The same function object, so
+ * `describe.skip` and `describe.todo` behave exactly like `module.skip` and
+ * `module.todo`.
+ *
+ * @example
+ * ```js
+ * import { describe, it } from "qunitx";
+ *
+ * describe("Math", () => {
+ *   it("addition", (assert) => {
+ *     assert.equal(1 + 1, 2);
+ *   });
+ * });
+ * ```
+ */
+export const describe: typeof module = module;
+
+/**
+ * BDD-style alias for {@linkcode test}. The same function object, so `it.skip`
+ * and `it.todo` behave exactly like `test.skip` and `test.todo`.
+ *
+ * @example
+ * ```js
+ * import { describe, it } from "qunitx";
+ *
+ * describe("Math", () => {
+ *   it.skip("division is not yet implemented", (assert) => {
+ *     assert.equal(4 / 2, 2);
+ *   });
+ * });
+ * ```
+ */
+export const it: typeof test = test;
+
 // Wrap QUnit's hooks object so each registered hook callback receives
 // `{ context: this }` as its second argument (arrow-function-friendly).
 // Must use regular functions — QUnit sets `this` to testEnvironment when calling them.

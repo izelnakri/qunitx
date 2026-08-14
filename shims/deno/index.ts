@@ -124,6 +124,49 @@ export { Assert };
 export { default as module } from './module.ts';
 
 /**
+ * BDD-style alias for {@linkcode module}. The same function object, so
+ * `describe.skip` and `describe.todo` behave exactly like `module.skip` and
+ * `module.todo`.
+ *
+ * @example
+ * ```js
+ * import { describe, it } from "qunitx";
+ *
+ * describe("Math", (hooks) => {
+ *   hooks.beforeEach((assert) => {
+ *     assert.step("setup");
+ *   });
+ *
+ *   it("adds", (assert) => {
+ *     assert.equal(1 + 1, 2);
+ *   });
+ * });
+ * ```
+ */
+export { default as describe } from './module.ts';
+
+/**
+ * BDD-style alias for {@linkcode test}. The same function object, so `it.skip`
+ * and `it.todo` behave exactly like `test.skip` and `test.todo`.
+ *
+ * @example
+ * ```js
+ * import { describe, it } from "qunitx";
+ *
+ * describe("Math", () => {
+ *   it("adds", (assert) => {
+ *     assert.equal(1 + 1, 2);
+ *   });
+ *
+ *   it.skip("divides", (assert) => {
+ *     assert.equal(4 / 2, 2);
+ *   });
+ * });
+ * ```
+ */
+export { default as it } from './test.ts';
+
+/**
  * Registers a skipped test. Equivalent to `test.skip`. The test body is never
  * executed and the test is reported as ignored by Deno's runner.
  *
@@ -213,12 +256,21 @@ export const todo: (testName: string, _testContent?: unknown) => void = Test.tod
  * @property {Function} test - Defines an individual test inside a `module()` callback.
  *   Receives an {@linkcode Assert} instance as its first argument.
  *   See the named {@linkcode test} export for full parameter documentation.
+ * @property {Function} describe - BDD-style alias for `module`. Same function object.
+ * @property {Function} it - BDD-style alias for `test`. Same function object.
  * @property {typeof AssertionError} AssertionError - The error class thrown when an
  *   assertion fails. Extends Deno's built-in `AssertionError`.
  * @property {object} config - Runtime configuration object (currently unused; reserved
  *   for future QUnit config compatibility).
  */
-export default { AssertionError: Assert.AssertionError, module: Module, test: Test, config: {} };
+export default {
+  AssertionError: Assert.AssertionError,
+  describe: Module,
+  it: Test,
+  module: Module,
+  test: Test,
+  config: {},
+};
 
 /** Public types referenced by the signatures above, so consumers can name them. */
 export type { HookFn, HooksObject, PushResultInfo, TestFn } from '../types.ts';
