@@ -83,21 +83,27 @@ Vitest, no second framework underneath.
 ## Install
 
 ```sh
-npm install qunitx --save-dev
+npm install --save-dev qunitx
 ```
 
-Deno users can install from JSR instead — same library, published from CI with
-[provenance](https://jsr.io/@izelnakri/qunitx):
+Deno second — and under the same name:
 
 ```sh
-deno add jsr:@izelnakri/qunitx
+deno add qunitx
 ```
 
-Requires **Node.js >= 22** (LTS) or **Deno >= 2**. For a Deno project with no
-`package.json`, an import map is enough:
+That writes `qunitx` into your `deno.json` import map, so a test file copied between a
+Node project and a Deno project keeps working. `qunitx` is the one specifier that
+resolves on both runtimes; installing as `deno add jsr:@izelnakri/qunitx` instead writes
+`@izelnakri/qunitx`, which Node cannot resolve. The
+[JSR package](https://jsr.io/@izelnakri/qunitx) is the same library, published from CI
+with provenance, and is worth importing directly only in Deno-only code.
+
+Requires **Node.js >= 22** (LTS) or **Deno >= 2**. qunitx ships ESM only, so a Node
+project created with `npm init -y` needs one line before its first `import` will load:
 
 ```sh
-echo '{"imports": {"qunitx": "npm:qunitx"}}' > deno.json
+npm pkg set type=module
 ```
 
 ---
@@ -111,13 +117,14 @@ One file, every runtime:
 import { module, test } from 'qunitx';
 
 module('Math utilities', (hooks) => {
-  hooks.beforeEach(function () {
-    this.numbers = [1, 2, 3];
+  let numbers: number[];
+
+  hooks.beforeEach(() => {
+    numbers = [1, 2, 3];
   });
 
   test('addition', (assert) => {
-    assert.equal(2 + 2, 4);
-    assert.notEqual(2 + 2, 5);
+    assert.equal(numbers.reduce((sum, n) => sum + n, 0), 6);
   });
 
   test('deepEqual understands Sets and Maps', (assert) => {
@@ -135,6 +142,8 @@ module('Math utilities', (hooks) => {
   });
 });
 ```
+
+Then run it with whichever runner you have. Nothing in the file changes between them.
 
 ### Node.js
 
@@ -449,6 +458,11 @@ module('Suite', (hooks, { context }) => {
 Either way the state follows QUnit's prototype-chain model: each test gets a fresh object
 inheriting from the module's, so `before()` writes are visible everywhere and a test's own
 writes never leak into its siblings.
+
+> **In TypeScript**, both bags are deliberately untyped, so `this.db` and `context.db` do
+> not type-check under `deno test`'s built-in checker. For a typed `.ts` suite, declare
+> the state as a variable in the `module()` closure and assign it from the hook — the
+> pattern used in [Quick start](#quick-start) above.
 
 ---
 
