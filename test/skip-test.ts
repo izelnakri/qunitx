@@ -55,3 +55,56 @@ module('skip', function () {
     },
   );
 });
+
+// Regression: a skipped module must not capture the siblings declared after it.
+// QUnit's processModule() sets config.currentModule unconditionally but restores it
+// only when given a callback, so calling module.skip/.todo without one reparented
+// every later sibling under the skipped module and reported it as skipped.
+// Browser-only — Node and Deno always scoped these correctly.
+// A swallowed sibling is reported as *skipped*, never failed, so asserting inside each
+// sibling would silently pass if the bug returned — as would an after() hook on the
+// module below, since QUnit does not run hooks for skipped tests. The count is checked
+// from a separate top-level module instead: processModule() restores the scope when the
+// enclosing callback exits, so the leak cannot reach past the module that caused it.
+let siblingsRan = 0;
+
+module('skipped modules do not swallow later siblings', function () {
+  module.skip('skipped via module.skip', function () {
+    test('inner test should not run', function (assert) {
+      assert.ok(false, 'test inside module.skip should never run');
+    });
+  });
+
+  test('sibling after module.skip runs', function (assert) {
+    siblingsRan++;
+    assert.ok(true);
+  });
+
+  module.todo('pending via module.todo', function () {
+    test('inner test should not run', function (assert) {
+      assert.ok(false, 'test inside module.todo should never run');
+    });
+  });
+
+  test('sibling after module.todo runs', function (assert) {
+    siblingsRan++;
+    assert.ok(true);
+  });
+
+  module('skipped via runtimeOptions { skip: true }', { skip: true }, function () {
+    test('inner test should not run', function (assert) {
+      assert.ok(false, 'test inside skip:true module should never run');
+    });
+  });
+
+  test('sibling after module({ skip: true }) runs', function (assert) {
+    siblingsRan++;
+    assert.ok(true);
+  });
+});
+
+module('skipped module scope guard', function () {
+  test('all three siblings after a skipped module ran', function (assert) {
+    assert.strictEqual(siblingsRan, 3, 'no sibling was captured by a skipped module');
+  });
+});
