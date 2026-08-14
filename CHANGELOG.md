@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.3.0] - 2026-08-14
+[`v1.2.19...v1.3.0`](https://github.com/izelnakri/qunitx/compare/v1.2.19...v1.3.0)
+
+### Bug Fixes
+- Point git-cliff at this repo, not qunitx-cli — 2026-08-13 by [@izelnakri](https://github.com/izelnakri) ([`f067ea6`](https://github.com/izelnakri/qunitx/commit/f067ea6dc2472c87fae86d873d1cc15e25e40038))
+- Stop skipped modules from swallowing later siblings — 2026-08-14 by [@izelnakri](https://github.com/izelnakri) ([`8194f5f`](https://github.com/izelnakri/qunitx/commit/8194f5fb0026c43f268115e234a347ed66b2a4e7))
+
+### Documentation
+- Rebuild the README as a full showcase, and re-record the demo — 2026-08-13 by [@izelnakri](https://github.com/izelnakri) ([`07cf97c`](https://github.com/izelnakri/qunitx/commit/07cf97ce5a69d2ab3cf8b5041f644ecbbb7aca11))
+
+### Features
+- Export describe/it as aliases for module/test — 2026-08-14 by [@izelnakri](https://github.com/izelnakri) ([`b9fc290`](https://github.com/izelnakri/qunitx/commit/b9fc290b8a1675e75f21545d780bd42e9bef160a))
+
 ## [1.2.19] - 2026-08-13
 [`v1.2.18...v1.2.19`](https://github.com/izelnakri/qunitx/compare/v1.2.18...v1.2.19)
 
