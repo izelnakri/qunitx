@@ -55,8 +55,12 @@ function module(
   // Before the ModuleContext exists: its constructor pushes to currentModuleChain.
   ModuleContext.assertCallbackIsSyncFunction(targetModuleContent);
   const moduleContext = new ModuleContext(moduleName);
+  if ((targetRuntimeOptions as { only?: boolean }).only) moduleContext.focused = true;
 
-  describe(moduleName, { ...targetRuntimeOptions }, function () {
+  // Deno's own `only` drops a nested suite that is not `only` itself, even inside one
+  // that is; QUnit runs everything inside an `only` module, so pass it down.
+  const describeOptions = moduleContext.focused ? { ...targetRuntimeOptions, only: true } : { ...targetRuntimeOptions };
+  describe(moduleName, describeOptions, function () {
     const beforeHooks: HookFn<Assert>[] = [];
     const afterHooks: HookFn<Assert>[] = [];
 
@@ -68,7 +72,7 @@ function module(
 
     beforeAll(async () => {
       // Skipped when every test in the module is (QUnit runs before on the first test).
-      if (moduleContext.runnableTestCount === 0) return;
+      if (!moduleContext.hasTestsToRun) return;
       // before() assertions are attributed to the first direct test only (matching QUnit's model).
       const firstTest = moduleContext.tests[0];
       const beforeAssert = firstTest ? firstTest.assert! : moduleContext.assert!;
@@ -83,7 +87,7 @@ function module(
       const allAsyncOps = moduleContext.tests.flatMap((t) => t.asyncOps);
       if (allAsyncOps.length > 0) await Promise.all(allAsyncOps);
 
-      if (moduleContext.runnableTestCount > 0) {
+      if (moduleContext.hasTestsToRun) {
         const tests = moduleContext.tests;
         const lastTest = tests[tests.length - 1];
         const afterAssert = lastTest ? lastTest.assert! : moduleContext.assert!;
@@ -167,6 +171,70 @@ module.skip = function skipModule(moduleName: string, _moduleContent?: unknown):
 module.todo = function todoModule(moduleName: string, _moduleContent?: unknown): void {
   describe(moduleName, { ignore: true }, function () {});
 };
+
+/**
+ * Runs only this module, and any other `only` module or test: every other test is
+ * skipped. Equivalent to `QUnit.module.only`, and to passing `{ only: true }`.
+ * Deno runs only these, and then fails the run on purpose, so that an `only` is
+ * not committed by accident.
+ *
+ * @param {string} moduleName - Name of the module.
+ * @param {object} [runtimeOptions] - Optional options, as for {@linkcode module}.
+ * @param {function} moduleContent - Callback that defines tests and hooks.
+ * @example
+ * ```js ignore
+ * import { module, test } from "qunitx";
+ *
+ * module.only("Math — the one being worked on", () => {
+ *   test("addition", (assert) => {
+ *     assert.equal(1 + 1, 2);
+ *   });
+ * });
+ * ```
+ */
+module.only = function onlyModule(
+  moduleName: string,
+  runtimeOptionsOrContent: object | ModuleContent,
+  moduleContent?: ModuleContent,
+): void {
+  const [options, content] = getModuleArguments(runtimeOptionsOrContent, moduleContent);
+  module(moduleName, { ...options, only: true }, content);
+};
+
+/**
+ * Defines a module that runs only when `condition` is truthy, and is skipped otherwise.
+ * Equivalent to `QUnit.module.if`.
+ *
+ * @param {string} moduleName - Name of the module.
+ * @param {unknown} condition - Whether to run the module's tests.
+ * @param {object} [runtimeOptions] - Optional options, as for {@linkcode module}.
+ * @param {function} moduleContent - Callback that defines tests and hooks.
+ * @example
+ * ```js ignore
+ * import { module, test } from "qunitx";
+ *
+ * module.if("Clipboard", typeof navigator !== "undefined", () => {
+ *   test("has the API", (assert) => {
+ *     assert.strictEqual(typeof navigator.clipboard, "object");
+ *   });
+ * });
+ * ```
+ */
+module.if = function ifModule(
+  moduleName: string,
+  condition: unknown,
+  runtimeOptionsOrContent: object | ModuleContent,
+  moduleContent?: ModuleContent,
+): void {
+  const [options, content] = getModuleArguments(runtimeOptionsOrContent, moduleContent);
+  module(moduleName, condition ? options : { ...options, skip: true }, content);
+};
+
+type ModuleContent = (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown; context: Record<string, unknown> }) => void;
+
+function getModuleArguments(optionsOrContent: object | ModuleContent, content?: ModuleContent): [object, ModuleContent] {
+  return content ? [optionsOrContent as object, content] : [{}, optionsOrContent as ModuleContent];
+}
 
 // Exported here rather than on the declarations above: `export default function` on an
 // overload set that also carries a namespace merge (.skip/.todo) emits a .d.ts with two

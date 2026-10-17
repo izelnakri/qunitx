@@ -487,3 +487,26 @@ function buildMockPromise(settledValue: unknown, shouldFulfill?: boolean) {
     });
   });
 }
+
+// QUnit 2.26: both return what they caught, for further assertions on it.
+module('Assertion: Throws - return values', function () {
+  test('throws returns the thrown error', function (assert) {
+    const error = assert.throws(() => {
+      throw new RangeError('out of range');
+    }, RangeError);
+    assert.strictEqual(error.message, 'out of range');
+  });
+
+  test('throws calls the function with the test context as this', function (assert) {
+    this.value = 'from the test context';
+    const error = assert.throws(function (this: { value: string }) {
+      throw new Error(this.value);
+    }, Error);
+    assert.strictEqual(error.message, 'from the test context');
+  });
+
+  test('rejects resolves to the rejection reason', async function (assert) {
+    const reason = await assert.rejects(Promise.reject(new TypeError('bad type')), TypeError);
+    assert.strictEqual(reason.message, 'bad type');
+  });
+});

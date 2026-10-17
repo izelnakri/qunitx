@@ -149,6 +149,23 @@ export { default as Assert } from '../shared/assert.ts';
 export { default as config } from '../shared/config.ts';
 
 /**
+ * Hooks for every test in the run, in every module: the equivalent of `QUnit.hooks`.
+ * A global `beforeEach` runs before any module's, and a global `afterEach` after all
+ * of them; each receives `(assert, { context })`, with the test's context as `this`.
+ *
+ * @example
+ * ```js
+ * import { hooks } from "qunitx";
+ *
+ * const realNow = Date.now;
+ * hooks.afterEach(() => {
+ *   Date.now = realNow; // undo any test that stubbed the clock
+ * });
+ * ```
+ */
+export { default as hooks } from '../shared/global-hooks.ts';
+
+/**
  * Defines a test module (suite). Wraps Deno's `describe()` and sets up the
  * QUnit lifecycle — `before`, `beforeEach`, `afterEach`, and `after` hooks,
  * assertion counting, and step tracking.
@@ -250,7 +267,7 @@ export { default as it } from './test.ts';
  * });
  * ```
  */
-export const skip: (testName: string, _testContent?: unknown) => void = Test.skip;
+export const skip: typeof Test.skip = Test.skip;
 
 /**
  * Defines an individual test. Wraps Deno's `it()` and handles the full QUnit
@@ -285,6 +302,26 @@ export const skip: (testName: string, _testContent?: unknown) => void = Test.ski
 export { default as test } from './test.ts';
 
 /**
+ * Runs only this test, and any other `only` test or module. Equivalent to `test.only`.
+ * Deno runs only these, and then fails the run on purpose, so that an `only` is not
+ * committed by accident.
+ *
+ * @param {string} testName - Name of the test.
+ * @param {function} testContent - Test callback receiving `(assert, { testName, options })`.
+ * @example
+ * ```js
+ * import { module, only } from "qunitx";
+ *
+ * module("Math", () => {
+ *   only("the one being worked on", (assert) => {
+ *     assert.equal(1 + 1, 2);
+ *   });
+ * });
+ * ```
+ */
+export const only: typeof Test.only = Test.only;
+
+/**
  * Registers a todo test. Equivalent to `test.todo`. The test body is never executed
  * and the test is reported as ignored by Deno's runner, which has no native todo concept.
  *
@@ -301,7 +338,7 @@ export { default as test } from './test.ts';
  * });
  * ```
  */
-export const todo: (testName: string, _testContent?: unknown) => void = Test.todo;
+export const todo: typeof Test.todo = Test.todo;
 
 /**
  * The default export provides the full QUnitX API as a single object.

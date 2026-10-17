@@ -14,6 +14,8 @@ export default class TestContext {
   expectedAssertionCount: number | undefined;
   totalExecutedAssertions = 0;
   userContext: Record<string, unknown> = {};
+  /** Set when the runner calls the test. One it never starts (filtered out by `only`) is not checked. */
+  started = false;
 
   rejectTimeout: ((err: Error) => void) | undefined;
   #timeoutHandle: ReturnType<typeof setTimeout> | undefined;
@@ -54,7 +56,7 @@ export default class TestContext {
   }
 
   finish() {
-    if (this.#timedOut) return;
+    if (!this.started || this.#timedOut) return;
     if (this.steps.length > 0) {
       this.assert!.pushResult({
         result: false,

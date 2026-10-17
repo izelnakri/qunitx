@@ -216,6 +216,7 @@ the complete list.
 | `assert.notPropEqual(actual, expected)` | inverse of `propEqual` |
 | `assert.propContains(actual, expected)` | **partial** match: every property in `expected` must match, extras in `actual` are ignored |
 | `assert.notPropContains(actual, expected)` | inverse of `propContains` |
+| `assert.closeTo(actual, expected, delta)` | `actual` is within `delta` of `expected`, inclusive — for floating-point results |
 
 `propContains` is the one to reach for when asserting on an API response you only partly
 care about:
@@ -232,8 +233,8 @@ test('api response', async (assert) => {
 
 | | |
 |---|---|
-| `assert.throws(fn, expected?)` | `fn` must throw |
-| `await assert.rejects(promise, expected?)` | `promise` must reject |
+| `assert.throws(fn, expected?)` | `fn` must throw; returns the error |
+| `await assert.rejects(promise, expected?)` | `promise` must reject; resolves to the reason |
 
 `expected` matches by constructor, by `RegExp` against the message, against another
 `Error` instance (same constructor, name and message), or by a custom validator:
@@ -248,6 +249,19 @@ test('error matching', (assert) => {
 
 test('async errors', async (assert) => {
   await assert.rejects(fetchMissing(), TypeError);
+});
+```
+
+Both hand back what they caught, so you can assert on it further. In TypeScript, passing
+a constructor as `expected` types the result as an instance of it:
+
+```js
+test('error details', async (assert) => {
+  const error = assert.throws(() => validate({}), ValidationError);
+  assert.deepEqual(error.fields, ['email']);
+
+  const reason = await assert.rejects(fetchMissing(), HttpError);
+  assert.strictEqual(reason.status, 404);
 });
 ```
 
@@ -419,6 +433,23 @@ module('Database', (hooks) => {
 `before` / `beforeEach` run FIFO (outermost first); `afterEach` / `after` run LIFO
 (innermost first) — exactly as in QUnit.
 
+### Global hooks
+
+`hooks`, imported rather than taken from a module, adds a `beforeEach` / `afterEach` to
+every test in the run, as `QUnit.hooks` does: the global `beforeEach` runs before any
+module's, the global `afterEach` after all of them.
+
+```js
+import { hooks } from 'qunitx';
+
+hooks.afterEach(() => {
+  sinon.restore(); // whatever a test stubbed, for every test in every file
+});
+```
+
+A global hook runs for every test, including other files' — keep assertions out of it, or
+they count towards every test's `assert.expect()`.
+
 ### `describe` / `it` — BDD aliases
 
 If you prefer BDD naming, `describe` and `it` are exported as aliases of `module` and
@@ -480,7 +511,26 @@ never leak into its siblings or into `after()`.
 
 ---
 
-## Skip and todo
+## Data-driven tests
+
+`test.each()` defines one test per case. Each receives its case as the second argument,
+and the usual meta object (with the case's own `testName`) as the third:
+
+```js
+test.each('is even', [2, 4, 6], (assert, n) => {
+  assert.strictEqual(n % 2, 0);
+});
+
+test.each('adds', { 'small numbers': [1, 2, 3], 'large numbers': [1e6, 2e6, 3e6] }, (assert, [a, b, sum]) => {
+  assert.strictEqual(a + b, sum);
+});
+```
+
+Cases are named as QUnit names them, on every runtime: `is even [2]` for a short value,
+`is even [0: 2]` for other primitives, `adds [small numbers]` for an object's keys.
+`test.skip.each`, `test.todo.each`, `test.only.each` and `test.if.each` combine the two.
+
+## Skip, todo, only and if
 
 ```js
 test.skip('not yet implemented', (assert) => { /* never runs */ });
@@ -492,13 +542,23 @@ test('waiting on API', { todo: 'needs endpoint' }, (assert) => {});
 
 module.skip('Legacy API', () => { /* whole module skipped */ });
 module.todo('Future features', () => { /* whole module pending */ });
+
+test.if('formats lists', typeof Intl.ListFormat === 'function', (assert) => {}); // skipped when false
+module.if('Clipboard', typeof navigator !== 'undefined', () => { /* … */ });
+
+test.only('the one being debugged', (assert) => {}); // every other test is skipped
+module.only('The module being worked on', () => { /* … */ });
 ```
 
-`skip` and `todo` are also exported top-level for QUnit-style usage:
+`skip`, `todo` and `only` are also exported top-level for QUnit-style usage:
 
 ```js
-import { module, test, skip, todo } from 'qunitx';
+import { module, test, only, skip, todo } from 'qunitx';
 ```
+
+`only` works as in QUnit on every runtime: once any test or module is `only`, every other
+test is skipped. Node.js needs no `--test-only` flag for it. Deno runs only those tests,
+then fails the run on purpose — its guard against committing an `only`.
 
 The BDD aliases carry the same helpers — `describe.skip`, `describe.todo`, `it.skip`,
 and `it.todo` are the exact same functions.
@@ -556,9 +616,12 @@ qunitx follows QUnit 3's test-environment model on every runtime:
 - **Hooks belong to their module** — adding a hook to a parent module from inside a child, or from inside a test, throws, as does an `async` module callback. Module setup that needs to wait goes in `before()`.
 - **Steps** — `assert.step()` is not an assertion of its own; the `verifySteps()` that checks it is.
 - **Default timeout** — 3 seconds per test, configurable with `config.testTimeout`.
+- **QUnit 2.x APIs** — `test.each`, `test.if` / `module.if`, `test.only` / `module.only`, global `hooks`, `assert.closeTo`, and the error that `assert.throws` / `assert.rejects` return all work on Node.js and Deno too.
 
 The same file of QUnit 3's own hook tests runs on all three runtimes, in
 [`test/hook-context-test.ts`](test/hook-context-test.ts).
+
+> **Known difference:** Inside a module that contains a `module.only()`, QUnit also ignores a `test.only()` declared after it ([qunitjs/qunit#1645](https://github.com/qunitjs/qunit/issues/1645)); the Node/Deno adapters run that test.
 
 > **Known difference:** In QUnit's browser runner, `before()` hook assertions are attributed to the first test in the *entire subtree* (including nested modules). In the Node/Deno adapters, they are attributed to the first *direct* test of the module. In the common case where direct tests appear before nested modules, the behavior is identical.
 

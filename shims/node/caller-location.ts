@@ -28,14 +28,14 @@ export function callAtLocation(
   loc: { file: string; line: number } | null,
   name: string,
   opts: object,
-  fn: () => void | Promise<void>,
+  fn: (context: never) => void | Promise<void>,
 ): void {
-  type Target = (name: string, opts: object, fn: () => void | Promise<void>) => void;
+  type Target = (name: string, opts: object, fn: (context: never) => void | Promise<void>) => void;
   const t = target as Target;
   if (!loc) return void t(name, opts, fn);
   (compileFunction(
     'return t(n,o,f)',
     ['t', 'n', 'o', 'f'],
     { filename: loc.file, lineOffset: loc.line - 1 },
-  ) as unknown as (t: Target, n: string, o: object, f: () => void | Promise<void>) => void)(t, name, opts, fn);
+  ) as unknown as (t: Target, n: string, o: object, f: (context: never) => void | Promise<void>) => void)(t, name, opts, fn);
 }
