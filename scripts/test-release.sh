@@ -26,7 +26,7 @@ cd "$CONSUMER"
 printf '{"type":"module"}' > package.json
 # jsdom, at the version package.json pins, for release-consumer-dom-test.ts.
 npm install --no-save --quiet "$TARBALL" "jsdom@$(node -p "require('$ROOT/package.json').devDependencies.jsdom")"
-cp "$ROOT/scripts/release-consumer-test.ts" "$ROOT/scripts/release-consumer-dom-test.ts" .
+cp "$ROOT/scripts/release-consumer-test.ts" "$ROOT/scripts/release-consumer-dom-test.ts" "$ROOT/scripts/release-consumer-types.ts" .
 cp -r "$ROOT/test" .
 
 # ── Node ────────────────────────────────────────────────────────────────────
@@ -36,6 +36,9 @@ echo "test-release: node (consumer, with a DOM)"
 node --test release-consumer-dom-test.ts
 echo "test-release: node (full suite)"
 node --test test/index.ts
+echo "test-release: tsc (strict consumer types)"
+"$ROOT/node_modules/.bin/tsc" --noEmit --strict --skipLibCheck false --module nodenext \
+  --target es2022 --types node --typeRoots "$ROOT/node_modules/@types" release-consumer-types.ts
 
 # ── Deno shim integrity ──────────────────────────────────────────────────────
 # dist/deno/index.js must contain no jsr: imports. When Deno loads npm:qunitx
@@ -53,5 +56,7 @@ echo "test-release: deno (consumer)"
 deno test --allow-read release-consumer-test.ts
 echo "test-release: deno (consumer, with a DOM)"
 deno test --allow-read --allow-env release-consumer-dom-test.ts
+echo "test-release: deno check (strict consumer types)"
+deno check release-consumer-types.ts
 echo "test-release: deno (full suite)"
 deno test --no-check --allow-read --allow-run test/index.ts
