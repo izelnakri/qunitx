@@ -73,8 +73,8 @@
  *
  * @module
  */
-import '../../vendor/qunit.js';
 import { AssertionError as DenoAssertionError } from 'jsr:@std/assert@^1.0.17';
+import QUnit from '../../vendor/qunit.js';
 import Assert from '../shared/assert.ts';
 import config from '../shared/config.ts';
 import { filterStack } from '../shared/filter-stack.ts';
@@ -119,7 +119,7 @@ export class AssertionError extends DenoAssertionError {
   }
 }
 
-Assert.QUnit = (globalThis as typeof globalThis & { QUnit: typeof Assert.QUnit }).QUnit;
+Assert.QUnit = QUnit;
 Assert.AssertionError = AssertionError;
 Assert.inspect = Deno.inspect;
 ModuleContext.Assert = Assert;

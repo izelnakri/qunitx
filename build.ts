@@ -4,6 +4,10 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { Plugin } from 'esbuild';
 
+// QUnit's native ES module build (since QUnit 3.0), vendored as vendor/qunit.js. Every
+// runtime imports it as ESM: no CommonJS interop, and its default export is the API.
+const QUNIT_SOURCE = './node_modules/qunit/qunit/esm/qunit.module.js';
+
 // null means the build is already up-to-date; skip everything.
 const inputHash = await checkUpToDate();
 if (inputHash !== null) {
@@ -39,7 +43,7 @@ async function checkUpToDate(): Promise<string | null> {
 // all in parallel. qunit.d.ts is written first so tsc can start immediately.
 async function compileAndVendor(): Promise<void> {
   const [qunitJS, qunitCSS] = await Promise.all([
-    fs.readFile('./node_modules/qunit/qunit/qunit.js'),
+    fs.readFile(QUNIT_SOURCE),
     fs.readFile('./node_modules/qunit/qunit/qunit.css'),
     fs.mkdir('./vendor', { recursive: true }),
   ]);
@@ -62,19 +66,19 @@ async function compileAndVendor(): Promise<void> {
   // exactly once. A QUnit upgrade that renames one fails the build here, rather
   // than shipping a vendor/qunit.js whose reset() throws a ReferenceError later.
   //
-  // `g.QUnit = QUnit;` is not patched, only required: since QUnit 3.0 the file
-  // puts itself on globalThis wherever it runs, including as the CommonJS module
-  // Deno loads from an npm install, and the Deno shim reads it from there.
+  // `g.QUnit = QUnit;` is not patched, only required: since QUnit 3.0 the file puts
+  // itself on globalThis wherever it runs, which qunit.d.ts declares and the browser
+  // runner (qunitx-cli) reads.
   const qunitSource = qunitJS.toString();
   const anchors = {
-    global: '    g.QUnit = QUnit;\n',
-    api: '\n  var QUnit = {\n',
-    start: '\n    start: start,\n',
-    suiteReport: '\n  var globalSuiteReport = new SuiteReport();\n',
-    createModule: '\n  function createModule(name, testEnvironment, modifiers, suiteReport) {\n',
-    testCount: '\n  Test.count = 0;\n',
-    focusedModule: '\n  var focused$1 = false;',
-    focusedTest: '\n  var focused = false;',
+    global: '\n  g.QUnit = QUnit;\n',
+    api: '\nvar QUnit = {\n',
+    start: '\n  start,\n',
+    suiteReport: '\nvar globalSuiteReport = new SuiteReport();\n',
+    createModule: '\nfunction createModule(name, testEnvironment, modifiers, suiteReport) {\n',
+    testCount: '\nTest.count = 0;\n',
+    focusedModule: '\nvar focused$1 = false;',
+    focusedTest: '\nvar focused = false;',
   };
   for (const [name, anchor] of Object.entries(anchors)) {
     if (qunitSource.split(anchor).length !== 2) {
@@ -89,51 +93,51 @@ async function compileAndVendor(): Promise<void> {
   // browser runner can define and run a second batch of tests on the same page
   // (qunitx-cli's watch mode and REPL). Registered listeners (QUnit.on, begin,
   // done, ...) are kept, and so is QUnit.config, apart from the run state below.
-  // It lives inside qunit.js's closure because most of that state is private.
+  // It lives inside qunit.js's module scope because most of that state is private.
   const reset = `
-  function reset() {
-    if (config.current) {
-      throw new Error('QUnit.reset() cannot be called inside a test.');
-    }
-    clearTimeout(config.timeout);
-    config.timeout = null;
-    config.timeoutHandler = null;
-
-    config._pq = new ProcessingQueue();
-    config._runStarted = false;
-    config._moduleStack.length = 0;
-    config._event_memory = {};
-    config.autostart = false;
-    config.blocking = true;
-    config.started = 0;
-    config.depth = 0;
-    config.pollution = undefined;
-    config.queue.length = 0;
-    config.modules.length = 0;
-    config.stats.all = 0;
-    config.stats.bad = 0;
-    config.stats.testCount = 0;
-    Test.count = 0;
-    focused = false;
-    focused$1 = false;
-
-    globalSuiteReport.tests.length = 0;
-    globalSuiteReport.childSuites.length = 0;
-    globalSuiteReport.globalFailureCount = 0;
-    delete globalSuiteReport._startTime;
-    delete globalSuiteReport._endTime;
-
-    // A fresh unnamed module for global tests, as qunit.js creates on load.
-    // createModule() also pushes it to config.modules.
-    config.currentModule = createModule('', {}, {}, globalSuiteReport);
+function reset() {
+  if (config.current) {
+    throw new Error('QUnit.reset() cannot be called inside a test.');
   }
+  clearTimeout(config.timeout);
+  config.timeout = null;
+  config.timeoutHandler = null;
+
+  config._pq = new ProcessingQueue();
+  config._runStarted = false;
+  config._moduleStack.length = 0;
+  config._event_memory = {};
+  config.autostart = false;
+  config.blocking = true;
+  config.started = 0;
+  config.depth = 0;
+  config.pollution = undefined;
+  config.queue.length = 0;
+  config.modules.length = 0;
+  config.stats.all = 0;
+  config.stats.bad = 0;
+  config.stats.testCount = 0;
+  Test.count = 0;
+  focused = false;
+  focused$1 = false;
+
+  globalSuiteReport.tests.length = 0;
+  globalSuiteReport.childSuites.length = 0;
+  globalSuiteReport.globalFailureCount = 0;
+  delete globalSuiteReport._startTime;
+  delete globalSuiteReport._endTime;
+
+  // A fresh unnamed module for global tests, as qunit.js creates on load.
+  // createModule() also pushes it to config.modules.
+  config.currentModule = createModule('', {}, {}, globalSuiteReport);
+}
 `;
 
   const newQUnit =
     denoEnvGuard +
     qunitSource
       .replace(anchors.api, `\n${reset}${anchors.api}`)
-      .replace(anchors.start, `\n    reset: reset,${anchors.start}`);
+      .replace(anchors.start, `\n  reset,${anchors.start}`);
 
   // Auto-generated type declarations for the patched QUnit API.
   // Update this template in build.ts when upgrading qunit to a version with API changes.
@@ -370,16 +374,13 @@ async function assertDeclarationIntegrity(): Promise<void> {
   }
 }
 
+// `"type": "module"` makes Node.js and Deno load vendor/qunit.js as the ES module it is,
+// rather than detecting it as one after failing to parse it as CommonJS.
 async function ensureVendorPackageJson(): Promise<void> {
-  await fs
-    .writeFile(
-      './vendor/package.json',
-      JSON.stringify({ name: 'qunitx-vendor', version: '0.0.1' }),
-      { flag: 'wx' },
-    )
-    .catch((err: { code?: string }) => {
-      if (err.code !== 'EEXIST') throw err;
-    });
+  await fs.writeFile(
+    './vendor/package.json',
+    JSON.stringify({ name: 'qunitx-vendor', version: '0.0.1', type: 'module' }),
+  );
 }
 
 // Produces dist/deno/index.js with all jsr: imports inlined.
@@ -549,7 +550,7 @@ async function computeInputHash(): Promise<string> {
   const [shimFiles, tsconfig, qunitSrc, denoLock, buildSelf] = await Promise.all([
     findFiles('./shims', (n) => n.endsWith('.ts'), 'vendor-types'),
     fs.readFile('./tsconfig.json').catch(() => Buffer.from('')),
-    fs.readFile('./node_modules/qunit/qunit/qunit.js').catch(() => Buffer.from('')),
+    fs.readFile(QUNIT_SOURCE).catch(() => Buffer.from('')),
     fs.readFile('./deno.lock').catch(() => Buffer.from('')),
     fs.readFile('./build.ts').catch(() => Buffer.from('')),
   ]);
