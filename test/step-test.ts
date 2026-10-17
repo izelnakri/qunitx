@@ -2,56 +2,32 @@
 import { module, test } from 'qunitx';
 
 module('assert.step', function () {
-  test('pushes a failing assertion if no message is given', function (assert) {
-    var original = assert.pushResult;
-    var pushed = null;
-    assert.pushResult = function (resultInfo) {
-      pushed = resultInfo;
-    };
-
-    assert.step();
-
-    assert.pushResult = original;
-    assert.false(pushed.result);
-    assert.equal(pushed.message, 'You must provide a message to assert.step');
-
-    assert.verifySteps([undefined]);
-  });
-
-  test('pushes a failing assertion if empty message is given', function (assert) {
-    var original = assert.pushResult;
-    var pushed = null;
-    assert.pushResult = function (resultInfo) {
-      pushed = resultInfo;
-    };
-
-    assert.step('');
-
-    assert.pushResult = original;
-    assert.false(pushed.result);
-    assert.equal(pushed.message, 'You must provide a message to assert.step');
-
-    assert.verifySteps(['']);
-  });
-
-  test('pushes a failing assertion if a non string message is given', function (assert) {
-    var original = assert.pushResult;
-    var pushed = [];
-    assert.pushResult = function (resultInfo) {
-      pushed.push(resultInfo);
-    };
-
-    assert.step(1);
-    assert.step(null);
-    assert.step(false);
-
-    assert.pushResult = original;
-    assert.deepEqual(pushed, [
-      { result: false, message: 'You must provide a string value to assert.step' },
-      { result: false, message: 'You must provide a string value to assert.step' },
-      { result: false, message: 'You must provide a string value to assert.step' },
-    ]);
-    assert.verifySteps([1, null, false]);
+  test('throws a TypeError for an invalid value', function (assert) {
+    assert.throws(
+      () => assert.step(),
+      new TypeError('You must provide a value to assert.step'),
+      'no value',
+    );
+    assert.throws(
+      () => assert.step(''),
+      new TypeError('You must provide a value to assert.step'),
+      'empty value',
+    );
+    assert.throws(
+      () => assert.step(1),
+      new TypeError('You must provide a string value to assert.step'),
+      'number value',
+    );
+    assert.throws(
+      () => assert.step(null),
+      new TypeError('You must provide a string value to assert.step'),
+      'null value',
+    );
+    assert.throws(
+      () => assert.step(false),
+      new TypeError('You must provide a string value to assert.step'),
+      'false value',
+    );
   });
 
   test('pushes a passing assertion if a message is given', function (assert) {
@@ -61,8 +37,9 @@ module('assert.step', function () {
     assert.verifySteps(['One step', 'Two step']);
   });
 
-  test('step() and verifySteps() count as assertions', function (assert) {
-    assert.expect(3);
+  // QUnit 3 counts only verifySteps(), not each step: https://github.com/qunitjs/qunit/issues/1226
+  test('step() does not count as an assertion', function (assert) {
+    assert.expect(1);
 
     assert.step('One');
     assert.step('Two');
@@ -103,18 +80,25 @@ module('assert.step', function () {
       assert.verifySteps(['One step', 'Two step', 'Red step', 'Blue step']);
     });
 
-    test('verifies the order and value of failed steps', function (assert) {
+    test('an invalid step is not recorded', function (assert) {
       assert.step('One step');
-
-      var original = assert.pushResult;
-      assert.pushResult = function noop() {};
-      assert.step();
-      assert.step('');
-      assert.pushResult = original;
-
+      assert.throws(() => assert.step(''), TypeError);
       assert.step('Two step');
 
-      assert.verifySteps(['One step', undefined, '', 'Two step']);
+      assert.verifySteps(['One step', 'Two step']);
+    });
+
+    test('empty verifySteps()', function (assert) {
+      assert.verifySteps([]);
+    });
+
+    test('expect() and verifySteps() together', function (assert) {
+      assert.expect(2);
+      assert.step('a');
+      assert.step('b');
+      assert.verifySteps(['a', 'b']);
+      assert.step('c');
+      assert.verifySteps(['c']);
     });
 
     test('resets the step list after verification', function (assert) {

@@ -58,50 +58,82 @@ async function compileAndVendor(): Promise<void> {
 })();
 `;
 
-  // QUnit puts itself on `window` where there is a DOM, and on module.exports
-  // wherever the file runs as CommonJS, which is how Deno runs it from an npm
-  // install. On globalThis too, always, as qunit.d.ts declares it: the Deno
-  // shim reads it from there whichever way the file was loaded.
-  const exportCall = '\n  exportQUnit(QUnit);\n';
-  if (qunitJS.toString().split(exportCall).length !== 2) {
-    throw new Error(
-      'qunit.js no longer calls exportQUnit(QUnit) once: update its patch in build.ts.',
-    );
+  // Every string the patches below rely on, each of which must occur in qunit.js
+  // exactly once. A QUnit upgrade that renames one fails the build here, rather
+  // than shipping a vendor/qunit.js whose reset() throws a ReferenceError later.
+  //
+  // `g.QUnit = QUnit;` is not patched, only required: since QUnit 3.0 the file
+  // puts itself on globalThis wherever it runs, including as the CommonJS module
+  // Deno loads from an npm install, and the Deno shim reads it from there.
+  const qunitSource = qunitJS.toString();
+  const anchors = {
+    global: '    g.QUnit = QUnit;\n',
+    api: '\n  var QUnit = {\n',
+    start: '\n    start: start,\n',
+    suiteReport: '\n  var globalSuiteReport = new SuiteReport();\n',
+    createModule: '\n  function createModule(name, testEnvironment, modifiers, suiteReport) {\n',
+    testCount: '\n  Test.count = 0;\n',
+    focusedModule: '\n  var focused$1 = false;',
+    focusedTest: '\n  var focused = false;',
+  };
+  for (const [name, anchor] of Object.entries(anchors)) {
+    if (qunitSource.split(anchor).length !== 2) {
+      throw new Error(
+        `qunit.js no longer contains ${JSON.stringify(anchor.trim())} exactly once ` +
+          `(the "${name}" anchor): update the QUnit patch in build.ts.`,
+      );
+    }
   }
+
+  // QUnit.reset(): puts a finished QUnit back into the state it loads in, so the
+  // browser runner can define and run a second batch of tests on the same page
+  // (qunitx-cli's watch mode and REPL). Registered listeners (QUnit.on, begin,
+  // done, ...) are kept, and so is QUnit.config, apart from the run state below.
+  // It lives inside qunit.js's closure because most of that state is private.
+  const reset = `
+  function reset() {
+    if (config.current) {
+      throw new Error('QUnit.reset() cannot be called inside a test.');
+    }
+    clearTimeout(config.timeout);
+    config.timeout = null;
+    config.timeoutHandler = null;
+
+    config._pq = new ProcessingQueue();
+    config._runStarted = false;
+    config._moduleStack.length = 0;
+    config._event_memory = {};
+    config.autostart = false;
+    config.blocking = true;
+    config.started = 0;
+    config.depth = 0;
+    config.pollution = undefined;
+    config.queue.length = 0;
+    config.modules.length = 0;
+    config.stats.all = 0;
+    config.stats.bad = 0;
+    config.stats.testCount = 0;
+    Test.count = 0;
+    focused = false;
+    focused$1 = false;
+
+    globalSuiteReport.tests.length = 0;
+    globalSuiteReport.childSuites.length = 0;
+    globalSuiteReport.globalFailureCount = 0;
+    delete globalSuiteReport._startTime;
+    delete globalSuiteReport._endTime;
+
+    // A fresh unnamed module for global tests, as qunit.js creates on load.
+    // createModule() also pushes it to config.modules.
+    config.currentModule = createModule('', {}, {}, globalSuiteReport);
+  }
+`;
 
   const newQUnit =
     denoEnvGuard +
-    qunitJS
-      .toString()
-      .replace(exportCall, `${exportCall}  globalThis.QUnit = QUnit;\n`)
-      .replace(
-        'start: function start(count) {',
-        `reset: function() {
-		ProcessingQueue.finished = false;
-		globalStartCalled = false;
-		runStarted = false;
-
-		config.queue.length = 0;
-		config.modules.length = 0;
-		config.autostart = false;
-
-    Object.assign(config.stats, { total: 0, passed: 0, failed: 0, skipped: 0, todo: 0 });
-
-		[
-			"started", "updateRate", "filter", "depth", "current",
-			"pageLoaded", "timeoutHandler", "timeout", "pollution"
-		].forEach( ( key ) => delete config[ key ] );
-
-		const suiteReport = config.currentModule.suiteReport;
-
-		suiteReport.childSuites.length = 0;
-		delete suiteReport._startTime;
-		delete suiteReport._endTime;
-
-		config.modules.push( config.currentModule );
-  },
-  start: function start(count) {`,
-      );
+    qunitSource
+      .replace(anchors.api, `\n${reset}${anchors.api}`)
+      .replace(anchors.start, `\n    reset: reset,${anchors.start}`);
 
   // Auto-generated type declarations for the patched QUnit API.
   // Update this template in build.ts when upgrading qunit to a version with API changes.
@@ -110,29 +142,38 @@ async function compileAndVendor(): Promise<void> {
 
 export interface QUnitConfig {
   autostart: boolean;
+  /** Milliseconds before a test fails as timed out; 3000 by default since QUnit 3.0, 0 disables. */
+  testTimeout: number;
+  reporters: { console?: boolean; html?: boolean; perf?: boolean; tap?: boolean };
   [key: string]: unknown;
 }
 
-interface QUnitInstance {
+type QUnitHookCallback = (assert: unknown) => void | Promise<void>;
+
+export interface QUnitInstance {
   config: QUnitConfig;
   isLocal: boolean;
   version: string;
+  urlParams: Record<string, unknown>;
+  reporters: Record<string, { init(QUnit: QUnitInstance): void }>;
+  hooks: {
+    beforeEach(callback: QUnitHookCallback): void;
+    afterEach(callback: QUnitHookCallback): void;
+  };
   on(event: string, callback: (...args: unknown[]) => void): void;
   test(name: string, callback: (assert: unknown) => void | Promise<void>): void;
   module(name: string, callback: (hooks: unknown) => void): void;
   skip(name: string, callback: (assert: unknown) => void): void;
   todo(name: string, callback: (assert: unknown) => void): void;
   only(name: string, callback: (assert: unknown) => void): void;
-  start(count?: number): void;
-  /** Added by qunitx's build patch for browser test isolation. */
+  start(): void;
+  /** Added by qunitx's build patch: makes a finished run accept and run new tests. */
   reset(): void;
   is(type: string, obj: unknown): boolean;
   extend(target: object, source: object): object;
   stack(offset?: number): string;
-  onUnhandledRejection(reason: unknown): void;
+  onUncaughtException(error: unknown): void;
   objectType(obj: unknown): string;
-  load(): void;
-  onError(callback: (...args: unknown[]) => void): void;
   pushFailure(message: string, source?: string, value?: unknown): void;
   equiv(a: unknown, b: unknown): boolean;
   begin(callback: (...args: unknown[]) => void): void;

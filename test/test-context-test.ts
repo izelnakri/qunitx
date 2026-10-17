@@ -39,11 +39,31 @@ if (typeof (globalThis as Record<string, unknown>)['document'] === 'undefined') 
     test('finish triggers error when steps are not verified', function (assert) {
       // Use ok() to get totalExecutedAssertions > 0 (ok doesn't call pushResult).
       assert.ok(true);
-      // Push directly to steps array to avoid going through assert.step()
-      // which calls pushResult and would be inverted to a failure.
-      assert.test.steps.push('unverified step');
+      // assert.step() records the step without pushing an assertion of its own.
+      assert.step('unverified step');
       // finish() will see steps.length > 0 and call pushResult({result: false}),
       // which the beforeEach invert converts to a passing result.
+    });
+  });
+
+  module('TestContext.finish - QUnit 2 step count branch', function (hooks) {
+    hooks.beforeEach(function (assert) {
+      const originalPushResult = assert.pushResult;
+      // Passes only for the failure that explains the QUnit 3 counting change.
+      assert.pushResult = function (resultInfo) {
+        resultInfo.result =
+          !resultInfo.result && /upgrading from QUnit 2/.test(resultInfo.message ?? '');
+        return originalPushResult.call(this, resultInfo);
+      };
+    });
+
+    test('finish explains an expect() count that still includes steps', function (assert) {
+      // The count QUnit 2 expected: two steps and the verifySteps() call.
+      assert.expect(3);
+      assert.step('one');
+      assert.step('two');
+      // deepEqual() inside verifySteps() bypasses the pushResult override when it passes.
+      assert.verifySteps(['one', 'two']);
     });
   });
 

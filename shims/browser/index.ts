@@ -21,24 +21,25 @@ export const done = QUnit.done;
 export const dump = QUnit.dump;
 export const equiv = QUnit.equiv;
 export const extend = QUnit.extend;
+export const hooks = QUnit.hooks;
 export const is = QUnit.is;
 export const isLocal = QUnit.isLocal;
-export const load = QUnit.load;
 export const log = QUnit.log;
 export const moduleDone = QUnit.moduleDone;
 export const moduleStart = QUnit.moduleStart;
 export const objectType = QUnit.objectType;
 export const on = QUnit.on;
-export const onError = QUnit.onError;
-export const onUnhandledRejection = QUnit.onUnhandledRejection;
+export const onUncaughtException = QUnit.onUncaughtException;
 export const only = QUnit.only;
 export const pushFailure = QUnit.pushFailure;
+export const reporters = QUnit.reporters;
 export const skip = QUnit.skip;
 export const stack = QUnit.stack;
 export const start = QUnit.start;
 export const testDone = QUnit.testDone;
 export const testStart = QUnit.testStart;
 export const todo = QUnit.todo;
+export const urlParams = QUnit.urlParams;
 export const version = QUnit.version;
 
 /**
@@ -92,8 +93,9 @@ export function module(
     return;
   }
 
+  // The callback's result is handed back so QUnit 3 can reject an async one.
   _QUnit.module(moduleName, function (this: Record<string, unknown>, qunitHooks: object) {
-    callback.call(this, wrapHooks(qunitHooks as QUnitHooks), { moduleName, options, context: this });
+    return callback.call(this, wrapHooks(qunitHooks as QUnitHooks), { moduleName, options, context: this });
   });
 }
 

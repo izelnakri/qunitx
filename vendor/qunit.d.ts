@@ -3,29 +3,38 @@
 
 export interface QUnitConfig {
   autostart: boolean;
+  /** Milliseconds before a test fails as timed out; 3000 by default since QUnit 3.0, 0 disables. */
+  testTimeout: number;
+  reporters: { console?: boolean; html?: boolean; perf?: boolean; tap?: boolean };
   [key: string]: unknown;
 }
 
-interface QUnitInstance {
+type QUnitHookCallback = (assert: unknown) => void | Promise<void>;
+
+export interface QUnitInstance {
   config: QUnitConfig;
   isLocal: boolean;
   version: string;
+  urlParams: Record<string, unknown>;
+  reporters: Record<string, { init(QUnit: QUnitInstance): void }>;
+  hooks: {
+    beforeEach(callback: QUnitHookCallback): void;
+    afterEach(callback: QUnitHookCallback): void;
+  };
   on(event: string, callback: (...args: unknown[]) => void): void;
   test(name: string, callback: (assert: unknown) => void | Promise<void>): void;
   module(name: string, callback: (hooks: unknown) => void): void;
   skip(name: string, callback: (assert: unknown) => void): void;
   todo(name: string, callback: (assert: unknown) => void): void;
   only(name: string, callback: (assert: unknown) => void): void;
-  start(count?: number): void;
-  /** Added by qunitx's build patch for browser test isolation. */
+  start(): void;
+  /** Added by qunitx's build patch: makes a finished run accept and run new tests. */
   reset(): void;
   is(type: string, obj: unknown): boolean;
   extend(target: object, source: object): object;
   stack(offset?: number): string;
-  onUnhandledRejection(reason: unknown): void;
+  onUncaughtException(error: unknown): void;
   objectType(obj: unknown): string;
-  load(): void;
-  onError(callback: (...args: unknown[]) => void): void;
   pushFailure(message: string, source?: string, value?: unknown): void;
   equiv(a: unknown, b: unknown): boolean;
   begin(callback: (...args: unknown[]) => void): void;

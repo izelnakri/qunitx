@@ -34,6 +34,8 @@ export interface QUnitObject {
 export interface TestState {
   totalExecutedAssertions: number;
   steps: string[];
+  /** Steps checked by verifySteps() so far, to explain an expect() count off by exactly those. */
+  stepsCount: number;
   asyncOps: Promise<void>[];
   timeout?: number;
   expectedAssertionCount?: number;

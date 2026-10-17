@@ -3,6 +3,7 @@ import { AssertionError as NodeAssertionError } from 'node:assert';
 import { inspect } from 'node:util';
 import QUnit from '../../vendor/qunit.js';
 import Assert from '../shared/assert.ts';
+import config from '../shared/config.ts';
 import { filterStack } from '../shared/filter-stack.ts';
 import ModuleContext from '../shared/module-context.ts';
 import TestContext from '../shared/test-context.ts';
@@ -30,7 +31,7 @@ Object.freeze(Assert);
 Object.freeze(ModuleContext);
 Object.freeze(TestContext);
 
-export { Assert };
+export { Assert, config };
 // BDD-style aliases. Same function objects as `module`/`test`, so `describe.skip`,
 // `describe.todo`, `it.skip`, and `it.todo` come along for free.
 export { default as describe } from './module.ts';
@@ -47,5 +48,5 @@ export default {
   it: Test,
   module: Module,
   test: Test,
-  config: {},
+  config,
 };

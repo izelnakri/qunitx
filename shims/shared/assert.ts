@@ -62,8 +62,10 @@ export default class Assert {
 
   /**
    * Sets the number of milliseconds after which the current test will fail if not yet complete.
+   * Overrides the default from `config.testTimeout` (3000) for this test; `0` requires the
+   * test to finish synchronously.
    *
-   * @param {number} number - Timeout in milliseconds (positive integer).
+   * @param {number} number - Timeout in milliseconds (non-negative integer).
    * @example
    * ```js
    * test("slow async operation", async (assert) => {
@@ -86,11 +88,16 @@ export default class Assert {
    * Records a named step. Use with {@linkcode Assert.prototype.verifySteps} to assert that
    * a sequence of steps occurred in the right order.
    *
+   * A step is not an assertion of its own: as in QUnit 3, only the
+   * {@linkcode Assert.prototype.verifySteps} call that checks it counts towards
+   * {@linkcode Assert.prototype.expect}.
+   *
    * @param {string} message - The step label to record.
+   * @throws {TypeError} If `message` is missing, empty, or not a string.
    * @example
    * ```js
    * test("event order", (assert) => {
-   *   assert.expect(3);
+   *   assert.expect(1);
    *   assert.step("step one");
    *   assert.step("step two");
    *   assert.verifySteps(["step one", "step two"]);
@@ -98,21 +105,19 @@ export default class Assert {
    * ```
    */
   step(message: string): void {
+    if (message === undefined || message === '') {
+      throw new TypeError('You must provide a value to assert.step');
+    }
+    if (typeof message !== 'string') {
+      throw new TypeError('You must provide a string value to assert.step');
+    }
+
     this.test.steps.push(message);
-
-    const result = typeof message === 'string' && message.length > 0;
-    const assertionMessage = result
-      ? message
-      : (message === undefined || message === '')
-        ? 'You must provide a message to assert.step'
-        : 'You must provide a string value to assert.step';
-
-    this.pushResult({ result, message: assertionMessage });
   }
 
   /**
    * Asserts that the steps recorded via {@linkcode Assert.prototype.step} match the given array,
-   * then clears the recorded steps.
+   * then clears the recorded steps. Counts as one assertion, however many steps it checks.
    *
    * @param {string[]} steps - Expected array of step labels in order.
    * @param {string} [message] - Optional failure message.
@@ -126,10 +131,24 @@ export default class Assert {
    * ```
    */
   verifySteps(steps: string[], message = 'Verify steps failed!') {
-    this.deepEqual(this.test.steps, steps, message);
+    this.deepEqual(this.test.steps.slice(), steps, message);
+    this.test.stepsCount += this.test.steps.length;
     this.test.steps.length = 0;
   }
 
+  /**
+   * Returns the number of assertions set with `assert.expect(number)` so far, if any.
+   *
+   * @returns {number | undefined} The expected assertion count, or `undefined` if unset.
+   * @example
+   * ```js
+   * test("reads the expected count back", (assert) => {
+   *   assert.expect(1);
+   *   assert.strictEqual(assert.expect(), 1);
+   * });
+   * ```
+   */
+  expect(): number | undefined;
   /**
    * Sets the number of assertions expected to run in the current test.
    * The test fails if a different number of assertions actually ran.
@@ -144,8 +163,10 @@ export default class Assert {
    * });
    * ```
    */
-  expect(number: number): void {
-    if (!Number.isInteger(number) || number < 0) {
+  expect(number: number): void;
+  expect(number?: number): number | undefined {
+    if (arguments.length === 0) return this.test.expectedAssertionCount;
+    if (!Number.isInteger(number) || number! < 0) {
       throw new Error('assert.expect() expects a positive integer.');
     }
 

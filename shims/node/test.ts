@@ -1,5 +1,6 @@
 import { it } from 'node:test';
 import type Assert from '../shared/assert.ts';
+import config from '../shared/config.ts';
 import ModuleContext from '../shared/module-context.ts';
 import TestContext from '../shared/test-context.ts';
 import { callAtLocation, captureCallerLocation } from './caller-location.ts';
@@ -62,11 +63,7 @@ function test(
   const targetTestContent = (testContent ?? runtimeOptions) as (assert: Assert, meta: { testName: string; options: unknown }) => void | Promise<void>;
   const context = new TestContext(testName, moduleContext);
 
-  // Each test gets a fresh plain object inheriting from the module's user context.
-  // This matches QUnit's prototype-chain model: before() sets props on the module context,
-  // tests inherit them, and each test's own writes don't pollute sibling tests.
-  const userContext = Object.create(moduleContext.userContext);
-  context.userContext = userContext;
+  moduleContext.registerRunnableTest();
 
   // todo: exclude from finish() loop — todo tests may have zero or failing assertions.
   // Node's { todo } on it() handles the result; we just prevent afterAll from calling finish().
@@ -75,7 +72,16 @@ function test(
   callAtLocation(it,loc, testName, { ...targetRuntimeOptions }, function () {
     const { promise, resolve, reject } = Promise.withResolvers<void>();
     context.rejectTimeout = reject;
+    // An explicit Node `{ timeout }` is Node's to enforce; ours would cut it short.
+    // `config.testTimeout = 0` turns the default off.
+    if (config.testTimeout > 0 && typeof (targetRuntimeOptions as { timeout?: unknown }).timeout !== 'number') {
+      context.setTimeoutDuration(config.testTimeout);
+    }
 
+    // Taken now rather than when the test was declared, so it includes what the
+    // module's before() hooks set.
+    const userContext = moduleContext.createTestUserContext();
+    context.userContext = userContext;
     const hookMeta = { context: userContext };
 
     (async () => {
@@ -84,6 +90,7 @@ function test(
         for (const mod of chain) {
           for (const hook of mod.beforeEachHooks) {
             await hook.call(userContext, context.assert!, hookMeta);
+            if (context.asyncOps.length > 0) await context.assert!.waitForAsyncOps();
           }
         }
 
@@ -98,6 +105,7 @@ function test(
           const hooks = chain[i]!.afterEachHooks;
           for (let j = hooks.length - 1; j >= 0; j--) {
             await hooks[j]!.call(userContext, context.assert!, hookMeta);
+            if (context.asyncOps.length > 0) await context.assert!.waitForAsyncOps();
           }
         }
 

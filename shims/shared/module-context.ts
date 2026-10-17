@@ -22,6 +22,9 @@ export default class ModuleContext {
   beforeEachHooks: HookFn<Assert>[] = [];
   afterEachHooks: HookFn<Assert>[] = [];
   tests: TestContext[] = [];
+  // Tests that will run, in this module and every module nested in it. QUnit runs a
+  // module's before/after hooks only when this is non-zero.
+  runnableTestCount = 0;
 
   constructor(name: string) {
     const chain = ModuleContext.currentModuleChain;
@@ -34,9 +37,64 @@ export default class ModuleContext {
     this.assert = new ModuleContext.Assert(this);
 
     // User context uses prototype chain from parent module for proper QUnit-style inheritance:
-    // parent before() sets props on parent userContext, child tests inherit via prototype.
+    // a parent before() sets props on its userContext, which child modules inherit; each
+    // test then starts from a flat copy of its module's (see createTestUserContext).
     this.userContext = parentModule ? Object.create(parentModule.userContext) : Object.create(null);
 
-    return Object.freeze(this);
+    return Object.seal(this);
   }
+
+  /**
+   * A fresh context for one test: a copy of every property the module context has,
+   * inherited ones included, taken as the test starts (after before hooks ran). The
+   * same snapshot QUnit 3 takes, so what one test writes stays out of the next.
+   */
+  createTestUserContext(): Record<string, unknown> {
+    const moduleUserContext = this.userContext;
+    const userContext: Record<string, unknown> = {};
+    for (const key in moduleUserContext) {
+      const value = moduleUserContext[key];
+      if (value !== undefined) userContext[key] = value;
+    }
+    return userContext;
+  }
+
+  /** Counts a test that will run towards this module and each module it is nested in. */
+  registerRunnableTest() {
+    for (const module of this.moduleChain) module.runnableTestCount++;
+  }
+
+  /**
+   * Throws QUnit 3's E0002 error unless this is the module whose callback is running:
+   * hooks belong to the module they are declared in, so registering one on a parent
+   * module from a child, or from inside a test, is a mistake rather than a late hook.
+   */
+  assertExecutionIsInsideTestModuleFor(hookName: string) {
+    const current = ModuleContext.lastModule;
+    if (current !== this) {
+      throw new Error(
+        `Cannot add ${hookName} hook outside the containing module. Called on "${this.name}", instead of expected "${current?.name ?? ''}". https://qunitjs.com/api/QUnit/module/#E0002`,
+      );
+    }
+  }
+
+  /** Throws QUnit 3's TypeError for an async module callback, before anything is registered. */
+  static assertCallbackIsSyncFunction(callback: unknown) {
+    if (isAsyncFunction(callback)) throw new TypeError(ASYNC_MODULE_MESSAGE);
+  }
+
+  /** Throws the same TypeError when a module callback returned a promise anyway. */
+  static assertNotPromise(result: unknown) {
+    if (result && typeof (result as { then?: unknown }).then === 'function') {
+      throw new TypeError(ASYNC_MODULE_MESSAGE);
+    }
+  }
+}
+
+const ASYNC_MODULE_MESSAGE =
+  'QUnit.module() callback must not be async. For async module setup, use hooks. https://qunitjs.com/api/QUnit/module/#hooks';
+
+function isAsyncFunction(fn: unknown): boolean {
+  const tag = typeof fn === 'function' && (fn as { [Symbol.toStringTag]?: string })[Symbol.toStringTag];
+  return tag === 'AsyncFunction' || tag === 'AsyncGeneratorFunction';
 }

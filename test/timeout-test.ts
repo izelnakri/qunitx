@@ -8,6 +8,11 @@ module('assert.timeout - pass cases', function () {
     assert.ok(true, 'completed within timeout');
   });
 
+  test('timeout(0) passes a test that finishes synchronously', function (assert) {
+    assert.timeout(0);
+    assert.ok(true, 'finished synchronously');
+  });
+
   test('calling timeout again resets the deadline', async function (assert) {
     assert.timeout(30);
     assert.timeout(500); // extends the deadline
@@ -20,7 +25,9 @@ module('assert.timeout - pass cases', function () {
 // Skipped in the browser (no subprocess API) and gated on document absence.
 if (typeof globalThis['document'] === 'undefined') {
   module('assert.timeout - timeout fires', function () {
-    test('slow test is aborted with a timeout error', async function (assert) {
+    test('slow tests are aborted with a timeout error', async function (assert) {
+      // Starts a whole test runner, which takes longer than the 3s default on a slow CI machine.
+      assert.timeout(30_000);
       // URL.pathname on Windows is '/C:/path' — strip the leading slash to get a valid path.
       const { pathname } = new URL('./helpers/timeout-fires.ts', import.meta.url);
       const helperPath = process.platform === 'win32' ? pathname.slice(1) : pathname;
@@ -50,8 +57,12 @@ if (typeof globalThis['document'] === 'undefined') {
 
       assert.notEqual(exitCode, 0, 'test runner exits non-zero when timeout fires');
       assert.ok(
-        output.includes('timed out'),
-        `output should mention "timed out" — got: ${output.slice(0, 400)}`,
+        output.includes('Test took longer than 30ms; test timed out.'),
+        `assert.timeout(30) should time the first test out — got: ${output.slice(0, 600)}`,
+      );
+      assert.ok(
+        output.includes('Test took longer than 40ms; test timed out.'),
+        `config.testTimeout = 40 should time the second test out — got: ${output.slice(0, 600)}`,
       );
     });
   });
