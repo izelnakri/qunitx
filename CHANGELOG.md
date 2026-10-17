@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.3.2] - 2026-10-17
+[`v1.3.1...v1.3.2`](https://github.com/izelnakri/qunitx/compare/v1.3.1...v1.3.2)
+
+### Bug Fixes
+- Load QUnit once, so qunitx runs where a DOM exists — 2026-10-17 by [@izelnakri](https://github.com/izelnakri) ([`5daa0d8`](https://github.com/izelnakri/qunitx/commit/5daa0d8b0132bc0836719303cdccaa0c0304d7ca))
+
+### Documentation
+- Make the npm quick start copy-pasteable, verified on both runtimes — 2026-08-14 by [@izelnakri](https://github.com/izelnakri) ([`66b8e76`](https://github.com/izelnakri/qunitx/commit/66b8e76a922d25df37478443ca005e97b19e1e08))
+
 ## [1.3.1] - 2026-08-14
 [`v1.3.0...v1.3.1`](https://github.com/izelnakri/qunitx/compare/v1.3.0...v1.3.1)
 
