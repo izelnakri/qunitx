@@ -7,13 +7,13 @@
     "jsr:@std/internal@^1.0.12": "1.0.12",
     "jsr:@std/testing@*": "1.0.17",
     "jsr:@std/testing@^1.0.17": "1.0.17",
-    "npm:@types/node@^26.2.0": "26.2.0",
+    "npm:@types/node@^26.6.5": "26.6.5",
     "npm:esbuild@0.28.2": "0.28.2",
     "npm:jsdom@^30.1.3": "30.1.3",
-    "npm:playwright-core@^1.62.1": "1.62.1",
-    "npm:prettier@^3.9.6": "3.9.6",
+    "npm:playwright-core@^1.64.1": "1.64.1",
+    "npm:prettier@^3.9.10": "3.9.10",
     "npm:qunit@^2.26.0": "2.26.0",
-    "npm:qunitx-cli@~0.34.3": "0.34.3",
+    "npm:qunitx-cli@0.38": "0.38.0",
     "npm:typescript@^7.0.2": "7.0.2"
   },
   "jsr": {
@@ -234,8 +234,8 @@
     "@exodus/bytes@1.16.0": {
       "integrity": "sha512-IcpW84uEn3N7ETtNZMlxKhfl6Pec8rUNGOTBtWbK1FKhJxIFAptZyVrvVRVBimAJxJCgc3PxepxkdWWG4DVzfA=="
     },
-    "@types/node@26.2.0": {
-      "integrity": "sha512-5IviulTZeRNp2vAJ514cc/HUlY5nZ9fCbq9DMyC52BrhFZACo3nI0R7qBxhQmo/d27NFe96ur/b7Wwxklda+kg==",
+    "@types/node@26.6.5": {
+      "integrity": "sha512-uMzsv9stDdofIZBx4UGh4Z9ZgXnGC9seRDscilBcTHAeOFk67MZg/k9bWVfO+bk4qZmG+l52hRnLwUiH2LnJTg==",
       "dependencies": [
         "undici-types"
       ]
@@ -461,12 +461,12 @@
       "integrity": "sha512-h7Qlt6m4REp25qvIdvbDtVmD4LqVXfpRxhORv9L0jzETM05p4fuPJ3dKyuSXQxDSbXnmS79HAgi9589lGSpLkg==",
       "bin": true
     },
-    "playwright-core@1.62.1": {
-      "integrity": "sha512-wPYSwEBJY9GHraISXqyqtx0na0LpO3XEX7jNDhntbex7tzUS7kLnZsOlFruFJB4Hi/rhDMjXGqHewDZ68nYZVw==",
+    "playwright-core@1.64.1": {
+      "integrity": "sha512-BC4s8y6SEVA6Q1rSxZTto8hI1KUI3xXlHGZgvGqP4IqPdI/a6FX9H29IDNz7vKo9l21b6LfYosScPL6M3xxyDQ==",
       "bin": true
     },
-    "prettier@3.9.6": {
-      "integrity": "sha512-OpN0zzVdiaiAhxpuuj5efpIS4sY9j7bY6uR5mnj5yPzGkdkjNKSJeUThPb60Jw29QuAZgA4o+/iB49kFiaBX6g==",
+    "prettier@3.9.10": {
+      "integrity": "sha512-skGHTH1Yb9QvaTC4hWnRTzEYtCpApF0UMBPz+t/0ZPzP8ihefo/btKd+QA7pUE0fEwA1SbS/NmhyEcstdXOIdA==",
       "bin": true
     },
     "punycode@2.3.1": {
@@ -481,14 +481,14 @@
       ],
       "bin": true
     },
-    "qunitx-cli-linux-x64@0.34.3": {
-      "integrity": "sha512-1wuQGu/E2txghK+zJtyBQ8GfwVNxHT6lMokFGsrv1wzs9M6K6Sguz9mDY66x4+9dpWzysANkhqOuULu+fTsn8w==",
+    "qunitx-cli-linux-x64@0.38.0": {
+      "integrity": "sha512-PfLZxuZnUFxVgoUHCS73YNCa3i0y8p9ADKTviCbTsKRzCXc3JVubTWXMgO8TyZjJD9en61cfiMTNWUR81mIdqw==",
       "os": ["linux"],
       "cpu": ["x64"],
       "bin": true
     },
-    "qunitx-cli@0.34.3": {
-      "integrity": "sha512-ob6Wp6cqrBhD5Xu2Sh6FJVtKhliPWQUe1uDJxljCg28AuajVLmIymQuTXD0cullLrcyoQ+zoCTpDQnY15sj5JA==",
+    "qunitx-cli@0.38.0": {
+      "integrity": "sha512-PvXqQB9HtRSmxvqUcn2vwYtcloxSzuqFtfGOF1etwVhxznouv80gEIvbjrCZdSGbsE1eICr/1kLs9efT4VzQcg==",
       "dependencies": [
         "esbuild",
         "playwright-core@1.61.1",
@@ -567,8 +567,8 @@
       ],
       "bin": true
     },
-    "undici-types@8.3.0": {
-      "integrity": "sha512-j375ScV60dom+YkPFIfTLcOiPxkN/buHz5GobjLhixFuANaNs3C9l4GmrWqejgXWJ7BbJcFYpTEUkS1Ge8bpZQ=="
+    "undici-types@8.9.0": {
+      "integrity": "sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg=="
     },
     "undici@8.12.2": {
       "integrity": "sha512-XtuDWVdqTLr3NAxm2ly9/hU6kUsJOgGh1RASzMBbsw6aWCOaQzHdW+QQDfdERjfJ2V5vL5pRPa4RetO9UfivDg=="
@@ -593,8 +593,8 @@
         "webidl-conversions"
       ]
     },
-    "ws@8.21.3": {
-      "integrity": "sha512-201TZ/kPWxoPr/OKWjquZR1SWKXcvxdH+e1xrx89b3YbmzLMFCLfnaG1HFIgWzJOEWZ7MvpK++odZufgYR50Rw=="
+    "ws@8.22.0": {
+      "integrity": "sha512-Ydggc987+RO0AnWtZ/7Wq9FtNvcrL1b/RO0ud9mWjUPgDrsAAwQSF51sm2hm1XofbU/4jkpGEsLFsZZxU+1DOg=="
     },
     "xml-name-validator@5.0.0": {
       "integrity": "sha512-EvGK8EJ3DhaHfbRlETOWAS5pO9MZITeauHKJyb8wyajUfQUenkIg2MvLDTZ4T/TgIcm3HU0TFBgWWboAZ30UHg=="
@@ -606,13 +606,13 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
-        "npm:@types/node@^26.2.0",
+        "npm:@types/node@^26.6.5",
         "npm:esbuild@0.28.2",
         "npm:jsdom@^30.1.3",
-        "npm:playwright-core@^1.62.1",
-        "npm:prettier@^3.9.6",
+        "npm:playwright-core@^1.64.1",
+        "npm:prettier@^3.9.10",
         "npm:qunit@^2.26.0",
-        "npm:qunitx-cli@~0.34.3",
+        "npm:qunitx-cli@0.38",
         "npm:typescript@^7.0.2"
       ]
     }
