@@ -35,11 +35,13 @@ Object.freeze(TestContext);
 // imports those with `import type`, which would make `export { Assert }` a type only.
 export { default as Assert } from '../shared/assert.ts';
 export { default as config } from '../shared/config.ts';
+export { default as hooks } from '../shared/global-hooks.ts';
 // BDD-style aliases. Same function objects as `module`/`test`, so `describe.skip`,
 // `describe.todo`, `it.skip`, and `it.todo` come along for free.
 export { default as describe } from './module.ts';
 export { default as it } from './test.ts';
 export { default as module } from './module.ts';
+export const only = Test.only;
 export const skip = Test.skip;
 export { default as test } from './test.ts';
 export const todo = Test.todo;

@@ -595,6 +595,39 @@ export default class Assert {
   }
 
   /**
+   * Asserts that `actual` is within `delta` of `expected`, inclusive: for numbers that
+   * floating-point arithmetic makes almost, but not exactly, equal.
+   *
+   * @param {number} actual - The value produced by the code under test.
+   * @param {number} expected - The value it should be close to.
+   * @param {number} delta - The largest allowed difference.
+   * @param {string} [message] - Optional failure message.
+   * @throws {TypeError} If `delta` is not a number.
+   * @example
+   * ```js
+   * test("floating point", (assert) => {
+   *   assert.closeTo(0.1 + 0.2, 0.3, 0.001);
+   *   assert.closeTo(Math.PI, 3.141, 0.001);
+   * });
+   * ```
+   */
+  closeTo(actual: number, expected: number, delta: number, message?: string): void {
+    if (typeof delta !== 'number') {
+      throw new TypeError('closeTo() requires a delta argument');
+    }
+    this.test.totalExecutedAssertions++;
+    if (!(Math.abs(actual - expected) <= delta)) {
+      throw new Assert.AssertionError({
+        actual,
+        expected,
+        message: message || `Value should be within ${delta} inclusive:${formatDiff(actual, expected)}`,
+        operator: 'closeTo',
+        stackStartFn: this.closeTo,
+      });
+    }
+  }
+
+  /**
    * Asserts that `blockFn` throws an exception. Optionally validates the thrown
    * error against a string (message substring), RegExp (message pattern),
    * or constructor (`instanceof` check). For async functions use {@linkcode Assert.prototype.rejects}.
@@ -602,14 +635,29 @@ export default class Assert {
    * @param {function} blockFn - A synchronous function expected to throw.
    * @param {string|RegExp|function} [expected] - Optional matcher for the thrown error.
    * @param {string} [message] - Optional failure message.
+   * @returns {unknown} The thrown error, for further assertions on it.
    * @example
    * ```js
    * assert.throws(() => { throw new Error("boom"); });
    * assert.throws(() => JSON.parse("{bad}"), SyntaxError);
    * assert.throws(() => { throw new Error("bad input"); }, /bad input/);
+   *
+   * const error = assert.throws(() => JSON.parse("{bad}"), SyntaxError);
+   * assert.true(error.message.length > 0);
    * ```
    */
-  throws(blockFn: unknown, expectedInput?: unknown, assertionMessage?: string): void {
+  throws<E>(blockFn: () => unknown, expected: abstract new (...args: never[]) => E, message?: string): E;
+  /**
+   * Asserts that `blockFn` throws, optionally matching the error against a RegExp,
+   * validator function or error object, and returns what it threw.
+   *
+   * @param {function} blockFn - A synchronous function expected to throw.
+   * @param {RegExp|function|object|string} [expected] - Optional matcher, or the message.
+   * @param {string} [message] - Optional failure message.
+   * @returns {unknown} The thrown error.
+   */
+  throws(blockFn: unknown, expected?: unknown, message?: string): unknown;
+  throws(blockFn: unknown, expectedInput?: unknown, assertionMessage?: string): unknown {
     this.test.totalExecutedAssertions++;
     const [expected, message] = validateExpectedExceptionArgs(expectedInput, assertionMessage, 'throws');
     if (typeof blockFn !== 'function') {
@@ -623,7 +671,8 @@ export default class Assert {
 
     let returnValue: unknown;
     try {
-      returnValue = blockFn();
+      // With the test's context as `this`, as QUnit calls it.
+      returnValue = blockFn.call(this.test.userContext);
     } catch (error) {
       const [result, , validatedMessage] = validateException(error, expected, message);
       if (result === false) {
@@ -637,7 +686,7 @@ export default class Assert {
         });
       }
 
-      return;
+      return error;
     }
 
     if (returnValue !== null && typeof returnValue === 'object' && typeof (returnValue as PromiseLike<unknown>).then === 'function') {
@@ -665,14 +714,29 @@ export default class Assert {
    * @param {Promise<unknown>} promise - A promise expected to reject.
    * @param {string|RegExp|function} [expected] - Optional matcher for the rejection reason.
    * @param {string} [message] - Optional failure message.
+   * @returns {Promise<unknown>} The rejection reason, for further assertions on it.
    * @example
    * ```js
    * await assert.rejects(Promise.reject(new Error("oops")));
    * await assert.rejects(fetch("/bad-url"), TypeError);
    * await assert.rejects(Promise.reject(new Error("timeout")), /timeout/);
+   *
+   * const reason = await assert.rejects(Promise.reject(new RangeError("too big")), RangeError);
+   * assert.strictEqual(reason.message, "too big");
    * ```
    */
-  async rejects(promise: unknown, expectedInput?: unknown, assertionMessage?: string): Promise<void> {
+  rejects<E>(promise: PromiseLike<unknown>, expected: abstract new (...args: never[]) => E, message?: string): Promise<E>;
+  /**
+   * Asserts that a promise rejects, optionally matching the reason against a RegExp,
+   * validator function or error object, and resolves to the reason.
+   *
+   * @param {Promise<unknown>} promise - A promise expected to reject.
+   * @param {RegExp|function|object|string} [expected] - Optional matcher, or the message.
+   * @param {string} [message] - Optional failure message.
+   * @returns {Promise<unknown>} The rejection reason.
+   */
+  rejects(promise: unknown, expected?: unknown, message?: string): Promise<unknown>;
+  async rejects(promise: unknown, expectedInput?: unknown, assertionMessage?: string): Promise<unknown> {
     this.test.totalExecutedAssertions++;
     const [expected, message] = validateExpectedExceptionArgs(expectedInput, assertionMessage, 'rejects');
     const then = promise && (promise as PromiseLike<unknown>).then;
@@ -712,6 +776,8 @@ export default class Assert {
         stackStartFn: this.rejects,
       });
     }
+
+    return caught;
   }
 }
 

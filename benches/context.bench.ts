@@ -47,6 +47,7 @@ function makeFinishableTest(expectedCount?: number) {
   const ctx = new TestContext('test', parentModule);
   parentModule.tests.pop();
   ctx.totalExecutedAssertions = 1;
+  ctx.started = true; // finish() checks only the tests the runner started.
   if (expectedCount !== undefined) ctx.expectedAssertionCount = expectedCount;
   return ctx;
 }
