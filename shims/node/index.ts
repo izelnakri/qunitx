@@ -31,7 +31,10 @@ Object.freeze(Assert);
 Object.freeze(ModuleContext);
 Object.freeze(TestContext);
 
-export { Assert, config };
+// Re-exported from their modules, not as the local bindings above: a declaration file
+// imports those with `import type`, which would make `export { Assert }` a type only.
+export { default as Assert } from '../shared/assert.ts';
+export { default as config } from '../shared/config.ts';
 // BDD-style aliases. Same function objects as `module`/`test`, so `describe.skip`,
 // `describe.todo`, `it.skip`, and `it.todo` come along for free.
 export { default as describe } from './module.ts';

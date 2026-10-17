@@ -1,3 +1,7 @@
+// Iterator helpers (map, flatMap on iterators) and Set.prototype.intersection are
+// ES2025, both in Node.js >= 22.
+/// <reference lib="esnext.iterator" />
+/// <reference lib="esnext.collection" />
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
@@ -341,8 +345,8 @@ async function fixDenoIndexDts(): Promise<void> {
   if (fixed !== src) await fs.writeFile(dtsPath, fixed);
 }
 
-// Two invariants the emitted declarations have to hold, both of which have shipped
-// broken before. Neither shows up in the runtime output or in this repo's own tests —
+// Three invariants the emitted declarations have to hold, all of which have shipped
+// broken before. None shows up in the runtime output or in this repo's own tests —
 // only a consumer type-checking with `skipLibCheck: false` ever sees them, which is
 // exactly why they need asserting at build time.
 //
@@ -352,7 +356,17 @@ async function fixDenoIndexDts(): Promise<void> {
 //      `export default` the merged binding once at the end.
 //   2. A value re-export may not name a declaration file (TS2846). fixDtsImports
 //      points those at the .js sibling; type-only re-exports stay on .d.ts.
+//   3. A binding imported with `import type` may not be re-exported with a plain
+//      `export { name }`: it would reach consumers as a type only (TS1361 on use).
+//      Re-export the module instead: `export { default as name } from './name.ts'`.
 async function assertDeclarationIntegrity(): Promise<void> {
+  // The local binding of each specifier in an `export { … }` list, the one that may be
+  // type-only: the identifier that starts the specifier (after `{` or `,`), alone or before
+  // `as alias`. Anchored so that `export { type X }`, a type-only export, matches nothing:
+  // `type` is followed by `X`, not by `,`, `as` or the end of the list.
+  // Declared here, not at module level: this runs from the top-level await above
+  // every module-level declaration below it, before they are initialised.
+  const LOCAL_BINDING = /(?:^|,)\s*([A-Za-z_$][\w$]*)\s*(?:as\s+[A-Za-z_$][\w$]*\s*)?(?=,|$)/g;
   const dtsFiles = await findFiles('./dist', (n) => n.endsWith('.d.ts'));
   const problems = (
     await Promise.all(
@@ -362,9 +376,28 @@ async function assertDeclarationIntegrity(): Promise<void> {
         const valueReExports = src.match(
           /^export\s+(?!type\b)[^\n]*?\bfrom\s+['"]\.\.?\/[^'"]*?\.d\.ts['"]/gm,
         );
+        // Iterator helpers, not arrays: each match flows through the chain as it is
+        // found, with no intermediate array per step.
+        const typeOnly = new Set(
+          src.matchAll(/^import type ([A-Za-z_$][\w$]*) from /gm).map(([, name]) => name!),
+        );
+        // Only files with an `import type` binding can re-export one; most have none.
+        const exportedLocals =
+          typeOnly.size === 0
+            ? new Set<string>()
+            : new Set(
+                src
+                  .matchAll(/^export \{([^}]*)\};?$/gm)
+                  .flatMap(([, specifiers]) => specifiers!.matchAll(LOCAL_BINDING))
+                  .map(([, local]) => local!),
+              );
+        const typeOnlyValueExports = [...typeOnly.intersection(exportedLocals)];
         return [
           defaults > 1 ? `${f}: ${defaults} default exports` : null,
           valueReExports ? `${f}: value re-export of a declaration file` : null,
+          typeOnlyValueExports.length > 0
+            ? `${f}: ${typeOnlyValueExports.join(', ')} exported as a value but imported with import type`
+            : null,
         ].filter((p) => p !== null);
       }),
     )

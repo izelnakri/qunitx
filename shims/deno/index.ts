@@ -129,7 +129,7 @@ Object.freeze(Assert);
 Object.freeze(ModuleContext);
 Object.freeze(TestContext);
 
-export { Assert };
+export { default as Assert } from '../shared/assert.ts';
 
 /**
  * Runner settings, named after the `QUnit.config` keys they mirror, and read as each
@@ -146,7 +146,7 @@ export { Assert };
  * config.testTimeout = 10_000; // for a suite of slow integration tests
  * ```
  */
-export { config };
+export { default as config } from '../shared/config.ts';
 
 /**
  * Defines a test module (suite). Wraps Deno's `describe()` and sets up the
