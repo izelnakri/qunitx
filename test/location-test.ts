@@ -26,7 +26,11 @@ async function runFailingFixture(extraEnv: Record<string, string> = {}): Promise
 }
 
 if (typeof globalThis['document'] === 'undefined') {
-  module('failing-test output', function () {
+  module('failing-test output', function (hooks) {
+    // Each test starts a whole test runner, which takes longer than the 3s default
+    // timeout on a slow CI machine.
+    hooks.beforeEach((assert) => assert.timeout(30_000));
+
     test('reports user file location, not qunitx dist', async function (assert) {
       const output = await runFailingFixture();
 

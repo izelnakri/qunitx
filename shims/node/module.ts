@@ -58,21 +58,31 @@ function module(
     return;
   }
 
-  const targetModuleContent = (moduleContent ?? runtimeOptions) as (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown }) => void;
+  const targetModuleContent = (moduleContent ?? runtimeOptions) as (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown }) => unknown;
+  // Before the ModuleContext exists: its constructor pushes to currentModuleChain.
+  ModuleContext.assertCallbackIsSyncFunction(targetModuleContent);
   const moduleContext = new ModuleContext(moduleName);
 
   callAtLocation(describe, loc, moduleName, { ...targetRuntimeOptions }, function () {
     const beforeHooks: HookFn<Assert>[] = [];
     const afterHooks: HookFn<Assert>[] = [];
 
+    // before/after hooks run with the module's own context, as in QUnit 3: what a
+    // before() sets is inherited by every test, and after() sees only module state,
+    // never what the last test wrote to its own context.
+    const userContext = moduleContext.userContext;
+    const hookMeta = { context: userContext };
+
     beforeAll(async () => {
+      // Skipped when every test in the module is (QUnit runs before on the first test).
+      if (moduleContext.runnableTestCount === 0) return;
       // before() assertions are attributed to the first direct test only (matching QUnit's model).
-      // Tests inherit parent context via prototype chain, so no Object.assign needed.
       const firstTest = moduleContext.tests[0];
       const beforeAssert = firstTest ? firstTest.assert! : moduleContext.assert!;
 
       for (const hook of beforeHooks) {
-        await hook.call(moduleContext.userContext, beforeAssert, { context: moduleContext.userContext });
+        await hook.call(userContext, beforeAssert, hookMeta);
+        await beforeAssert.waitForAsyncOps();
       }
     });
 
@@ -80,12 +90,14 @@ function module(
       const allAsyncOps = moduleContext.tests.flatMap((t) => t.asyncOps);
       if (allAsyncOps.length > 0) await Promise.all(allAsyncOps);
 
-      const tests = moduleContext.tests;
-      const lastTest = tests[tests.length - 1];
-      if (lastTest) {
+      if (moduleContext.runnableTestCount > 0) {
+        const tests = moduleContext.tests;
+        const lastTest = tests[tests.length - 1];
+        const afterAssert = lastTest ? lastTest.assert! : moduleContext.assert!;
         // Indexed reverse iteration avoids `afterHooks.toReversed()`'s per-call alloc.
         for (let i = afterHooks.length - 1; i >= 0; i--) {
-          await afterHooks[i]!.call(lastTest.userContext, lastTest.assert!, { context: lastTest.userContext });
+          await afterHooks[i]!.call(userContext, afterAssert, hookMeta);
+          await afterAssert.waitForAsyncOps();
         }
       }
 
@@ -94,22 +106,29 @@ function module(
       }
     });
 
-    targetModuleContent.call(moduleContext.userContext, {
-      before(beforeFn) {
-        beforeHooks.push(beforeFn);
-      },
-      beforeEach(beforeEachFn) {
-        moduleContext.beforeEachHooks.push(beforeEachFn);
-      },
-      afterEach(afterEachFn) {
-        moduleContext.afterEachHooks.push(afterEachFn);
-      },
-      after(afterFn) {
-        afterHooks.push(afterFn);
-      }
-    }, { moduleName, options: targetRuntimeOptions, context: moduleContext.userContext });
-
-    ModuleContext.currentModuleChain.pop();
+    try {
+      ModuleContext.assertNotPromise(targetModuleContent.call(userContext, {
+        before(beforeFn) {
+          moduleContext.assertExecutionIsInsideTestModuleFor('before');
+          beforeHooks.push(beforeFn);
+        },
+        beforeEach(beforeEachFn) {
+          moduleContext.assertExecutionIsInsideTestModuleFor('beforeEach');
+          moduleContext.beforeEachHooks.push(beforeEachFn);
+        },
+        afterEach(afterEachFn) {
+          moduleContext.assertExecutionIsInsideTestModuleFor('afterEach');
+          moduleContext.afterEachHooks.push(afterEachFn);
+        },
+        after(afterFn) {
+          moduleContext.assertExecutionIsInsideTestModuleFor('after');
+          afterHooks.push(afterFn);
+        }
+      }, { moduleName, options: targetRuntimeOptions, context: userContext }));
+    } finally {
+      // Even when the callback throws, so the modules declared after it nest correctly.
+      ModuleContext.currentModuleChain.pop();
+    }
   });
 }
 

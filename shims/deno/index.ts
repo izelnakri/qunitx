@@ -76,6 +76,7 @@
 import '../../vendor/qunit.js';
 import { AssertionError as DenoAssertionError } from 'jsr:@std/assert@^1.0.17';
 import Assert from '../shared/assert.ts';
+import config from '../shared/config.ts';
 import { filterStack } from '../shared/filter-stack.ts';
 import ModuleContext from '../shared/module-context.ts';
 import TestContext from '../shared/test-context.ts';
@@ -129,6 +130,23 @@ Object.freeze(ModuleContext);
 Object.freeze(TestContext);
 
 export { Assert };
+
+/**
+ * Runner settings, named after the `QUnit.config` keys they mirror, and read as each
+ * test starts.
+ *
+ * `testTimeout` is how many milliseconds a test may take before it fails as timed out:
+ * 3000 by default, as in QUnit 3.0. `0` disables it, and `assert.timeout()` overrides
+ * it for a single test.
+ *
+ * @example
+ * ```js
+ * import { config } from "qunitx";
+ *
+ * config.testTimeout = 10_000; // for a suite of slow integration tests
+ * ```
+ */
+export { config };
 
 /**
  * Defines a test module (suite). Wraps Deno's `describe()` and sets up the
@@ -309,8 +327,8 @@ export const todo: (testName: string, _testContent?: unknown) => void = Test.tod
  * @property {Function} it - BDD-style alias for `test`. Same function object.
  * @property {typeof AssertionError} AssertionError - The error class thrown when an
  *   assertion fails. Extends Deno's built-in `AssertionError`.
- * @property {object} config - Runtime configuration object (currently unused; reserved
- *   for future QUnit config compatibility).
+ * @property {object} config - Runner settings, the same object as the named
+ *   {@linkcode config} export.
  */
 export default {
   AssertionError: Assert.AssertionError,
@@ -318,7 +336,7 @@ export default {
   it: Test,
   module: Module,
   test: Test,
-  config: {},
+  config,
 };
 
 /** Public types referenced by the signatures above, so consumers can name them. */

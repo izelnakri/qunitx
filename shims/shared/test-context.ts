@@ -10,6 +10,7 @@ export default class TestContext {
   assert: Assert | undefined;
   timeout: number | undefined;
   steps: string[] = [];
+  stepsCount = 0;
   expectedAssertionCount: number | undefined;
   totalExecutedAssertions = 0;
   userContext: Record<string, unknown> = {};
@@ -27,6 +28,8 @@ export default class TestContext {
     }
   }
 
+  // 0 fires on the next macrotask: a synchronous test has finished by then, and any
+  // other fails, which is what QUnit's `assert.timeout(0)` means.
   setTimeoutDuration(ms: number) {
     if (this.#timeoutHandle !== undefined) {
       clearTimeout(this.#timeoutHandle);
@@ -35,7 +38,11 @@ export default class TestContext {
     if (!this.rejectTimeout) return;
     this.#timeoutHandle = setTimeout(() => {
       this.#timedOut = true;
-      this.rejectTimeout!(new Error(`Test timed out after ${ms}ms`));
+      this.rejectTimeout!(new Error(
+        ms === 0
+          ? 'Test did not finish synchronously even though assert.timeout( 0 ) was used.'
+          : `Test took longer than ${ms}ms; test timed out.`,
+      ));
     }, ms);
   }
 
@@ -55,6 +62,18 @@ export default class TestContext {
         expected: [],
         message: `Expected assert.verifySteps() to be called before end of test after using assert.step(). Unverified steps: ${this.steps.join(', ')}`,
       });
+    } else if (
+      this.expectedAssertionCount !== undefined &&
+      this.stepsCount > 0 &&
+      this.expectedAssertionCount === this.totalExecutedAssertions + this.stepsCount
+    ) {
+      // The count QUnit 2 would have expected, which counted every assert.step() as well.
+      this.assert!.pushResult({
+        result: false,
+        actual: this.totalExecutedAssertions,
+        expected: this.expectedAssertionCount,
+        message: `Expected ${this.expectedAssertionCount} assertions, but ${this.totalExecutedAssertions} were run for test: ${this.name}\nIt looks like you are upgrading from QUnit 2. Steps no longer count as separate assertions. https://qunitjs.com/api/assert/expect/`,
+      });
     } else if (this.expectedAssertionCount !== undefined && this.expectedAssertionCount !== this.totalExecutedAssertions) {
       this.assert!.pushResult({
         result: false,
@@ -67,7 +86,7 @@ export default class TestContext {
         result: false,
         actual: this.totalExecutedAssertions,
         expected: '> 0',
-        message: `Expected at least one assertion to be run for test: ${this.name}`,
+        message: `Expected at least one assertion to be run for test: ${this.name}. Call assert.expect(0) to accept zero assertions.`,
       });
     }
   }

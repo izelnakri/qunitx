@@ -10,3 +10,10 @@ module('Assertion: Expect | Passing Assertions', function (hooks) {
     assert.ok(true);
   });
 });
+
+module('Assertion: Expect | expect() without an argument', function () {
+  test('returns the number of assertions set so far', function (assert) {
+    assert.expect(1);
+    assert.strictEqual(assert.expect(), 1);
+  });
+});

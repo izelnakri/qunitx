@@ -18,7 +18,8 @@ module('module', function () {
       this.lastHook = 'module-afterEach';
     });
     hooks.after(function (assert) {
-      assert.strictEqual(this.lastHook, 'module-afterEach', "Module's afterEach runs before after");
+      // QUnit 3: after() gets the module's context, which the test's writes never reach.
+      assert.strictEqual(this.lastHook, 'module-before', "Module's after sees the module context");
       this.lastHook = 'module-after';
     });
 
@@ -50,7 +51,8 @@ module('module', function () {
     });
 
     test('all hooks', (assert) => {
-      assert.expect(4);
+      // QUnit 3: the verifySteps() in after() is the one assertion; steps are not counted.
+      assert.expect(1);
     });
   });
 
@@ -344,28 +346,38 @@ module('module', function () {
   });
 
   module('nested modules before/after', function (hooks) {
+    // QUnit 3: each before()/after() runs with its own module's context, which inherits
+    // from its parent module's; what a test writes stays in that test's context.
+    const seenByAfter: string[] = [];
+
     hooks.before(function (assert) {
       assert.true(true, 'before hook ran');
       this.lastHook = 'before';
     });
     hooks.after(function (assert) {
-      assert.strictEqual(this.lastHook, 'outer-after');
+      seenByAfter.push(`after: ${this.lastHook}`);
+      assert.deepEqual(seenByAfter, [
+        'inner-after: inner-before',
+        'outer-after: outer-before',
+        'after: before',
+      ]);
     });
 
     test('should run before', function (assert) {
       // assert.expect() differs by runtime: node/deno=3 (before+body+after), browser=2 (body+after only)
       // before-hook assertions are attributed to all tests in node/deno vs first-in-subtree in browser
       assert.strictEqual(this.lastHook, 'before');
-      this.lastHook = 'outer-after';
+      this.lastHook = 'test';
     });
 
     module('outer', function (hooks) {
       hooks.before(function (assert) {
-        assert.true(true, 'outer before hook ran');
+        assert.strictEqual(this.lastHook, 'before', 'outer context inherits from its parent');
         this.lastHook = 'outer-before';
       });
       hooks.after(function (assert) {
-        assert.strictEqual(this.lastHook, 'outer-test');
+        seenByAfter.push(`outer-after: ${this.lastHook}`);
+        assert.strictEqual(this.lastHook, 'outer-before');
         this.lastHook = 'outer-after';
       });
 
@@ -375,7 +387,8 @@ module('module', function () {
           this.lastHook = 'inner-before';
         });
         hooks.after(function (assert) {
-          assert.strictEqual(this.lastHook, 'inner-test');
+          seenByAfter.push(`inner-after: ${this.lastHook}`);
+          assert.strictEqual(this.lastHook, 'inner-before');
         });
 
         test('should run outer-before and inner-before', function (assert) {
@@ -411,7 +424,7 @@ module('module', function () {
         assert.strictEqual(context.fromTest, 'test', 'afterEach context sees test-set value');
       });
       hooks.after((assert, { context }) => {
-        assert.strictEqual(context.fromTest, 'test', 'after context sees last test value');
+        assert.strictEqual(context.fromTest, undefined, 'after context is the module context');
       });
 
       test('context is the same object as this', (assert, { context }) => {
@@ -488,7 +501,7 @@ module('module', function () {
     });
 
     test('all hooks', function (assert) {
-      assert.expect(9);
+      assert.expect(1);
     });
   });
 });

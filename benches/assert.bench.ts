@@ -18,7 +18,7 @@ Assert.AssertionError = QXAssertionError;
 TestContext.Assert = Assert;
 
 function makeAssert() {
-  const test = { totalExecutedAssertions: 0, steps: [], asyncOps: [], setTimeoutDuration() {}, clearTimeoutHandle() {} };
+  const test = { totalExecutedAssertions: 0, steps: [], stepsCount: 0, asyncOps: [], setTimeoutDuration() {}, clearTimeoutHandle() {} };
   return new Assert(null, test);
 }
 

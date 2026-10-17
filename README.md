@@ -259,8 +259,8 @@ test('async errors', async (assert) => {
 
 | | |
 |---|---|
-| `assert.step(label)` | records a step |
-| `assert.verifySteps(labels)` | asserts the recorded steps equal `labels` in order, then clears them |
+| `assert.step(label)` | records a step; not an assertion of its own |
+| `assert.verifySteps(labels)` | asserts the recorded steps equal `labels` in order, then clears them — one assertion |
 
 ```js
 test('callbacks fire in order', (assert) => {
@@ -277,8 +277,8 @@ test('callbacks fire in order', (assert) => {
 
 | | |
 |---|---|
-| `assert.expect(n)` | the test fails unless exactly `n` assertions ran |
-| `assert.timeout(ms)` | hard deadline for this test; calling again resets it |
+| `assert.expect(n)` | the test fails unless exactly `n` assertions ran (steps not included) |
+| `assert.timeout(ms)` | hard deadline for this test; calling again resets it, `0` requires it to finish synchronously |
 | `assert.async()` | returns a `done` callback; the test waits until every `done` is called |
 
 ```js
@@ -301,6 +301,19 @@ test('deadline', async (assert) => {
 `assert.expect()` is what turns "the callback never fired" from a silent pass into a
 failure. For `async`/`await` tests just use an `async` callback — `assert.async()` is for
 callback APIs.
+
+Without `assert.timeout()`, a test times out after 3 seconds, as in QUnit 3. Change the
+default with `config.testTimeout` (`0` turns it off), which each test reads as it starts:
+
+```js
+import { config } from 'qunitx';
+
+config.testTimeout = 30_000; // a suite of slow integration tests
+```
+
+In the browser, `config` is `QUnit.config` itself, and qunitx-cli sets `testTimeout` from
+its `--timeout` option. On Node.js, a test given Node's own `{ timeout }` option is left
+to Node.
 
 ### Custom assertions
 
@@ -455,9 +468,10 @@ module('Suite', (hooks, { context }) => {
 });
 ```
 
-Either way the state follows QUnit's prototype-chain model: each test gets a fresh object
-inheriting from the module's, so `before()` writes are visible everywhere and a test's own
-writes never leak into its siblings.
+Either way the state follows QUnit 3's model: `before()` and `after()` run with the
+module's context, which inherits from its parent module's, and each test starts from a
+fresh copy of it — so `before()` writes are visible everywhere, and a test's own writes
+never leak into its siblings or into `after()`.
 
 > **In TypeScript**, both bags are deliberately untyped, so `this.db` and `context.db` do
 > not type-check under `deno test`'s built-in checker. For a typed `.ts` suite, declare
@@ -532,13 +546,19 @@ Coming from a BDD runner instead? Import `describe` / `it` — they are aliases 
 
 ## QUnit compatibility
 
-qunitx follows the same test-environment model as QUnit:
+qunitx follows QUnit 3's test-environment model on every runtime:
 
-- **Fresh context per test** — each test gets its own `this` object. Writes in one test never bleed into a sibling.
-- **Prototype-chain inheritance** — a parent module's `before()` hook sets properties on the module context. Each test inherits those properties, so reads work naturally (`this.x`) while writes stay local to the test.
+- **Module context** — `before()` and `after()` run with the module's own context. A nested module's context inherits from its parent's, so what a parent's `before()` sets is visible below it.
+- **Fresh context per test** — each test starts from a copy of its module's context, taken after the `before()` hooks ran. Writes in one test never bleed into a sibling, or into `after()`.
 - **`before()` assertions** — attributed to the first test in the module (matching QUnit's attribution model).
 - **`after()` assertions** — attributed to the last test in the module.
-- **Hook ordering** — `before`/`beforeEach` run FIFO; `afterEach`/`after` run LIFO, exactly as in QUnit.
+- **Hook ordering** — `before`/`beforeEach` run FIFO; `afterEach`/`after` run LIFO, exactly as in QUnit. A hook that calls `assert.async()` finishes before the next one starts.
+- **Hooks belong to their module** — adding a hook to a parent module from inside a child, or from inside a test, throws, as does an `async` module callback. Module setup that needs to wait goes in `before()`.
+- **Steps** — `assert.step()` is not an assertion of its own; the `verifySteps()` that checks it is.
+- **Default timeout** — 3 seconds per test, configurable with `config.testTimeout`.
+
+The same file of QUnit 3's own hook tests runs on all three runtimes, in
+[`test/hook-context-test.ts`](test/hook-context-test.ts).
 
 > **Known difference:** In QUnit's browser runner, `before()` hook assertions are attributed to the first test in the *entire subtree* (including nested modules). In the Node/Deno adapters, they are attributed to the first *direct* test of the module. In the common case where direct tests appear before nested modules, the behavior is identical.
 
