@@ -24,13 +24,16 @@ TARBALL=$(ls "$CONSUMER"/*.tgz | head -1)
 # ── Install into a clean consumer directory ─────────────────────────────────
 cd "$CONSUMER"
 printf '{"type":"module"}' > package.json
-npm install --no-save --quiet "$TARBALL"
-cp "$ROOT/scripts/release-consumer-test.ts" .
+# jsdom, at the version package.json pins, for release-consumer-dom-test.ts.
+npm install --no-save --quiet "$TARBALL" "jsdom@$(node -p "require('$ROOT/package.json').devDependencies.jsdom")"
+cp "$ROOT/scripts/release-consumer-test.ts" "$ROOT/scripts/release-consumer-dom-test.ts" .
 cp -r "$ROOT/test" .
 
 # ── Node ────────────────────────────────────────────────────────────────────
 echo "test-release: node (consumer)"
 node --test release-consumer-test.ts
+echo "test-release: node (consumer, with a DOM)"
+node --test release-consumer-dom-test.ts
 echo "test-release: node (full suite)"
 node --test test/index.ts
 
@@ -48,5 +51,7 @@ fi
 # ── Deno ─────────────────────────────────────────────────────────
 echo "test-release: deno (consumer)"
 deno test --allow-read release-consumer-test.ts
+echo "test-release: deno (consumer, with a DOM)"
+deno test --allow-read --allow-env release-consumer-dom-test.ts
 echo "test-release: deno (full suite)"
 deno test --no-check --allow-read --allow-run test/index.ts

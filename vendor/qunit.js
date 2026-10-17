@@ -5723,6 +5723,7 @@
     }).then(unblockAndAdvanceQueue);
   }
   exportQUnit(QUnit);
+  globalThis.QUnit = QUnit;
 
   (function () {
     if (!window$1 || !document) {

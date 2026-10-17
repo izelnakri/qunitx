@@ -58,11 +58,25 @@ async function compileAndVendor(): Promise<void> {
 })();
 `;
 
+  // QUnit puts itself on `window` where there is a DOM, and on module.exports
+  // wherever the file runs as CommonJS, which is how Deno runs it from an npm
+  // install. On globalThis too, always, as qunit.d.ts declares it: the Deno
+  // shim reads it from there whichever way the file was loaded.
+  const exportCall = '\n  exportQUnit(QUnit);\n';
+  if (qunitJS.toString().split(exportCall).length !== 2) {
+    throw new Error(
+      'qunit.js no longer calls exportQUnit(QUnit) once: update its patch in build.ts.',
+    );
+  }
+
   const newQUnit =
     denoEnvGuard +
-    qunitJS.toString().replace(
-      'start: function start(count) {',
-      `reset: function() {
+    qunitJS
+      .toString()
+      .replace(exportCall, `${exportCall}  globalThis.QUnit = QUnit;\n`)
+      .replace(
+        'start: function start(count) {',
+        `reset: function() {
 		ProcessingQueue.finished = false;
 		globalStartCalled = false;
 		runStarted = false;
@@ -87,7 +101,7 @@ async function compileAndVendor(): Promise<void> {
 		config.modules.push( config.currentModule );
   },
   start: function start(count) {`,
-    );
+      );
 
   // Auto-generated type declarations for the patched QUnit API.
   // Update this template in build.ts when upgrading qunit to a version with API changes.
@@ -407,6 +421,14 @@ async function bundleDenoShim(): Promise<void> {
         path: args.path.replace(/\.ts$/, '.js'),
         external: true,
       }));
+      // vendor/qunit.js stays external for the same reason: dist/shared/assert.js
+      // imports it too, and a copy inlined here would be a second QUnit. Where a
+      // DOM exists (jsdom, happy-dom), the second one to load throws "QUnit has
+      // already been defined", and no test runs.
+      build.onResolve({ filter: /[/\\]vendor[/\\]qunit\.js$/ }, (args) => ({
+        path: args.path,
+        external: true,
+      }));
       // jsr: imports from local TypeScript files → resolve to https://jsr.io
       build.onResolve({ filter: /^jsr:/ }, async (args) => ({
         path: await jsrToUrl(args.path),
@@ -422,22 +444,6 @@ async function bundleDenoShim(): Promise<void> {
         contents: await fetchText(args.path),
         loader: 'ts',
       }));
-
-      // vendor/qunit.js is a UMD module.  When esbuild bundles it as CJS the UMD
-      // code takes the `module.exports = QUnit` branch (exportedModule=true), so
-      // the `globalThis.QUnit = QUnit` fallback never runs.  The shim reads
-      // `Assert.QUnit` from `globalThis.QUnit` — fix by appending an explicit setter
-      // to the source before esbuild wraps it, so it runs inside the CJS closure
-      // where `exports` is defined and equals the QUnit object.
-      build.onLoad({ filter: /[/\\]vendor[/\\]qunit\.js$/ }, async (args) => {
-        const src = await fs.readFile(args.path, 'utf8');
-        return {
-          contents:
-            src +
-            '\nif (typeof exports !== "undefined" && exports.QUnit && typeof globalThis !== "undefined") { globalThis.QUnit = exports.QUnit; }',
-          loader: 'js',
-        };
-      });
     },
   };
 
