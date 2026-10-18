@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.4.0] - 2026-10-18
+[`v1.3.2...v1.4.0`](https://github.com/izelnakri/qunitx/compare/v1.3.2...v1.4.0)
+
+### Bug Fixes
+- Export Assert and config as values, not types only — 2026-10-17 by [@izelnakri](https://github.com/izelnakri) ([`db274fc`](https://github.com/izelnakri/qunitx/commit/db274fc8e57d9b0b2f6b4c98be8c614ca5359369))
+
+### Features
+- [**breaking**] Upgrade to QUnit 3.0.0, with its semantics on Node.js and Deno too — 2026-10-17 by [@izelnakri](https://github.com/izelnakri) ([`e05a6cd`](https://github.com/izelnakri/qunitx/commit/e05a6cd50ca95ab67d45194bff1a9f3186bbf15b))
+- QUnit's test.each, test.if, only, global hooks and closeTo on every runtime — 2026-10-17 by [@izelnakri](https://github.com/izelnakri) ([`cda94fa`](https://github.com/izelnakri/qunitx/commit/cda94fa47f5a7012c01b2f5890de0365e9eb7f0c))
+
 ## [1.3.2] - 2026-10-17
 [`v1.3.1...v1.3.2`](https://github.com/izelnakri/qunitx/compare/v1.3.1...v1.3.2)
 
