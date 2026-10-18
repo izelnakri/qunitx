@@ -35,7 +35,11 @@ async function runOnlyFixture(): Promise<{ exitCode: number; output: string }> {
   child.stdout.on('data', (d) => chunks.push(d));
   child.stderr.on('data', (d) => chunks.push(d));
   const exitCode = await new Promise((resolve) => child.on('close', resolve));
-  return { exitCode, output: Buffer.concat(chunks).toString() };
+  // In a terminal, `node --test` sets FORCE_COLOR for its test files, and so for this child.
+  const output = Buffer.concat(chunks)
+    .toString()
+    .replace(/\x1b\[[0-9;]*m/g, '');
+  return { exitCode, output };
 }
 
 if (typeof globalThis['document'] === 'undefined') {
