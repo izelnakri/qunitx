@@ -17,7 +17,7 @@ const inputHash = await checkUpToDate();
 if (inputHash !== null) {
   await compileAndVendor();
   await Promise.all([fixJsImports(), fixDtsImports()]);
-  await fixDenoIndexDts();
+  await Promise.all([fixDenoIndexDts(), addPluginAssertionTypes()]);
   await assertDeclarationIntegrity();
   const hash = inputHash || (await computeInputHash());
   await fs.writeFile('./dist/.build-hash', hash + '\n');
@@ -341,6 +341,35 @@ async function fixDenoIndexDts(): Promise<void> {
   const code = fixed.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[^\S\n]*\/\/.*$/gm, '');
   if (code.includes('jsr:') || code.includes('DenoAssertionError')) {
     throw new Error(`${dtsPath}: jsr:@std/assert reference survived post-processing`);
+  }
+  if (fixed !== src) await fs.writeFile(dtsPath, fixed);
+}
+
+// Assertion plugins type their methods on the global `Assert` interface, as QUnit's own
+// typings do: qunit-dom declares `declare global { interface Assert { dom(...) } }`.
+// Making qunitx's Assert extend that interface types a plugin's methods on every
+// `assert` as soon as the plugin is imported, with no shim in the consumer's project.
+// Only the npm declaration gets this: JSR rejects global augmentation in source, and
+// npm is where such plugins come from. It merges into the class tsc emits as
+// `declare class Assert` with a separate `export default Assert;`, which is why
+// shims/shared/assert.ts exports the class on its own line.
+async function addPluginAssertionTypes(): Promise<void> {
+  const dtsPath = './dist/shared/assert.d.ts';
+  const src = await fs.readFile(dtsPath, 'utf8');
+  const globalAssert = 'declare global {\n    interface Assert {\n    }\n}\n';
+  const merge = 'interface Assert extends globalThis.Assert {\n}\nexport default Assert;\n';
+  // Idempotent, as in fixDenoIndexDts: an incremental build may hand us the patched file.
+  const fixed = src.includes(merge)
+    ? src
+    : src
+        .replace(/^import /m, `${globalAssert}import `)
+        .replace(/^export default Assert;\n/m, merge);
+  if (
+    !fixed.includes(globalAssert) ||
+    !fixed.includes(merge) ||
+    !/^declare class Assert \{/m.test(fixed)
+  ) {
+    throw new Error(`${dtsPath}: could not merge Assert with the global Assert interface`);
   }
   if (fixed !== src) await fs.writeFile(dtsPath, fixed);
 }

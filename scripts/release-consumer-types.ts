@@ -4,8 +4,19 @@
  * Every named export is used as the value it is: the declarations once re-exported
  * `Assert` and `config` as types only, which no runtime test could notice.
  */
-import qunitx, { Assert, config, describe, hooks, it, module, only, skip, test, todo } from 'qunitx';
+import qunitx, { Assert, assert as assertPrototype, config, describe, hooks, it, module, only, skip, test, todo } from 'qunitx';
 import BaseAssert from 'qunitx/assert';
+
+// An assertion plugin types its methods on the global `Assert` interface, as qunit-dom
+// does, and installs them on the exported `assert`: both must reach every test's assert.
+declare global {
+  interface Assert {
+    isTheAnswer(value: number): void;
+  }
+}
+assertPrototype.isTheAnswer = function (value) {
+  this.pushResult({ result: value === 42, actual: value, expected: 42 });
+};
 
 config.testTimeout = 5_000;
 hooks.beforeEach((_assert, { context }) => {
@@ -29,6 +40,7 @@ module('types', (moduleHooks, { context }) => {
     assert.expect(2);
     const expected: number | undefined = assert.expect();
     assert.ok(expected);
+    assert.isTheAnswer(42);
   });
 
   test.each('each', [1, 2], (assert, n: number, { testName }) => assert.ok(n && testName));

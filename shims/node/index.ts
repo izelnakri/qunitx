@@ -34,6 +34,9 @@ Object.freeze(TestContext);
 // Re-exported from their modules, not as the local bindings above: a declaration file
 // imports those with `import type`, which would make `export { Assert }` a type only.
 export { default as Assert } from '../shared/assert.ts';
+// The object every test's `assert` inherits from, as `QUnit.assert` is in the browser:
+// assertion plugins install themselves on it, e.g. qunit-dom's `setup(assert)`.
+export const assert: Assert = Assert.prototype;
 export { default as config } from '../shared/config.ts';
 export { default as hooks } from '../shared/global-hooks.ts';
 // BDD-style aliases. Same function objects as `module`/`test`, so `describe.skip`,

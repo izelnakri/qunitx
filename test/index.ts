@@ -1,6 +1,7 @@
 import './alias-test.ts';
 import './assert-failures-test.ts';
 import './assert-identity-test.ts';
+import './assert-plugin-test.ts';
 import './error-messages-test.ts';
 import './timeout-test.ts';
 import './location-test.ts';
