@@ -132,6 +132,34 @@ Object.freeze(TestContext);
 export { default as Assert } from '../shared/assert.ts';
 
 /**
+ * The object every test's `assert` inherits from: the equivalent of `QUnit.assert`.
+ * Assertion plugins install their methods on it, and type them on the global `Assert`
+ * interface, which {@linkcode Assert} extends.
+ *
+ * @example
+ * ```ts
+ * import { assert, module, test } from "qunitx";
+ *
+ * declare global {
+ *   interface Assert {
+ *     isEven(value: number): void;
+ *   }
+ * }
+ *
+ * assert.isEven = function (value: number) {
+ *   this.pushResult({ result: value % 2 === 0, actual: value, message: `${value} is even` });
+ * };
+ *
+ * module("Math", () => {
+ *   test("doubling", (assert) => {
+ *     assert.isEven(21 * 2);
+ *   });
+ * });
+ * ```
+ */
+export const assert: Assert = Assert.prototype;
+
+/**
  * Runner settings, named after the `QUnit.config` keys they mirror, and read as each
  * test starts.
  *
