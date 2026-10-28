@@ -44,7 +44,7 @@ const PENDING = Symbol('pending');
  * });
  * ```
  */
-export default class Assert {
+class Assert {
   /** @internal Set by each runtime shim before tests run. */
   static QUnit: QUnitObject;
   /** @internal Set by each runtime shim before tests run. */
@@ -780,6 +780,10 @@ export default class Assert {
     return caught;
   }
 }
+
+// Declared apart from the class so the npm declaration can merge an interface into it:
+// build.ts makes Assert extend the global `Assert` there (see addPluginAssertionTypes).
+export default Assert;
 
 
 const INSPECT_OPTIONS = { depth: 10, colors: true, compact: false as const };

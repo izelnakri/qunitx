@@ -5,10 +5,9 @@ import { module, test } from 'qunitx';
 // invisible to tests imported from `qunitx`. Both entries must expose the
 // same class identity for prototype extensions to take effect.
 //
-// Guarded for browser: the qunitx browser entry exposes QUnit directly and
-// does not export an `Assert` class — this regression only applies to the
-// node and deno entries. Dynamic imports keep esbuild from failing to
-// resolve a named `Assert` export when bundling the test for the browser.
+// Guarded for browser: there `Assert` from qunitx is QUnit's own class, which the
+// browser runs tests with, not the one `qunitx/assert` exports. This regression only
+// applies to the node and deno entries.
 if (typeof (globalThis as Record<string, unknown>)['document'] === 'undefined') {
   module('Assert class identity across entries', function () {
     test('Assert from qunitx === default from qunitx/assert', async function (assert) {
