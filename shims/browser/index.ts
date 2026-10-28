@@ -1,9 +1,10 @@
 import QUnit from '../../vendor/qunit.js';
+import type QUnitxAssert from '../shared/assert.ts';
 import type { EachCallback, EachData, HookFn, HooksObject, IfTest, OnlyTest, SkipTest, TestContent, TodoTest } from '../types.ts';
 
 // QUnit's type declarations omit the .skip/.todo/.only extensions on module/test.
 // Define the minimal shape we actually call rather than reaching for `any`.
-type QUnitHookFn = (this: Record<string, unknown>, assert: unknown) => void | Promise<void>;
+type QUnitHookFn = (this: Record<string, unknown>, assert: Assert) => void | Promise<void>;
 interface QUnitHooks { before: (fn: QUnitHookFn) => void; beforeEach: (fn: QUnitHookFn) => void; afterEach: (fn: QUnitHookFn) => void; after: (fn: QUnitHookFn) => void; }
 type QUnitModuleScope = (this: Record<string, unknown>, hooks: QUnitHooks) => unknown;
 type QUnitEach = (name: string, dataset: unknown, fn: (...args: never[]) => unknown) => void;
@@ -26,7 +27,12 @@ const _QUnit = QUnit as unknown as QUnitWithExtensions;
 
 QUnit.config.autostart = false;
 
-export const assert = QUnit.assert;
+// QUnit's Assert class and QUnit.assert, its prototype: the object every test's `assert`
+// inherits from, where assertion plugins install themselves. Typed as qunitx's Assert,
+// whose API they share, so `Assert` names the same value and type on every runtime.
+export type Assert = QUnitxAssert;
+export const assert = QUnit.assert as Assert;
+export const Assert = assert.constructor as typeof QUnitxAssert;
 export const begin = QUnit.begin;
 export const config = QUnit.config;
 export const diff = QUnit.diff;
@@ -83,16 +89,16 @@ export const version = QUnit.version;
  * });
  * ```
  */
-export function module(moduleName: string, moduleContent: (hooks: HooksObject, meta: { moduleName: string; options: unknown; context: Record<string, unknown> }) => void): void;
+export function module(moduleName: string, moduleContent: (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown; context: Record<string, unknown> }) => void): void;
 /** Defines a test module (suite) with optional options forwarded from cross-runtime code. Only `{ skip: true }` is acted on in the browser. */
-export function module(moduleName: string, runtimeOptions: object, moduleContent: (hooks: HooksObject, meta: { moduleName: string; options: unknown; context: Record<string, unknown> }) => void): void;
+export function module(moduleName: string, runtimeOptions: object, moduleContent: (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown; context: Record<string, unknown> }) => void): void;
 export function module(
   moduleName: string,
-  runtimeOptionsOrContent: object | ((hooks: HooksObject, meta: { moduleName: string; options: unknown; context: Record<string, unknown> }) => void),
-  moduleContent?: (hooks: HooksObject, meta: { moduleName: string; options: unknown; context: Record<string, unknown> }) => void,
+  runtimeOptionsOrContent: object | ((hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown; context: Record<string, unknown> }) => void),
+  moduleContent?: (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown; context: Record<string, unknown> }) => void,
 ): void {
   const hasOptions = moduleContent !== undefined;
-  const callback = (hasOptions ? moduleContent : runtimeOptionsOrContent) as (hooks: HooksObject, meta: { moduleName: string; options: unknown; context: Record<string, unknown> }) => void;
+  const callback = (hasOptions ? moduleContent : runtimeOptionsOrContent) as (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown; context: Record<string, unknown> }) => void;
   const options = hasOptions ? runtimeOptionsOrContent as object : {};
   const { skip, only } = options as { skip?: boolean | string; only?: boolean };
 
@@ -186,7 +192,7 @@ module.if = function ifModule(moduleName: string, condition: unknown, runtimeOpt
   module(moduleName, condition ? options : { ...options, skip: true }, content);
 };
 
-type ModuleContent = (hooks: HooksObject, meta: { moduleName: string; options: unknown; context: Record<string, unknown> }) => void;
+type ModuleContent = (hooks: HooksObject<Assert>, meta: { moduleName: string; options: unknown; context: Record<string, unknown> }) => void;
 
 function getModuleArguments(optionsOrContent: object | ModuleContent, content?: ModuleContent): [object, ModuleContent] {
   return content ? [optionsOrContent as object, content] : [{}, optionsOrContent as ModuleContent];
@@ -224,16 +230,16 @@ function getModuleArguments(optionsOrContent: object | ModuleContent, content?: 
  * });
  * ```
  */
-export function test(testName: string, testContent: (assert: unknown, meta: { testName: string; options: unknown; context: Record<string, unknown> }) => void | Promise<void>): void;
+export function test(testName: string, testContent: (assert: Assert, meta: { testName: string; options: unknown; context: Record<string, unknown> }) => void | Promise<void>): void;
 /** Defines an individual test with optional options. `{ skip }` and `{ todo }` are acted on; other options are ignored in the browser. */
-export function test(testName: string, runtimeOptions: object, testContent: (assert: unknown, meta: { testName: string; options: unknown; context: Record<string, unknown> }) => void | Promise<void>): void;
+export function test(testName: string, runtimeOptions: object, testContent: (assert: Assert, meta: { testName: string; options: unknown; context: Record<string, unknown> }) => void | Promise<void>): void;
 export function test(
   testName: string,
-  runtimeOptionsOrContent: object | ((assert: unknown, meta: { testName: string; options: unknown; context: Record<string, unknown> }) => void | Promise<void>),
-  testContent?: (assert: unknown, meta: { testName: string; options: unknown; context: Record<string, unknown> }) => void | Promise<void>,
+  runtimeOptionsOrContent: object | ((assert: Assert, meta: { testName: string; options: unknown; context: Record<string, unknown> }) => void | Promise<void>),
+  testContent?: (assert: Assert, meta: { testName: string; options: unknown; context: Record<string, unknown> }) => void | Promise<void>,
 ): void {
   const hasOptions = testContent !== undefined;
-  const callback = (hasOptions ? testContent : runtimeOptionsOrContent) as (assert: unknown, meta: { testName: string; options: unknown; context: Record<string, unknown> }) => void | Promise<void>;
+  const callback = (hasOptions ? testContent : runtimeOptionsOrContent) as (assert: Assert, meta: { testName: string; options: unknown; context: Record<string, unknown> }) => void | Promise<void>;
   const options = hasOptions ? runtimeOptionsOrContent as object : {};
   const { skip, todo, only } = options as { skip?: boolean | string; todo?: boolean | string; only?: boolean };
 
@@ -243,7 +249,7 @@ export function test(
   }
 
   const meta = { testName, options: options as unknown, context: {} as Record<string, unknown> };
-  const wrappedFn: QUnitHookFn = function (this: Record<string, unknown>, assert: unknown) {
+  const wrappedFn: QUnitHookFn = function (this: Record<string, unknown>, assert: Assert) {
     meta.context = this;
     return callback.call(this, assert, meta);
   };
@@ -254,7 +260,7 @@ export function test(
   }
 
   if (only) _QUnit.test.only(testName, wrappedFn);
-  else QUnit.test(testName, wrappedFn);
+  else _QUnit.test(testName, wrappedFn);
 }
 
 /**
@@ -303,22 +309,22 @@ test.skip = Object.assign(function skipTest(testName: string, _testContent?: unk
  * });
  * ```
  */
-test.todo = Object.assign(function todoTest(testName: string, testContent?: (assert: unknown, meta: { testName: string; options: unknown; context: Record<string, unknown> }) => void | Promise<void>): void {
+test.todo = Object.assign(function todoTest(testName: string, testContent?: (assert: Assert, meta: { testName: string; options: unknown; context: Record<string, unknown> }) => void | Promise<void>): void {
   if (!testContent) {
     _QUnit.test.todo(testName, function () {});
     return;
   }
   const meta = { testName, options: {} as unknown, context: {} as Record<string, unknown> };
-  _QUnit.test.todo(testName, function (this: Record<string, unknown>, assert: unknown) {
+  _QUnit.test.todo(testName, function (this: Record<string, unknown>, assert: Assert) {
     meta.context = this;
     return testContent.call(this, assert, meta);
   });
 }, {
   /** Registers a todo test for each case of `dataset`. Equivalent to `QUnit.test.todo.each`. */
-  each<T>(testName: string, dataset: EachData<T>, callback: EachCallback<unknown, T>): void {
+  each<T>(testName: string, dataset: EachData<T>, callback: EachCallback<Assert, T>): void {
     _QUnit.test.todo.each(testName, dataset, buildEachTestScope(callback));
   },
-}) as TodoTest<unknown>;
+}) as TodoTest<Assert>;
 
 /**
  * Defines a test that runs only when `condition` is truthy, and is skipped otherwise.
@@ -328,14 +334,14 @@ test.todo = Object.assign(function todoTest(testName: string, testContent?: (ass
  * @param {unknown} condition - Whether to run the test.
  * @param {function} testContent - Test callback receiving `(assert, { testName, options, context })`.
  */
-test.if = Object.assign(function ifTest(testName: string, condition: unknown, testContent: TestContent<unknown>): void {
+test.if = Object.assign(function ifTest(testName: string, condition: unknown, testContent: TestContent<Assert>): void {
   test(testName, condition ? {} : { skip: true }, testContent);
 }, {
   /** {@linkcode test.each}, run only when `condition` is truthy. Equivalent to `QUnit.test.if.each`. */
-  each<T>(testName: string, condition: unknown, dataset: EachData<T>, callback: EachCallback<unknown, T>): void {
+  each<T>(testName: string, condition: unknown, dataset: EachData<T>, callback: EachCallback<Assert, T>): void {
     _QUnit.test.if.each(testName, condition, dataset, buildEachTestScope(callback));
   },
-}) as IfTest<unknown>;
+}) as IfTest<Assert>;
 
 /**
  * Runs only this test, and any other `only` test or module. Equivalent to
@@ -345,17 +351,17 @@ test.if = Object.assign(function ifTest(testName: string, condition: unknown, te
  * @param {object} [runtimeOptions] - Optional options, as for {@linkcode test}.
  * @param {function} testContent - Test callback receiving `(assert, { testName, options, context })`.
  */
-test.only = Object.assign(function onlyTest(testName: string, runtimeOptionsOrContent: object | TestContent<unknown>, testContent?: TestContent<unknown>): void {
+test.only = Object.assign(function onlyTest(testName: string, runtimeOptionsOrContent: object | TestContent<Assert>, testContent?: TestContent<Assert>): void {
   const [options, content] = testContent
     ? [runtimeOptionsOrContent as object, testContent]
-    : [{}, runtimeOptionsOrContent as TestContent<unknown>];
+    : [{}, runtimeOptionsOrContent as TestContent<Assert>];
   test(testName, { ...options, only: true }, content);
 }, {
   /** {@linkcode test.each}, with every case `only`. Equivalent to `QUnit.test.only.each`. */
-  each<T>(testName: string, dataset: EachData<T>, callback: EachCallback<unknown, T>): void {
+  each<T>(testName: string, dataset: EachData<T>, callback: EachCallback<Assert, T>): void {
     _QUnit.test.only.each(testName, dataset, buildEachTestScope(callback));
   },
-}) as OnlyTest<unknown>;
+}) as OnlyTest<Assert>;
 
 /**
  * Defines one test per case of `dataset`, each receiving its case as `data`.
@@ -365,15 +371,15 @@ test.only = Object.assign(function onlyTest(testName: string, runtimeOptionsOrCo
  * @param {Array|object} dataset - The cases.
  * @param {function} callback - Test body receiving `(assert, data)`.
  */
-test.each = function eachTest<T>(testName: string, dataset: EachData<T>, callback: EachCallback<unknown, T>): void {
+test.each = function eachTest<T>(testName: string, dataset: EachData<T>, callback: EachCallback<Assert, T>): void {
   _QUnit.test.each(testName, dataset, buildEachTestScope(callback));
 };
 
 
 // QUnit calls a test.each() body with `(assert, data)`; qunitx adds the meta object that
 // every test body gets, as on Node.js and Deno, with the case's own name.
-function buildEachTestScope<T>(callback: EachCallback<unknown, T>) {
-  return function (this: Record<string, unknown>, assert: unknown, data: T) {
+function buildEachTestScope<T>(callback: EachCallback<Assert, T>) {
+  return function (this: Record<string, unknown>, assert: Assert, data: T) {
     const testName = (QUnit.config.current as { testName: string }).testName;
     return callback.call(this, assert, data, { testName, options: {}, context: this });
   };
@@ -390,14 +396,14 @@ export const todo: typeof test.todo = test.todo;
  * Hooks for every test in the run: `QUnit.hooks`, with each hook also receiving
  * `{ context }` as its second argument, as module hooks do.
  */
-export const hooks: { beforeEach(fn: HookFn): void; afterEach(fn: HookFn): void } = {
+export const hooks: { beforeEach(fn: HookFn<Assert>): void; afterEach(fn: HookFn<Assert>): void } = {
   beforeEach(fn) {
-    _QUnit.hooks.beforeEach(function (this: Record<string, unknown>, assert: unknown) {
+    _QUnit.hooks.beforeEach(function (this: Record<string, unknown>, assert: Assert) {
       return fn.call(this, assert, { context: this });
     });
   },
   afterEach(fn) {
-    _QUnit.hooks.afterEach(function (this: Record<string, unknown>, assert: unknown) {
+    _QUnit.hooks.afterEach(function (this: Record<string, unknown>, assert: Assert) {
       return fn.call(this, assert, { context: this });
     });
   },
@@ -443,23 +449,23 @@ export const it: typeof test = test;
 // Must use regular functions — QUnit sets `this` to testEnvironment when calling them.
 // The meta object is allocated once per hook registration and reused across test runs;
 // `meta.context` is updated to the current testEnvironment before each invocation.
-function wrapHooks(qunitHooks: QUnitHooks): HooksObject {
+function wrapHooks(qunitHooks: QUnitHooks): HooksObject<Assert> {
   return {
-    before(fn: HookFn) {
+    before(fn: HookFn<Assert>) {
       const meta = { context: {} };
-      qunitHooks.before(function (this: Record<string, unknown>, assert: unknown) { meta.context = this; return fn.call(this, assert, meta); });
+      qunitHooks.before(function (this: Record<string, unknown>, assert: Assert) { meta.context = this; return fn.call(this, assert, meta); });
     },
-    beforeEach(fn: HookFn) {
+    beforeEach(fn: HookFn<Assert>) {
       const meta = { context: {} };
-      qunitHooks.beforeEach(function (this: Record<string, unknown>, assert: unknown) { meta.context = this; return fn.call(this, assert, meta); });
+      qunitHooks.beforeEach(function (this: Record<string, unknown>, assert: Assert) { meta.context = this; return fn.call(this, assert, meta); });
     },
-    afterEach(fn: HookFn) {
+    afterEach(fn: HookFn<Assert>) {
       const meta = { context: {} };
-      qunitHooks.afterEach(function (this: Record<string, unknown>, assert: unknown) { meta.context = this; return fn.call(this, assert, meta); });
+      qunitHooks.afterEach(function (this: Record<string, unknown>, assert: Assert) { meta.context = this; return fn.call(this, assert, meta); });
     },
-    after(fn: HookFn) {
+    after(fn: HookFn<Assert>) {
       const meta = { context: {} };
-      qunitHooks.after(function (this: Record<string, unknown>, assert: unknown) { meta.context = this; return fn.call(this, assert, meta); });
+      qunitHooks.after(function (this: Record<string, unknown>, assert: Assert) { meta.context = this; return fn.call(this, assert, meta); });
     },
   };
 }
