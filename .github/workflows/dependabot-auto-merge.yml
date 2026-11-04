@@ -1,5 +1,10 @@
 name: Dependabot auto-merge
 
+# Turns on GitHub's native auto-merge for every dependabot PR. GitHub then merges it by itself
+# once the checks required by the `main` ruleset (lint, test ×3, coverage) are green; if any of
+# them fails the PR simply stays open. Requires "Allow auto-merge" in the repo settings plus the
+# ruleset — without required checks `gh pr merge --auto` merges instantly, before CI has run.
+
 on:
   pull_request:
     types: [opened, reopened, synchronize, closed]
@@ -13,20 +18,40 @@ permissions:
 jobs:
   auto-merge:
     runs-on: ubuntu-latest
-    if: github.event.action != 'closed' && github.actor == 'dependabot[bot]'
+    if: github.event.action != 'closed' && github.event.pull_request.user.login == 'dependabot[bot]'
     steps:
+      # GITHUB_TOKEN is a GitHub App installation token, and GitHub refuses to let an App merge a
+      # PR that edits .github/workflows/* (`refusing to allow a GitHub App to create or update
+      # workflow`) — no `permissions:` entry can grant that. So action bumps need a token that
+      # can: DEPENDABOT_AUTOMERGE_TOKEN, a fine-grained PAT (this repo; Contents, Pull requests,
+      # Workflows: read & write) stored as a *Dependabot* secret. Without it, workflow-touching
+      # PRs are left open with a notice instead of a red check; npm bumps are unaffected.
       - name: Enable auto-merge
-        run: gh pr merge --auto --squash "$PR_URL"
+        run: |
+          if [ -z "$PAT" ] && gh pr diff "$PR_URL" --name-only | grep -q '^\.github/workflows/'; then
+            echo "::notice::Touches .github/workflows/ and DEPENDABOT_AUTOMERGE_TOKEN is not set — GITHUB_TOKEN cannot merge that. Merge it by hand."
+            exit 0
+          fi
+          gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PAT: ${{ secrets.DEPENDABOT_AUTOMERGE_TOKEN }}
+          GH_TOKEN: ${{ secrets.DEPENDABOT_AUTOMERGE_TOKEN || secrets.GITHUB_TOKEN }}
 
+  # A merge performed with GITHUB_TOKEN does not fire `push` workflows, so main would never get a
+  # CI run (nor a fresh dist/deno cache). A PAT-enabled merge does fire them, so skip in that case.
   trigger-ci-after-merge:
     runs-on: ubuntu-latest
-    if: github.event.action == 'closed' && github.event.pull_request.merged == true && github.actor == 'dependabot[bot]'
+    if: github.event.action == 'closed' && github.event.pull_request.merged == true && github.event.pull_request.user.login == 'dependabot[bot]'
     steps:
       - name: Trigger CI on main
-        run: gh workflow run ci.yml --ref main
+        run: |
+          if [ -n "$PAT" ]; then
+            echo "Merged with DEPENDABOT_AUTOMERGE_TOKEN — the push already triggered CI."
+            exit 0
+          fi
+          gh workflow run ci.yml --ref main
         env:
+          PAT: ${{ secrets.DEPENDABOT_AUTOMERGE_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}

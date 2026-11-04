@@ -1,7 +1,25 @@
 version: 2
 updates:
+  # npm devDependencies (qunitx-cli, typescript, @types/node, ...). Every PR is auto-merged by
+  # .github/workflows/dependabot-auto-merge.yml once the required CI checks on main pass; a PR
+  # whose CI fails stays open for a human.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    versioning-strategy: "increase"
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      # One PR for all non-breaking bumps: they all rewrite package-lock.json, so separate PRs
+      # would conflict with each other and serialize on dependabot rebases.
+      npm-minor-and-patch:
+        update-types: ["minor", "patch"]
+
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "daily"
+    commit-message:
+      prefix: "chore(deps)"
