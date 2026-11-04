@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.1] - 2026-11-04
+[`v1.4.0...v1.4.1`](https://github.com/izelnakri/qunitx/compare/v1.4.0...v1.4.1)
+
+### Features
+- Export assert on every runtime and type assertion plugins on Assert — 2026-10-28 by [@izelnakri](https://github.com/izelnakri) ([`e9a65c3`](https://github.com/izelnakri/qunitx/commit/e9a65c387adf20691144166b352f718c9a216e3c))
+
 ## [1.4.0] - 2026-10-18
 [`v1.3.2...v1.4.0`](https://github.com/izelnakri/qunitx/compare/v1.3.2...v1.4.0)
 
